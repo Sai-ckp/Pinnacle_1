@@ -1,0 +1,318 @@
+{% extends 'master/layout.html' %}
+
+{% block content %}
+<style>
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: -5px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .icon-btn i {
+            font-size: 10px;
+            color: #800000;
+        }
+
+        .icon-btn:hover {
+            background-color: #e2e6ea;
+        }
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 10px;
+        margin-left: -64px;
+        margin-right: 27px;
+    }
+
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        color: #800000;
+        margin-bottom: 24px;
+        margin-top: -17px;
+        font-size: 22px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+    }
+
+    td {
+        font-size: 10px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .filter-btn {
+        text-decoration: none;
+        color: black;
+        border: 1px solid black;
+        background-color: transparent;
+        width: 200px;
+        height: 29px;
+        border-radius: 5px;
+    }
+
+
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        margin-top: -22px;
+    }
+
+        .filter-form input,
+        .filter-form select {
+            min-width: 180px;
+        }
+
+    .btn-maroon {
+        color: #800000;
+        border: 2px solid #800000;
+        background-color: transparent;
+        font-weight: 600;
+        min-width: 76px;
+        padding: 6px;
+        font-size: 12px;
+        transition: all 0.2s ease-in-out;
+        margin-left: 778px;
+        margin-right: -3px;
+        text-align: center;
+        border-radius: 5px;
+        text-decoration: none;
+    }
+
+        .btn-maroon:hover {
+            background-color: #800000;
+            color: #fff;
+            border-color: #800000;
+        }
+
+    /* Modal styles */
+    .popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 1001;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+        display: none;
+        width: 300px;
+        text-align: center;
+    }
+
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: none;
+    }
+
+    #confirm-popup-message {
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #800000;
+    }
+
+    /*   #confirm-yes,
+    #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        border: none;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #confirm-yes {
+        background-color: #800000;
+        color: white;
+    }
+
+    #confirm-no {
+        background-color: #e0e0e0;
+    }*/
+    #confirm-yes,
+    #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        border: 2px solid #800000;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: transparent;
+        color: #800000;
+        font-weight: 600;
+        transition: all 0.2s ease-in-out;
+    }
+
+        #confirm-yes:hover {
+            background-color: #800000;
+            color: #fff;
+        }
+
+        #confirm-no:hover {
+            background-color: #800000;
+            color: #fff;
+        }
+</style>
+
+<div class="container mt-4">
+    <h2>Attendance Records</h2>
+
+    <!-- Add Attendance Button -->
+    <div class="d-flex justify-content-start mb-3">
+        <a href="{% url 'attendance_entry' %}" class="btn btn-maroon">+ Add Attendance</a>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" class="filter-form">
+        <input type="date" name="date" value="{{ request.GET.date }}" class="form-control" />
+        <select name="department" class="form-control">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+            <option value="{{ dept }}" {% if dept == request.GET.department %}selected{% endif %}>{{ dept }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn filter-btn">Filter</button>
+    </form>
+
+    <!-- Attendance Table -->
+    <table class="table table-bordered table-striped table-hover mt-3">
+        <thead>
+            <tr>
+                <th>Emp Code</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Date</th>
+                <th>Check-in</th>
+                <th>Check-out</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record.employee.emp_code }}</td>
+                <td>{{ record.employee.name }}</td>
+                <td>{{ record.employee.department }}</td>
+                <td>{{ record.date }}</td>
+                <td>{{ record.check_in }}</td>
+                <td>{{ record.check_out }}</td>
+                <td>{{ record.status }}</td>
+                <td>
+                    <a href="{% url 'attendance_view' record.id %}" class="icon-btn" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'attendance_edit' record.id %}" class="icon-btn" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="#" class="icon-btn" title="Delete"
+                       onclick="confirmAttendanceDelete({{ record.id }}, '{{ record.employee.name|escapejs }}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+
+                    <!-- Hidden delete form -->
+                    <form id="attendance-delete-form-{{ record.id }}"
+                          method="POST"
+                          action="{% url 'attendance_delete' record.id %}"
+                          style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center alert">No records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Confirmation Popup -->
+<div id="confirm-popup" class="popup">
+    <p id="confirm-popup-message"></p>
+    <button id="confirm-yes">Yes</button>
+    <button id="confirm-no">No</button>
+</div>
+
+<!-- Overlay Background -->
+<div id="overlay"></div>
+
+<script>
+    let deleteAttendanceId = null;
+
+    function confirmAttendanceDelete(attendanceId, employeeName) {
+        deleteAttendanceId = attendanceId;
+        document.getElementById("confirm-popup").style.display = "block";
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("confirm-popup-message").innerHTML =
+            `Are you sure you want to delete attendance for <b>${employeeName}</b>?`;
+    }
+
+    document.getElementById("confirm-yes").addEventListener("click", function () {
+        if (deleteAttendanceId) {
+            document.getElementById(`attendance-delete-form-${deleteAttendanceId}`).submit();
+        }
+    });
+
+    document.getElementById("confirm-no").addEventListener("click", function () {
+        document.getElementById("confirm-popup").style.display = "none";
+        document.getElementById("overlay").style.display = "none";
+        deleteAttendanceId = null;
+    });
+</script>
+{% endblock %}

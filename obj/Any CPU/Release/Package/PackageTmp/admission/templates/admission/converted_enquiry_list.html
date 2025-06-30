@@ -1,0 +1,161 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}Enquiry List{% endblock %}
+
+{% block content %}
+<style>
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: 6px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .icon-btn i {
+            font-size: 14px;
+            color: #0f6bc6;
+        }
+
+        .icon-btn:hover {
+            background-color: #e2e6ea;
+        }
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 10px;
+    }
+
+    td:contains("Pending Follow-up") {
+        color: red;
+        font-weight: bold;
+    }
+
+    td:contains("Follow-up Scheduled") {
+        color: orange;
+        font-weight: 600;
+    }
+
+    td:contains("Follow-up Required") {
+        color: gray;
+    }
+
+
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        color: #333;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+    .mb-4 {
+        color: #800000;
+        font-size: 20px;
+    }
+    th {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+    }
+
+    td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+        font-size: 9px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    @media (max-width: 768px) {
+        table {
+            font-size: 11px;
+        }
+    }
+
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-top: 24px;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Converted Enquiries List</h2>
+    <table class="table table-bordered table-striped table-hover mt-4">
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry No</th>
+                <th>Admission No</th>
+
+                <th>Student Name</th>
+                <th>Type</th>
+
+                <th>Enquiry Converted_by</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enquiry in enquiries %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ enquiry.enquiry_no }}</td>
+                <td>{{ enquiry.admission_no }}</td>
+
+                <td>{{ enquiry.student_name }}</td>
+                <td>{{ enquiry.enquiry_type }}</td>
+
+
+                <td>{{ enquiry.created_by_username }}</td>
+
+
+
+
+
+
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center alert">No enquiries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+</div>
+{% endblock %}

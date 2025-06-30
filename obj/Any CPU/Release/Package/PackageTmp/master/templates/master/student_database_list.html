@@ -1,0 +1,128 @@
+﻿{% extends 'master/layout.html' %}
+
+{% block content %}
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+    }
+
+    th {
+        border: 1px solid #ddd;
+        padding: 1px;
+        text-align: center;
+        font-weight: 200;
+        font-size: 12px;
+        background-color: #007bff;
+        color: white;
+    }
+
+    td {
+        border: 1px solid #ddd;
+        padding: 1px;
+        text-align: center;
+        font-weight: 200;
+        font-size: 9px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .tab-buttons {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+        .tab-buttons a {
+            text-decoration: none;
+            padding: 5px 16px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            margin: 0 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .tab-buttons .active {
+            background-color: #0056b3;
+        }
+
+    .empty {
+        text-align: center;
+        color: gray;
+        margin-top: 20px;
+    }
+
+    .content {
+        padding: 40px 20px 18px;
+    }
+
+    .dropdown-btn {
+        background: none;
+        border: none;
+        color: white;
+        text-align: left;
+        padding: 12px 8px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        display: block;
+        width: 100% 300px;
+    }
+</style>
+
+<h2 style="text-align:center; margin-bottom: 20px;">{{ selected_type }} Students List</h2>
+
+<div class="tab-buttons">
+    <a href="{% url 'master_student_list' %}?course_type=PU"
+       class="{% if selected_type == 'PU' %}active{% endif %}">
+        PU Students
+    </a>
+    <a href="{% url 'master_student_list' %}?course_type=Degree"
+       class="{% if selected_type == 'Degree' %}active{% endif %}">
+        Degree Students
+    </a>
+</div>
+
+{% if students %}
+<table>
+    <thead>
+        <tr>
+            <th>Serial No</th>
+            <th>Admission No</th>
+            <th>Student Name</th>
+            <th>Student User ID</th>
+            <th>Course</th>
+            <th>Course Type</th> <!-- ✅ New Column -->
+            <th>Admission Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ student.admission_no }}</td>
+            <td>{{ student.student_name }}</td>
+            <td>{{ student.student_userid }}</td>
+            <td>{{ student.course }}</td>
+            <td>{{ student.course_type }}</td>
+            <td>{{ student.admission_date }}</td>
+            <td>{{ student.status }}</td>
+            <td>
+                <a href="{% url 'student_data_base_from' student.pk %}">View</a> |
+                <a href="{% url 'student_data_base_from' student.pk %}?edit=1">Edit</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No students found for {{ selected_type }}.</p>
+{% endif %}
+
+{% endblock %}

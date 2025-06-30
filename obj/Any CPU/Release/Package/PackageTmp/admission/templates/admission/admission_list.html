@@ -1,0 +1,219 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}Enquiry List{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admission List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f8f8;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            margin-top: 10px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: #fff;
+            box-shadow: 0 0 10px #ccc;
+        }
+
+        th {
+            padding: 5px 2px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        td {
+            padding: 2px 3px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 9px;
+        }
+
+        th {
+            background-color: #8B0000;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #d7e2fb;
+        }
+
+        .caption {
+            caption-side: top;
+            font-size: 1.5em;
+            margin-bottom: -29px;
+            font-weight: bold;
+            color: #800000 !important;
+            margin-top: -29px;
+            margin-left: 216px;
+        }
+
+        .content {
+            padding: 32px 26px 18px;
+        }
+
+        .sidebar {
+            width: 200px;
+            height: 100vh;
+            background: linear-gradient(135deg, #8B0000, #800000);
+            color: white;
+            padding-top: 0px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* ✅ Enables vertical scrollbar */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: rgba(255, 255, 255, 0.5) transparent; /* Firefox */
+        }
+
+            .sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .sidebar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+                background-color: rgba(255, 255, 255, 0.4);
+                border-radius: 4px;
+            }
+
+            .sidebar a {
+                color: white;
+                text-decoration: none;
+                padding: 10px 8px;
+                display: block;
+                font-weight: 500;
+            }
+
+        /*.sidebar a:hover {
+             background-color: #0069d9;
+         }*/
+
+        .main-area {
+            margin-left: 200px;
+            width: calc(100% - 200px);
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #8B0000, #800000);
+            padding: 12px 12px;
+            color: white;
+            width: calc(100% - 200px); /* Account for sidebar */
+            position: fixed; /* Make topbar fixed */
+            top: 0;
+            left: 200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        thead {
+            border-color: #8b0000;
+            border-style: solid;
+            border-width: 0;
+        }
+
+
+            .topbar a {
+                color: white;
+                text-decoration: none;
+                font-weight: 500;
+                margin: 0 -24px;
+                white-space: nowrap;
+            }
+
+                .topbar a:hover {
+                    text-decoration: underline;
+                }
+
+        .btn-colors {
+            min-width: 58px;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            padding: 0px;
+            font-size: 9px;
+            background: #800;
+            color: white;
+            padding: 2px;
+            border-radius: 3px;
+        }
+
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <h4 class="caption">PU Admission List</h4>
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry No</th>
+                <th>Admission No</th>
+                <th>Student Name</th>
+                <th>Course</th>
+                <th>Year of Passing</th>
+                <th>Parent Name</th>
+                <th>Parent Mobile</th>
+                <th>Status</th>
+                <th>Admission Taken By </th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for admission in admissions %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ admission.enquiry_no }}</td>
+
+                <td>{{ admission.admission_no }}</td>
+                <td>{{ admission.student_name }}</td>
+                <td>{{ admission.course }}</td>
+                <td>{{ admission.year_of_passing }}</td>
+                <td>{{ admission.parent_name }}</td>
+                <td>{{ admission.parent_mobile_no }}</td>
+                <td>{{ admission.status }}</td> <!-- Added status column -->
+                <td>{{ admission.created_by_username }}</td>
+                <td>
+                    <a href="{% url 'edit_pu_admission' admission.pk %}" class="btn-colors">View/Edit</a>
+                </td>
+            </tr>
+            <!--<tr>
+            <td colspan="11" style="text-align:center;">No admission forms found.</td>
+        </tr>-->
+            {% empty %}
+            <!--<tr>
+            <td colspan="7" style="text-align:center;">No admission forms found.</td>
+        </tr>-->
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+{% endblock %}

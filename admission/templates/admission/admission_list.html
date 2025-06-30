@@ -1,0 +1,180 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}PU Admission List{% endblock %}
+
+{% block content %}
+
+<style>
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 10px;
+        margin-left: -64px;
+        margin-right: 27px;
+        margin-top: -15px;
+    }
+
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        color: #800000;
+        margin-bottom: 24px;
+        margin-top: -17px;
+        font-size: 22px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th, td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+    }
+
+    td {
+        font-size: 9px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: 3px 5px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: inline-block;
+    }
+
+        .icon-btn i {
+            font-size: 11px;
+            color: #800000;
+        }
+
+        .icon-btn.text-danger i {
+            color: #b30000;
+        }
+    .action-btn {
+        font-size: 9px;
+        padding: 3px 8px;
+        border: none;
+        background-color: #800000;
+        color: white;
+        border-radius: 4px;
+        margin: 0 2px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .action-btn:hover {
+            background-color: #a52a2a;
+        }
+
+    .content {
+        padding: 65px 26px 40px;
+        margin-left: 200px;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2>PU Application List</h2>
+
+    <table class="table table-bordered table-striped table-hover mt-3">
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry No</th>
+                <th>Application No</th>
+                <th>Student Name</th>
+                <th>Course</th>
+                <th>Parent Name</th>
+                <th>Parent Mobile</th>
+                <th>Status</th>
+                <th>Application Taken By</th>
+                <th>Actions</th>
+                <th>Fee Print</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for admission in admissions %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ admission.enquiry_no }}</td>
+                <td>{{ admission.admission_no }}</td>
+                <td>{{ admission.student_name }}</td>
+                <td>{{ admission.course }}</td>
+                <td>{{ admission.parent_name }}</td>
+                <td>{{ admission.parent_mobile_no }}</td>
+                <td>{{ admission.status }}</td>
+                <td>{{ admission.created_by_username }}</td>
+                <td>
+                    {% if admission.pk %}
+                    <a href="{% url 'view_pu_admission' admission.pk %}" class="icon-btn" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'edit_pu_admission' admission.pk %}" class="icon-btn" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'delete_pu_admission' admission.pk %}" class="icon-btn text-danger" title="Delete"
+                       onclick="return confirm('Are you sure you want to delete this admission?');">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                   
+
+
+                    {% if deleted_id == admission.pk|stringformat:"s" %}
+                    <div style="color: green; font-size: 10px; margin-top: 4px;">
+                        Deleted successfully
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-muted">No ID</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'download_pu_fee_receipt' admission.admission_no %}" class="action-btn" title="Print Receipt" target="_blank">
+                        <i class="fas fa-print"></i>  
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="11" class="text-center text-muted">No admission forms found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- FONT AWESOME -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+{% endblock %}

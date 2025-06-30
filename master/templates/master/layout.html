@@ -1,0 +1,313 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Pinnacle School of Commerce and Management{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sidebar {
+            width: 200px;
+            height: 100vh;
+            background: linear-gradient(135deg, #8B0000, #800000);
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 999;
+        }
+
+            .sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+                background-color: rgba(255, 255, 255, 0.4);
+                border-radius: 4px;
+            }
+
+            .sidebar a,
+            .dropdown-container a,
+            .dropdown-btn {
+                font-size: 14px !important;
+                color: #fff !important;
+                text-decoration: none;
+                padding: 10px 8px !important;
+                display: flex !important;
+                align-items: center;
+                gap: 8px;
+                font-weight: 500 !important;
+                background: #800000;
+            }
+
+                .sidebar a i,
+                .dropdown-btn i,
+                .dropdown-container a i {
+                    font-size: 15px !important;
+                    width: 18px;
+                }
+
+        .sidebar-title {
+            padding: 14px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+        }
+
+            .sidebar-title img {
+                width: 304px;
+                height: 25px;
+                object-fit: cover;
+                margin-left: -15px;
+                margin-bottom: -2px;
+            }
+
+        .main-area {
+            margin-left: 200px;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 200px;
+            right: 0;
+            height: 52px;
+            background: linear-gradient(135deg, #8B0000, #800000);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 12px;
+            z-index: 998;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+            .topbar a {
+                color: white !important;
+                font-weight: 500 !important;
+                text-decoration: none;
+                font-size: 14px !important;
+            }
+
+                .topbar a:hover {
+                    text-decoration: underline;
+                }
+
+        .content {
+            padding: 80px 26px 40px;
+            margin-left: 200px;
+        }
+
+        .dropdown-container {
+            display: none;
+            padding-left: 0px;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .footer {
+            margin-left: 191px;
+            color: #8b0000;
+            text-align: center;
+            padding: 10px 0;
+            font-weight: 500;
+            margin-top: 177px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-title">
+            <img src="{% static 'image/logo.png' %}" alt="Logo">
+        </div>
+
+        <a href="{% url 'dashboard_view' %}"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        {% if 'dashboard_view2' in allowed_forms %}
+        <a href="{% url 'dashboard_view2' %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+        {% endif %}
+        <a href="{% url 'master_dashboard' %}"><i class="fas fa-sliders-h"></i> Master </a>
+        <a href="{% url 'enquiry_dashboard' %}"><i class="fa-solid fa-question-circle"></i> Enquiry</a>
+        <a href="{% url 'admission_dashboard' %}"><i class="fa-solid fa-user-plus"></i> Admission</a>
+
+        <a href="{% url 'fee_management' %}">
+            <i class="fa-solid fa-wallet"></i> Fee
+        </a>
+
+        {% if 'communication_dashboard' in allowed_forms or can_access_all %}
+        <a href="{% url 'communication_dashboard' %}"><i class="fa-solid fa-comments"></i> Communication Dashboard</a>
+        {% endif %}
+        <a href="{% url 'employee_list' %}"><i class="fa-solid fa-users"></i> Employee</a>
+        <a href="{% url 'master_student_list' %}"><i class="fa-solid fa-database"></i> Students Information</a>
+        <a href="{% url 'attendance_dashboard' %}"><i class="fa-solid fa-clipboard-list"></i> Attendance</a>
+        <a href="{% url 'timetable_dashboard' %}"><i class="fa-solid fa-calendar-alt"></i> Timetable</a>
+        <a href="{% url 'calendar' %}"><i class="fa-solid fa-calendar-alt"></i> Calendar</a>
+    </div>
+
+    <div class="topbar">
+        <div style="font-size: large; font-weight: 700;">Pinnacle School of Commerce and Management</div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="position: relative;">
+                <input id="sidebar-search" type="text" placeholder="Search..." style="padding: 2px 4px; border-radius: 4px; border: none; color: #800000;" />
+                <div id="suggestions" style="position: absolute; top: 20px; left: 0; background: #fff; border: 1px solid #ccc; width: 158px; max-height: 200px; overflow-y: auto; display: none; font-size: 10px; color: black;"></div>
+            </div>
+            <div style="position: relative;">
+                <i class="fas fa-user-circle" id="user-icon" style="font-size: 24px; cursor: pointer;"></i>
+                <div id="user-popup" style="display: none; position: absolute; top: 43px; right: 0; background: white; color: #333; border: 1px solid #ccc; border-radius: 8px; width: 220px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 15px; z-index: 1000; text-align: center;">
+                    <i class="fas fa-user-circle" style="font-size: 60px; color: #800000; display: block; margin: 0 auto 10px;"></i>
+                    <p style="margin: 0;"><strong>Username:</strong> {{user.username }}</p>
+                    <a href="{% url 'logout' %}" style="background: #800000; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; display: inline-block; margin-top: 12px;">
+                        <i class="fas fa-power-off"></i> Logout
+                    </a>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="footer">
+        Designed and Developed by CKP Software Technologies &copy; 2025. All rights reserved.
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const userIcon = document.getElementById("user-icon");
+            const userPopup = document.getElementById("user-popup");
+
+            userIcon.addEventListener("click", function (e) {
+                e.stopPropagation(); // Prevent immediate close
+                const isVisible = userPopup.style.display === "block";
+                userPopup.style.display = isVisible ? "none" : "block";
+            });
+
+            document.addEventListener("click", function (e) {
+                if (!userPopup.contains(e.target) && e.target.id !== "user-icon") {
+                    userPopup.style.display = "none";
+                }
+            });
+        });
+    </script>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".dropdown-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const content = btn.nextElementSibling;
+                    if (content.classList.contains("dropdown-container")) {
+                        content.classList.toggle("show");
+                    }
+                });
+            });
+
+            const items = [
+                { label: 'Dashboard', url: '{% url "dashboard_view" %}' },
+                {% if 'dashboard_view2' in allowed_forms %}
+                        { label: 'Dashboard (Pie)', url: '{% url "dashboard_view2" %}' },
+            {% endif %}
+            { label: 'Master ', url: '{% url "master_dashboard" %}' },
+            { label: 'Enquiry', url: '{% url "enquiry_dashboard" %}' },
+            { label: 'Admission', url: '{% url "admission_dashboard" %}' },
+            { label: 'Fee Form', url: '{% url "shortlist_display" %}' },
+            { label: 'Fee Payment', url: '{% url "student_list" %}' },
+            { label: 'Payment History', url: '{% url "payment_history" %}' },
+            { label: 'Fee ', url: '{% url "fee_dashboard" %}' },
+            { label: 'Communication', url: '{% url "upload_excel" %}' },
+            { label: 'Employee', url: '{% url "employee_list" %}' },
+            { label: 'Students Information', url: '{% url "master_student_list" %}' },
+            { label: 'Attendance', url: '{% url "attendance_dashboard" %}' },
+            { label: 'Timetable', url: '{% url "timetable_dashboard" %}' },
+            { label: 'Calendar', url: '{% url "calendar" %}' },
+                    ];
+
+        const searchInput = document.getElementById('sidebar-search');
+        const suggestionsBox = document.getElementById('suggestions');
+        let filtered = [];
+        let selectedIndex = -1;
+
+        function updateSuggestions() {
+            suggestionsBox.innerHTML = '';
+            filtered.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.textContent = item.label;
+                div.style.padding = '4px 8px';
+                div.style.cursor = 'pointer';
+                div.style.backgroundColor = selectedIndex === index ? '#800000' : '';
+                div.style.color = selectedIndex === index ? 'white' : 'black';
+                if (selectedIndex === index) {
+                    setTimeout(() => div.scrollIntoView({ block: 'nearest' }), 0);
+                }
+                div.addEventListener('click', () => window.location.href = item.url);
+                suggestionsBox.appendChild(div);
+            });
+            suggestionsBox.style.display = filtered.length ? 'block' : 'none';
+        }
+
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.trim().toLowerCase();
+            selectedIndex = -1;
+            filtered = items.filter(i => i.label.toLowerCase().includes(q));
+            updateSuggestions();
+        });
+
+        searchInput.addEventListener('keydown', e => {
+            if (filtered.length === 0) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex + 1) % filtered.length;
+                updateSuggestions();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex - 1 + filtered.length) % filtered.length;
+                updateSuggestions();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0) {
+                    window.location.href = filtered[selectedIndex].url;
+                } else if (filtered.length > 0) {
+                    window.location.href = filtered[0].url;
+                }
+            }
+        });
+
+        document.addEventListener('click', e => {
+            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // User dropdown toggle
+        const userIcon = document.getElementById("user-icon");
+        const userDropdown = document.getElementById("user-dropdown");
+
+        userIcon.addEventListener("click", () => {
+            userDropdown.style.display = userDropdown.style.display === "block" ? "none" : "block";
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!userIcon.contains(e.target) && !userDropdown.contains(e.target)) {
+                userDropdown.style.display = "none";
+            }
+        });
+
+                });
+    </script>
+</body>
+</html>

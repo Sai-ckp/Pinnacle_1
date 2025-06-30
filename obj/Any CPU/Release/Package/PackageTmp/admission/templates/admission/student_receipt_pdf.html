@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Student Fee Receipt</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            background: #f9f9f9;
+            padding: 20px;
+        }
+
+        .receipt-container {
+            background: #fff;
+            border: 1px dashed #333;
+            padding: 20px;
+            max-width: 380px;
+            margin: auto;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+            .logo-container img {
+                max-width: 180px;
+                height: auto;
+            }
+
+        .heading {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .receipt-line {
+            border-top: 1px dashed #333;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        td {
+            padding: 4px 0;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #444;
+        }
+
+        .thank-you {
+            text-align: center;
+            font-size: 13px;
+            font-style: italic;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/4xSpKtqg/college-logo-with-name-white-page-0001.jpg" alt="College Logo">
+        </div>
+
+        <div class="heading">STUDENT FEE RECEIPT</div>
+        <div class="receipt-line"></div>
+
+        <table>
+            <tr>
+                <td class="label">Admission No:</td>
+                <td>{{ student.admission_no }}</td>
+            </tr>
+            <tr>
+                <td class="label">Name:</td>
+                <td>{{ student.name }}</td>
+            </tr>
+            <tr>
+                <td class="label">Course:</td>
+                <td>{{ student.course }}</td>
+            </tr>
+            <tr>
+                <td class="label">Tuition Fee Paid:</td>
+                <td>₹ {{ student.tuition_fee_paid }}</td>
+            </tr>
+            <!--<tr>
+            <td class="label">Tuition Pending:</td>
+            <td>₹ {{ student.tuition_pending_fee }}</td>
+        </tr>-->
+            <tr>
+                <td class="label">Scholarship:</td>
+                <td>₹ {{ student.scholarship }}</td>
+            </tr>
+            <tr>
+                <td class="label">Transport Fee Paid:</td>
+                <td>₹ {{ student.transport_fee_paid }}</td>
+            </tr>
+            <tr>
+                <td class="label">Hostel Fee Paid:</td>
+                <td>₹ {{ student.hostel_fee_paid }}</td>
+            </tr>
+            <tr>
+                <td class="label">Books Fee Paid:</td>
+                <td>₹ {{ student.books_fee_paid }}</td>
+            </tr>
+            <tr>
+                <td class="label">Uniform Fee Paid:</td>
+                <td>₹ {{ student.uniform_fee_paid }}</td>
+            </tr>
+            <tr>
+                <td class="label">Other Fee:</td>
+                <td>{{ student.other_fee }}</td>
+            </tr>
+            <tr>
+                <td class="label">Other Amount:</td>
+                <td>₹ {{ student.other_amount }}</td>
+            </tr>
+            <tr>
+                <td class="label">Payment Method:</td>
+                <td>{{ student.payment_method }}</td>
+            </tr>
+            <tr>
+                <td class="label">Payment Date:</td>
+                <td>{{ student.payment_date|date:"d M Y" }}</td>
+            </tr>
+        </table>
+
+        <div class="receipt-line"></div>
+
+        <div style="display: flex; justify-content: space-between; padding: 30px 0 10px;font-size: 14px;margin-top: 30px;">
+            <div><strong>Dean Signature</strong></div>
+            <div><strong>Authorized Signature</strong></div>
+        </div>
+
+    </div>
+</body>
+</html>

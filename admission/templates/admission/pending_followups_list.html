@@ -1,0 +1,128 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}Pending Follow-ups{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        background-color: #ffffff;
+        padding: 20px;
+        margin-top: 10px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .mb-4 {
+        color: #800000;
+        font-size: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #dee2e6;
+        padding: 6px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 9px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .text-center {
+        font-style: italic;
+        color: #888;
+    }
+</style>
+
+<div class="container">
+    <h3 class="mb-4">
+        {% if title %}
+        {{ title }}
+        {% else %}
+        Pending Follow-up List
+        {% endif %}
+    </h3>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry No</th>
+                <th>Student Name</th>
+                <th>Follow-up Date</th>
+                <th>Priority</th>
+                <th>Follow-up Stage</th>
+                <th>Follow-up Type</th>
+                <th>Status</th>
+                <th>Reschedule </th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in pending_followups %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                    {% if f.pu_enquiry %}
+                    {{ f.pu_enquiry.enquiry_no }}
+                    {% else %}
+                    {{ f.degree_enquiry.enquiry_no }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if f.pu_enquiry %}
+                    {{ f.pu_enquiry.student_name }}
+                    {% else %}
+                    {{ f.degree_enquiry.student_name }}
+                    {% endif %}
+                </td>
+                <td>{{ f.follow_up_date|date:"Y-m-d H:i" }}</td>
+                <td>{{ f.priority }}</td>
+                <th>Overdue</th>
+                <td>{{ f.follow_up_type }}</td>
+                <td>{{ f.status }}</td>
+                <td>
+                    {% if f.pu_enquiry %}
+                    <a href="{% url 'schedule_follow_up_form' %}?enquiry_no={{ f.pu_enquiry.enquiry_no }}&student_name={{ f.pu_enquiry.student_name }}" style="color: blue; font-weight: bold;">
+                        Reschedule
+                    </a>
+                    {% else %}
+                    <a href="{% url 'schedule_follow_up_form' %}?enquiry_no={{ f.degree_enquiry.enquiry_no }}&student_name={{ f.degree_enquiry.student_name }}" style="color: blue; font-weight: bold;">
+                        Reschedule
+                    </a>
+                    {% endif %}
+
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No pending follow-ups found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

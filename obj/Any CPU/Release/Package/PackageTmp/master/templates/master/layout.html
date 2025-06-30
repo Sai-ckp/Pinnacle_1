@@ -1,0 +1,295 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Student Alerts{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 200px;
+            height: 100vh;
+            background: linear-gradient(135deg, #8B0000, #800000); /* Maroon gradient */
+            color: white;
+            padding-top: 0px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
+        }
+
+            .sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .sidebar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+                background-color: rgba(255, 255, 255, 0.4);
+                border-radius: 4px;
+            }
+
+            .sidebar a {
+                color: white;
+                text-decoration: none;
+                padding: 10px 8px;
+                display: block;
+                font-weight: 500;
+            }
+
+        .main-area {
+            margin-left: 200px;
+            width: calc(100% - 200px);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-bottom: 40px; /* space for footer */
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #8B0000, #800000);
+            padding: 12px 12px;
+            color: white;
+            width: calc(100% - 200px);
+            position: fixed;
+            top: 0;
+            left: 200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+            .topbar a {
+                color: white;
+                text-decoration: none;
+                font-weight: 500;
+                margin: 0 -24px;
+                white-space: nowrap;
+            }
+
+                .topbar a:hover {
+                    text-decoration: underline;
+                }
+
+        .content {
+            padding: 60px 26px 18px; /* top padding adjusted to avoid overlap with fixed topbar */
+            flex-grow: 1;
+        }
+
+        .sidebar-title {
+            padding: 10px 12px;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .dropdown-btn {
+            background: none;
+            border: none;
+            color: white;
+            text-align: left;
+            padding: 10px 8px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            display: block;
+            width: 100%;
+        }
+
+        .dropdown-container {
+            display: none;
+            padding-left: 0px;
+        }
+
+            .dropdown-container a {
+                padding: 8px 8px;
+                display: block;
+                color: white;
+                font-weight: 500;
+                text-decoration: none;
+            }
+
+        .show {
+            display: block;
+        }
+
+        /* Footer styles */
+        .footer {
+            margin-left: 87px;
+            bottom: 0;
+            left: 200px;
+            width: calc(100% - 200px);
+            /* background: linear-gradient(135deg, #fff, #FAFAFA); */
+            color: #8b0000;
+            text-align: center;
+            padding: 6px 0;
+            font-weight: 500;
+            /* box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); */
+            /* z-index: 1000; */
+            /* font-size: 14px; */
+            bottom: 11px;
+            margin-bottom: -36px;
+            margin-right: -20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-title">
+            <i class="fas fa-home"></i> Home
+        </div>
+
+        {% if 'dashboard_view' in allowed_forms or can_access_all %}
+        <a href="{% url 'dashboard_view' %}"><i class="fas fa-chart-line"></i> Dashboard</a>
+        {% endif %}
+
+        {% if 'dashboard_view2' in allowed_forms %}
+        <a href="{% url 'dashboard_view2' %}"><i class="fas fa-chart-pie"></i> Dashboard</a>
+        {% endif %}
+
+        <!--{% if 'dashboard_view' in allowed_forms or 'compose_message' in allowed_forms or 'message_history_view' in allowed_forms or can_access_all %}
+    <button class="dropdown-btn">
+        <i class="fas fa-comments"></i> Communication Management
+        <i class="fas fa-caret-down" style="margin-left: 5px;"></i>
+    </button>
+    <div class="dropdown-container">
+        {% if 'dashboard_view' in allowed_forms or can_access_all %}
+        <a href="{% url 'student_data_view' %}"><i class="fas fa-user-graduate"></i> Communication</a>
+        {% endif %}
+
+        {% if 'compose_message' in allowed_forms or can_access_all %}
+        <a href="{% url 'compose_message' %}"><i class="fas fa-envelope-open-text"></i> Bulk Communication</a>
+        {% endif %}
+
+        {% if 'message_history_view' in allowed_forms or can_access_all %}
+        <a href="{% url 'message_history_view' %}"><i class="fas fa-history"></i> Message History</a>
+        {% endif %}
+    </div>
+    {% endif %}-->
+
+
+        <a href="{% url 'upload_excel' %}"><i class="fas fa-paper-plane"></i> Communication</a>
+
+        <a href="{% url 'admission_dashboard' %}">
+            <i class="fas fa-user-plus"></i> Admission
+        </a>
+
+        <a href="{% url 'enquiry_dashboard' %}">
+            <i class="fas fa-question-circle"></i> Enquiry
+        </a>
+
+        <a href="{% url 'employee_list' %}">
+            <i class="fas fa-users"></i> Employee
+        </a>
+
+        {% if 'student_list' in allowed_forms or 'payment_history' in allowed_forms or can_access_all %}
+        <button class="dropdown-btn">
+            <i class="fas fa-wallet"></i> FEE management
+            <i class="fas fa-caret-down" style="margin-left: 5px;"></i>
+        </button>
+        <div class="dropdown-container">
+            {% if 'shortlist_display' in allowed_forms or can_access_all %}
+            <a href="{% url 'shortlist_display' %}"><i class="fas fa-file-invoice"></i> Fee form</a>
+            {% endif %}
+
+            {% if 'student_list' in allowed_forms or can_access_all %}
+            <a href="{% url 'student_list' %}"><i class="fas fa-credit-card"></i> Fee Payment</a>
+            {% endif %}
+
+            {% if 'payment_history' in allowed_forms or can_access_all %}
+            <a href="{% url 'payment_history' %}"><i class="fas fa-history"></i> View Payment History</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!--{% if 'dashboard_view2' in allowed_forms or can_access_all %}
+    <a href="{% url 'dashboard_view2' %}"><i class="fas fa-layer-group"></i> Dashboard2</a>
+    {% endif %}-->
+        {% if 'student_database_list' in allowed_forms or can_access_all %}
+        <a href="{% url 'master_student_list' %}"><i class="fas fa-database"></i> Student Database</a>
+        {% endif %}
+
+
+        <a href="{% url 'attendance_dashboard' %}"><i class="fas fa-clipboard-list"></i> Attendance </a>
+
+        <a href="{% url 'timetable_dashboard' %}"><i class="fa-calendar-alt"></i> Timetable </a>
+
+        <!--<a href="{% url 'weekly_timetable' course_id=1 semester_number=1 %}">
+        <i class="fas fa-table"></i> Weekly View
+    </a>-->
+        <a href="{% url 'add_timetable_entry' %}">
+            <i class="fas fa-plus-circle"></i> add entry
+        </a>
+        <!--<a href="{% url 'course_list' %}">
+        <i class="fas fa-question-circle"></i> Branch
+    </a>-->
+        <a href="{% url 'subject_list' %}">
+            <i class="fas fa-book-open"></i> subject_list
+        </a>
+
+
+        <a href="{% url 'calendar' %}" class="flex items-center space-x-2 hover:bg-gray-200 px-4 py-2">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Calendar</span>
+        </a>
+        <!--{% if 'transport' in allowed_forms or can_access_all %}
+    <button class="dropdown-btn"><i class="fas fa-cogs"></i> Master</button>
+    <div class="dropdown-container">
+        {% if 'transport' in allowed_forms or can_access_all %}
+        <a href="{% url 'transport_list' %}"><i class="fas fa-bus"></i> Transport</a>
+        {% endif %}
+    </div>
+    {% endif %}-->
+    </div>
+
+    <div class="main-area">
+        <div class="topbar">
+            <div>Student Alerts</div>
+            <div style="margin-right: 20px;">
+                <a href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+
+        <div class="footer">
+            &copy; 2025 CKP Software Technologies All rights Reserved
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var dropdowns = document.querySelectorAll(".dropdown-btn");
+
+            dropdowns.forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    var dropdownContent = btn.nextElementSibling;
+                    if (dropdownContent && dropdownContent.classList.contains("dropdown-container")) {
+                        dropdownContent.classList.toggle("show");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

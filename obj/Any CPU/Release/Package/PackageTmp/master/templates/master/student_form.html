@@ -1,0 +1,301 @@
+{% extends 'master/layout.html' %}
+{% block content %}
+<style>
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 12px
+    }
+
+    .form-card {
+        background: #fff;
+        padding: 40px 50px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px 32px;
+        margin-top: 10px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 12px;
+        }
+
+        .form-group input {
+            padding: 2px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 9px;
+        }
+
+
+        .form-group select,
+        .form-group textarea {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+    .btn {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 5px 15px;
+        border-radius: 6px;
+        transition: background-color 0.3s ease;
+        border: 21px solid:#80000;
+        border: -12px solid;
+        background: #800;
+        color: #fff;
+    }
+
+    .btn-primary {
+        background-color: #800;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background-color: #025fc1;
+        }
+
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    textarea#id_address {
+        height: 60px !important;
+    }
+
+    .sidebar a {
+        color: white;
+        text-decoration: none;
+        padding: 12px 8px;
+        display: block;
+        font-weight: 500;
+    }
+
+    @media print {
+        .btn,
+        .alert,
+        .no-print,
+        .sidebar,
+        .topbar,
+        .navbar,
+        .footer {
+            display: none !important;
+        }
+
+        body {
+            background: white;
+            margin: 0;
+        }
+
+        .form-card {
+            box-shadow: none;
+            border: none;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .form-title {
+            font-size: 16pt;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .form-card {
+            padding: 30px 20px;
+        }
+
+        .form-title {
+            font-size: 20px;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .form-grid {
+            gap: 12px;
+        }
+    }
+
+    .logo-container {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+        .logo-container img {
+            max-width: 400px;
+            margin-bottom: -18px;
+        }
+
+        .logo-container h2 {
+            margin-top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+
+    .content {
+        padding: 45px 44px 11px;
+        font-size: 16px;
+        /* text-align: center; */
+    }
+
+    .thead {
+        text-align: center;
+    }
+</style>
+<h2 style="text-align: center; color: #800000;">
+    {% if edit_mode %}
+    Edit Student
+    {% else %}
+    Student Details
+    {% endif %}
+</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <strong>Please fix the following errors:</strong>
+        <ul>
+            {% for field in form %}
+            {% for error in field.errors %}
+            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label>Admission Number:</label>
+        <input type="text" name="admission_no" class="form-control"
+               value="{{ student.admission_no }}" readonly style="background:#eee;">
+    </div>
+
+    <div class="form-group">
+        <label>Student Name:</label>
+        {% if edit_mode %}
+        {{ form.student_name }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.student_name }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Course:</label>
+        {% if edit_mode %}
+        {{ form.course }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.course }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Course Type:</label>
+        {% if edit_mode %}
+        {{ form.course_type }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.course_type }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Quota Type:</label>
+        {% if edit_mode %}
+        {{ form.quota_type }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.quota_type }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Status:</label>
+        {% if edit_mode %}
+        {{ form.status }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.status }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Student User ID:</label>
+        {% if edit_mode %}
+        {{ form.student_userid }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.student_userid }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        <label>Student Phone No:</label>
+        {% if edit_mode %}
+        {{ form.student_phone_no }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.student_phone_no }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+    <div class="form-group">
+        <label>Parent Name:</label>
+        {% if edit_mode %}
+        {{ form.parent_name }}
+        {% else %}
+        <input type="text" class="form-control" value="{{ student.parent_name }}" readonly style="background:#eee;">
+        {% endif %}
+    </div>
+
+    {% if edit_mode %}
+    <div style="margin-top: 20px;">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url back_to_list_url %}" class="btn btn-secondary">Cancel</a>
+    </div>
+    {% else %}
+    <div style="margin-top: 20px;">
+        <a href="{% url back_to_list_url %}" class="btn btn-secondary">Back to List</a>
+    </div>
+    {% endif %}
+</form>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'master/layout.html' %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: -15px;
+        margin-left: -64px;
+        margin-right: 27px;
+    }
+
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        color: #800000;
+        margin-bottom: 24px;
+        margin-top: -17px;
+        font-size: 22px;
+    }
+
+    .btn-add {
+        background-color: #800000;
+        color: #fff;
+        border: none;
+        font-size: 13px;
+        padding: 6px 12px;
+        font-weight: bold;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+        margin-left: 794px;
+        text-decoration: none;
+    }
+
+        .btn-add:hover {
+            background-color: #a10000;
+        }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th, td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+    }
+
+    td {
+        font-size: 10px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .empty {
+        text-align: center;
+        color: #6c757d;
+        font-size: 13px;
+        padding: 20px 0;
+    }
+
+    .content {
+        padding: 65px 26px 40px;
+        margin-left: 200px;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Academic Cycle </h2>
+        <a href="{% url 'semester_add' %}" class="btn-add">Add Academic Cycle</a>
+    </div>
+
+    {% if semesters %}
+    <table class="table table-bordered table-striped table-hover mt-3">
+        <thead>
+            <tr>
+                <th>Academic Cycles (In Semesters)</th>
+                <th>Combinations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for semester in semesters %}
+            <tr>
+                <td>{{ semester.number }}</td>
+                <td>{{ semester.course.name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No Academic Cycles available.</p>
+    {% endif %}
+</div>
+
+
+{% endblock %}

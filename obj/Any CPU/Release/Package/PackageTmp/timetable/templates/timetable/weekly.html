@@ -1,0 +1,145 @@
+{% extends 'master/layout.html' %}
+{% load utils %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+        padding: -2px;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+    }
+
+    .subject-box {
+        padding: 8px;
+        margin-bottom: 8px;
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .subject-name {
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .faculty-name {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .room-badge {
+        font-size: 0.75rem;
+        background-color: #d0ebff;
+        color: #084298;
+    }
+
+    .table thead th {
+        background-color: #800000;
+        color: white;
+        font-size: 11px;
+        text-align: center;
+    }
+
+    .heading {
+        color: #800000;
+        font-size: 22px;
+        text-align: center;
+        margin-bottom: 3px;
+        margin-top: 3px;
+    }
+</style>
+
+<div class="container mt-5">
+    <h2 class="mb-4 heading">
+        {% if semester %}{{ semester }} - Weekly Timetable{% else %}Weekly Timetable{% endif %}
+    </h2>
+
+    <!-- Filter Form -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label><strong>Course Type</strong></label>
+            <select name="course_type" class="form-control" onchange="this.form.submit()">
+                <option value="">Select Course Type</option>
+                {% for ct in course_types %}
+                <option value="{{ ct.id }}" {% if ct.id|stringformat:"s" == selected_course_type %}selected{% endif %}>{{ ct.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label><strong>Course</strong></label>
+            <select name="course" class="form-control" onchange="this.form.submit()">
+                <option value="">Select Course</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}" {% if course.id|stringformat:"s" == selected_course %}selected{% endif %}>{{ course.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label><strong>Semester</strong></label>
+            <select name="semester" class="form-control" onchange="this.form.submit()">
+                <option value="">Select Semester</option>
+                {% for sem in semesters %}
+                <option value="{{ sem.number }}" {% if sem.number|stringformat:"s" == selected_semester %}selected{% endif %}>Semester {{ sem.number }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <!-- Timetable Table -->
+    {% if semester and time_slots %}
+    <div class="card shadow border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 12%;">Time</th>
+                            {% for day in week_days %}
+                            <th>{{ day }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for time in time_slots %}
+                        <tr class="table-light">
+                            <td class="fw-semibold bg-white">{{ time }}</td>
+                            {% for day in week_days %}
+                            <td>
+                                {% with entries=timetable|dict_get:day %}
+                                {% for entry in entries %}
+                                {% if entry.time_slot == time %}
+                                <div class="subject-box">
+                                    <div class="subject-name">{{ entry.subject.name }}</div>
+                                    <div class="faculty-name">{{ entry.faculty.name }}</div>
+                                    <div><span class="badge room-badge">{{ entry.room }}</span></div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                                {% endwith %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% elif selected_semester %}
+    <div class="alert alert-warning mt-4 text-center">
+        No timetable entries found for the selected semester.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

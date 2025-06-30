@@ -1,0 +1,2046 @@
+﻿{% extends 'master/layout.html' %}
+
+{% block content %}
+<style>
+    /* Hide print-only sections on screen */
+    .print-only {
+        display: none;
+    }
+
+    /*    hide while-printing*/
+    .footer, #main-footer {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        #print-area, #print-area * {
+            visibility: visible;
+        }
+
+        #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .no-print, footer, #main-footer {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+        }
+
+        input, select, textarea {
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            color: #000;
+        }
+
+            input[type=checkbox], input[type=radio] {
+                transform: scale(1.2);
+            }
+
+        .form-control {
+            padding: 0;
+            margin: 0;
+        }
+
+        .form-group {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 0px;
+        }
+
+        .form-label {
+            font-weight: bold;
+        }
+
+        hr {
+            border-color: #000 !important;
+        }
+
+        table {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #000 !important;
+            padding: 4px !important;
+            font-size: 12px;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        .section-break {
+            page-break-before: always;
+            break-before: page;
+        }
+
+        /* Show photo section only in print */
+        .print-only {
+            display: block !important;
+        }
+
+        #uploadBox input {
+            display: none !important;
+        }
+
+        #photoPreview {
+            display: block !important;
+            max-height: 150px !important;
+            margin-top: 20px;
+        }
+    }
+</style>
+
+
+
+<style>
+    body {
+        background-color: #f1f1f1;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .form-card {
+        background: #fff;
+        padding: 40px 50px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        margin-left: 64px;
+    }
+
+    .form-title {
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+        font-size: 24px;
+        color: #343a40;
+    }
+
+    .photo-section {
+        position: absolute;
+        top: 92px;
+        right: 50px;
+        text-align: center;
+    }
+
+    .photo-label {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+        color: #555;
+    }
+
+    .logo-container {
+        margin-bottom: 10px;
+    }
+
+        .logo-container img {
+            width: 705px;
+            height: 123px;
+            /* object-fit: contain; */
+            margin-bottom: -19px;
+            margin-left: 36px;
+            margin-top: 9px;
+        }
+
+        .logo-container h2 {
+            margin-top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+
+    .photo-upload {
+        width: 89px;
+        height: 89px;
+        border: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        cursor: pointer;
+        background-color: #fafafa;
+        font-size: 14px;
+        position: relative;
+        overflow: hidden;
+        margin-left: 704px;
+        margin-top: 3px;
+        margin-bottom: 20px;
+    }
+
+        .photo-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+    .edit-icon {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        font-size: 9px;
+        background-color: #0274ee;
+        color: white;
+        padding: 1px 1px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    /* ✅ Updated to stack fields vertically */
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: #333;
+        font-size: 12px;
+    }
+
+    .form-group select,
+    .form-group input {
+        padding: 2px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 2px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-group.checkbox-inline {
+        flex-direction: row;
+        align-items: center;
+        width: 50%;
+    }
+
+        .form-group.checkbox-inline .form-label {
+            margin: 0;
+            min-width: 186px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group.checkbox-inline input[type="checkbox"] {
+            margin-left: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+    .btn {
+        font-size: 14px;
+        padding: 6px 12px;
+        border-radius: 5px;
+        margin-top: 30px;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: #800000;
+        color: white;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #a00000;
+        }
+
+    /*@media print {
+        .btn,
+        .alert,
+        .photo-upload input,
+        .edit-icon,
+        .no-print,
+        .sidebar,
+        .topbar {
+            display: none !important;
+        }
+
+        body {
+            background: white;
+        }
+
+        .form-card {
+            box-shadow: none;
+            border: none;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .form-title {
+            font-size: 16pt;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+    }*/
+
+    .btn-sm {
+        padding: 3px 7px;
+        font-size: 14px;
+        background: #800000;
+    }
+
+    .sidebar {
+        width: 200px;
+        height: 100vh;
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+        padding-top: 0px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 11px 8px;
+            display: block;
+            font-weight: 500;
+        }
+
+    .content {
+        padding: 0px 74px 18px;
+    }
+</style>
+<style>
+    .marks-summary-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .small-box {
+        background-color: #fff;
+        padding: 0px 0px;
+        font-size: 13px;
+        min-width: 35px;
+        text-align: center;
+    }
+
+    .divider {
+        font-weight: bold;
+        font-size: 14px;
+    }
+</style>
+
+
+<div id="print-area">
+    <div class="container mt-5">
+        <div class="form-card mx-auto" style="max-width: 800px; position: relative; display: flex; flex-direction: column;">
+
+            <!-- Logo & Heading -->
+            <div class="logo-container">
+                <img src="https://i.postimg.cc/fbZjQX3j/Untitled-Project.jpg" alt="College Logo">
+
+            </div>
+            <h2 style="text-align: center; font-size: 20px;">Application for the admission of PU program for the acadamic year 2025-2026</h2>
+            <!-- Upload Photo -->
+            <!-- Upload Photo -->
+            <div style=" margin-top: 20px;" class="photo-section print-only">
+                <div class="photo-upload" id="uploadBox">
+                    <!--{{ form.photo }}-->
+                    <l
+                    <label>Photo</label>
+                    <!--<img id="photoPreview" src="" alt="Photo " style="max-height: 150px; margin-top: 10px;" />-->
+                </div>
+            </div>
+
+
+            <form method="POST" enctype="multipart/form-data" style="flex: 1; display: flex; flex-direction: column;">
+                {% csrf_token %}
+
+                <div class="form-grid" style="flex: 1;">
+                    <!-- IDENTIFIERS -->
+                    <div class="form-group">
+                        <label class="form-label">Application Number</label>
+                        <input type="text" class="form-control bg-light" value="{{ next_admission_no }}" readonly>
+                        {{ form.admission_no.as_hidden }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Enquiry Number:</label>
+                        <input type="text" id="id_enquiry_no" name="enquiry_no" maxlength="20" autocomplete="off" class="form-control" value="{{ form.enquiry_no.value|default:'' }}" {% if view_mode %}readonly disabled{% endif %} />
+
+                        <small id="enquiry-error" style="color: red; display: none;">Enquiry number not found or not for PU</small>
+                    </div>
+                    <!-- PERSONAL DETAILS -->
+
+
+
+                    <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
+
+                    <h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; ">Student Details</h4>
+
+                    <div class="form-group">
+                        <label for="id_student_name" style="font-size: 12px; font-weight: 500; color: #333; ">Name of the Student as entered in SSLC marks card<span style="color:red">*</span></label>
+                        {{ form.student_name }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth</label>
+                        {{ form.dob }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_gender" style="font-size: 12px; font-weight: 500; color: #333; ">Gender <span style="color:red">*</span></label>
+                        {{ form.gender }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_birthplace" style="font-size: 12px; font-weight: 500; color: #333;">Place of Birth <span style="color:red">*</span></label>
+                        {{ form.birthplace }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nationality</label>
+                        {{ form.nationality }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Religion</label>
+                        {{ form.religion }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Caste</label>
+                        {{ form.caste }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_sub_caste" style="font-size: 12px; font-weight: 500; color: #333;">Sub Caste</label>
+                        {{ form.sub_caste }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Student Mobile No</label>
+                        {{ form.student_phone_no }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_aadhar_no" style="font-size: 12px; font-weight: 500;">Student Aadhar No <span style="color: red;">*</span></label>
+                        {{ form.student_aadhar_no }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Student e-Mail ID</label>
+                        {{ form.student_email }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Blood Group</label>
+                        {{ form.blood_group }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333; ">Emergency Contact No<span style="color:red">*</span></label>
+                        {{ form.emergency_contact }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333; ">Emergency Contact Person Name <span style="color:red">*</span></label>
+                        {{ form.emergency_contact_name }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333; ">Emenrgency Contact Person's relationship with Student <span style="color:red">*</span></label>
+                        {{ form.emergency_contact_relation }}
+                    </div>
+                    <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
+
+                    <h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; ">Parent Details</h4>
+
+                    <!-- CONTACT DETAILS -->
+                    <div class="form-group">
+                        <label class="form-label">Name of the Father</label>
+                        {{ form.parent_name }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_parent_mobile_no" style=" font-size: 12px; font-weight: 500;">Father Mobile No <span style="color: red;">*</span></label>
+                        {{ form.parent_mobile_no }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_aadhar_no" style="font-size: 12px; font-weight: 500; color: #333; ">Father Aadhar No <span style="color:red">*</span></label>
+                        {{ form.aadhar_no }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Father e-Mail ID</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_parent_mobile_no" style="font-size: 12px; font-weight: 500; color: #333; ">Father Occupation <span style="color:red">*</span></label>
+                        {{ form.father_occupation }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Father Annual Income</label>
+                        {{ form.annual_income }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Name of the Mother</label>
+                        {{ form.mother_name }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_parent_mobile_no" style="font-size: 12px; font-weight: 500; color: #333; ">Mother Mobile No <span style="color:red">*</span></label>
+                        {{ form.mother_phone_no }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_aadhar_no" style="font-size: 12px; font-weight: 500; color: #333; ">Mother Aadhar No <span style="color:red">*</span></label>
+                        {{ form.mother_aadhar_no }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_mother_email" class="form-label">Mother e-Mail ID</label>
+                        {{ form.mother_email }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_parent_mobile_no" style="font-size: 12px; font-weight: 500; color: #333; ">Mother Occupation <span style="color:red">*</span></label>
+                        {{ form.mother_occupation }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mother Annual Income</label>
+                        {{ form.mother_annual_income }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"> Name of the Guardian</label>
+                        {{ form.guardian_name }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address of the Guardian </label>
+                        {{ form.guardian_address }}
+                    </div>
+
+
+                    <div class="form-group">
+                        <label class="form-label"> Total Annual Income</label>
+                        {{ form.total_annual_income }}
+                    </div>
+
+
+
+
+
+                    <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
+
+                    <h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; ">Address Details</h4>
+
+                    <!--<div class="form-group">
+        <label class="form-label">Student Address</label>
+        {{ form.student_address }}
+    </div>-->
+                    <div class="form-group">
+                        <label class="form-label">Local Address</label>
+                        {{ form.current_address }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_permanent_address" style="font-size: 12px; font-weight: 500; color: #333; ">Permanent Address <span style="color:red">*</span></label>
+                        {{ form.permanent_address }}
+                    </div>
+
+                    <!--<div class="form-group">
+        <label class="form-label">Pincode</label>
+        {{ form.pincode }}
+    </div>-->
+                    <div class="form-group">
+                        <label class="form-label">Taluk</label>
+                        {{ form.city }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_district" style="font-size: 12px; font-weight: 500; color: #333;">District<span style="color:red">*</span></label>
+                        {{ form.district }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">State</label>
+                        {{ form.state }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        {{ form.country }}
+                    </div>
+
+
+
+                    <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
+
+                    <!--<h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; ">Emergency Contact Number</h4>
+    <div class="form-group">
+        <label for="id_emergency_contact">Emergency Contact <span style="color:red">*</span></label>
+        {{ form.emergency_contact }}
+    </div>
+
+    <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />-->
+
+                    <h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; ">Educational Details of Previous Year</h4>
+
+                    <!-- ACADEMIC DETAILS -->
+                    <!--<div class="form-group">
+        <label class="form-label">Year of Passing (MM-YYYY)</label>
+        {{ form.year_of_passing }}
+        <div id="year_of_passing_error" style="color:red; display:none;"></div>
+    </div>-->
+                    <!--<div class="form-group">
+        <label class="form-label">SSLC Percentage</label>
+        {{ form.sslc_percentage }}
+    </div>-->
+                    <div class="form-group">
+                        <label class="form-label">Name of the School Last Studied</label>
+                        {{ form.school_name_laststudied }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address of the School last Studied</label>
+                        {{ form.school_addresslaststudied }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">SATS Number</label>
+                        <input type="text" name="sats_number" class="form-control bg-light" placeholder="Enter SATS Number" />
+                        {% if form.sats_number.errors %}
+                        <small class="text-danger">{{ form.sats_number.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Register No</label>
+                        {{ form.register_no_course }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Month & Year Passed</label>
+                        {{ form.month_year_passed }}
+                    </div>
+                    <div class="form-group row align-items-center">
+                        <label for="id_education_boards" class="col-sm-4 col-form-label" style="font-size: 12px; font-weight: 500; color: #333;">
+                            Education Boards Attended
+                        </label>
+                        <div class="col-sm-8">
+                            {{ form.education_boards }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Converstion Fee</label>
+                        {{ form.converstion_fee }}
+                    </div>
+
+
+                    <div class="form-group">
+                        <label class="form-label">Medium</label>
+                        {{ form.medium }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">First Language</label>
+                        {{ form.first_language }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Second Language</label>
+                        {{ form.second_language }}
+                    </div>
+
+
+                    <!-- COURSE DETAILS -->
+                    <div class="form-group" style="grid-column: 1/-1;">
+                        <h4 class="mt-4 mb-3">Last Studied Course Details</h4>
+                        <table class="table table-bordered table-striped mb-4">
+                            <thead class="table-light">
+                                <tr>
+
+                                    <table class="table table-bordered" id="marksTable">
+                                        <thead>
+                                            <tr style=" font-size: 14px; font-weight: 300;">
+                                                <th>Subject Names</th>
+                                                <th>Maximum Marks</th>
+                                                <th>Marks Obtained</th>
+                                                <th>Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Row 1 -->
+                                            <tr>
+                                                <td>{{ form.subject1 }}</td>
+                                                <td><input type="number" id="total1" name="total_marks1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="number" id="marks1" name="marks_obtained1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="text" id="percent1" name="percentage1" class="form-control" readonly {% if view_mode %}disabled{% endif %}></td>
+                                            </tr>
+                                            <!-- Row 2 -->
+                                            <tr>
+                                                <td>{{ form.subject2 }}</td>
+                                                <td><input type="number" id="total1" name="total_marks1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="number" id="marks1" name="marks_obtained1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="text" id="percent1" name="percentage1" class="form-control" readonly {% if view_mode %}disabled{% endif %}></td>
+                                            </tr>
+                                            <!-- Repeat for total2/marks2/percent2 etc., just add the {% if view_mode %}readonly disabled{% endif %} or {% if view_mode %}disabled{% endif %} as above -->
+                                            <!-- Row 3 -->
+                                            <tr>
+                                                <td>{{ form.subject3 }}</td>
+                                                <td><input type="number" id="total1" name="total_marks1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="number" id="marks1" name="marks_obtained1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="text" id="percent1" name="percentage1" class="form-control" readonly {% if view_mode %}disabled{% endif %}></td>
+                                            </tr>
+                                            <!-- Repeat for total2/marks2/percent2 etc., just add the {% if view_mode %}readonly disabled{% endif %} or {% if view_mode %}disabled{% endif %} as above -->
+                                            <!-- Row 4 -->
+                                            <tr>
+                                                <td>{{ form.subject4 }}</td>
+                                                <td><input type="number" id="total1" name="total_marks1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="number" id="marks1" name="marks_obtained1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="text" id="percent1" name="percentage1" class="form-control" readonly {% if view_mode %}disabled{% endif %}></td>
+                                            </tr>
+                                            <!-- Repeat for total2/marks2/percent2 etc., just add the {% if view_mode %}readonly disabled{% endif %} or {% if view_mode %}disabled{% endif %} as above -->
+                                            <!-- Row 5 -->
+                                            <tr>
+                                                <td>{{ form.subject5 }}</td>
+                                                <td><input type="number" id="total1" name="total_marks1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="number" id="marks1" name="marks_obtained1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="text" id="percent1" name="percentage1" class="form-control" readonly {% if view_mode %}disabled{% endif %}></td>
+                                            </tr>
+                                            <!-- Repeat for total2/marks2/percent2 etc., just add the {% if view_mode %}readonly disabled{% endif %} or {% if view_mode %}disabled{% endif %} as above -->
+                                            <!-- Row 6 -->
+                                            <tr>
+                                                <td>{{ form.subject6 }}</td>
+                                                <td><input type="number" id="total1" name="total_marks1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="number" id="marks1" name="marks_obtained1" class="form-control" min="0" {% if view_mode %}readonly disabled{% endif %}></td>
+                                                <td><input type="text" id="percent1" name="percentage1" class="form-control" readonly {% if view_mode %}disabled{% endif %}></td>
+                                            </tr>
+                                            <!-- Repeat for total2/marks2/percent2 etc., just add the {% if view_mode %}readonly disabled{% endif %} or {% if view_mode %}disabled{% endif %} as above -->
+                                        </tbody>
+
+                                        <tfoot>
+                                            <tr>
+                                                <td><strong style=" font-size: 14px;">Total Marks:</strong></td>
+                                                <td>
+                                                    <input type="text" id="grandTotalMax" name="total_max_marks" class="form-control" readonly>
+                                                </td>
+                                                <td>
+                                                    <input type="text" id="grandTotalObtained" name="total_marks_obtained" class="form-control" readonly>
+                                                </td>
+                                                <td>
+                                                    <input type="text" id="grandOverallPercent" name="overall_percentage" class="form-control" readonly>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+
+
+
+                    </div>
+
+                </div>
+
+                <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
+
+                <h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; ">Admission Details</h4>
+
+
+
+                <div class="form-group">
+                    <label for="id_course_type" class="form-label">
+                        Course Type <span style="color:red">*</span>
+                    </label>
+                    <select name="course_type" id="id_course_type" class="form-select" required {% if view_mode %}disabled{% endif %}>
+                        <option value="">Select Course Type</option>
+                        {% for ctype in form.fields.course_type.queryset %}
+                        <option value="{{ ctype.id }}"
+                                {% if form.instance.course_type and form.instance.course_type.id == ctype.id %}selected{% endif %}>
+                            {{ ctype.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_course" class="form-label">
+                        Combination (Course) <span style="color:red">*</span>
+                    </label>
+                    <select name="course" id="id_course" class="form-select" required {% if view_mode %}disabled{% endif %}>
+                        <option value="">Select Course</option>
+                        {% for course in form.fields.course.queryset %}
+                        <option value="{{ course.id }}"
+                                {% if form.instance.course and form.instance.course.id == course.id %}selected{% endif %}>
+                            {{ course.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Medium of Instruction in PU Course</label>
+                    {{ form.medium_of_instruction }}
+                </div>
+
+
+
+
+                <!--<div class="form-group">
+        <label class="form-label">Quota </label>
+        {{ form.quota_type }}
+    </div>-->
+                <!-- ACTIVITIES -->
+                <!--<div class="form-group" style="grid-column: 1/-1;">
+        <label class="form-label fw-bold">Co-Curricular Activities</label>
+        {{ form.co_curricular_activities }}
+    </div>-->
+                <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
+
+                <h4 class="mt-4 mb-3 text-uppercase text-primary" style="text-align: center;">Undertaking Details</h4>
+
+                <!-- Declaration Container -->
+                <div class="form-group" style="grid-column: 1 / -1;">
+
+                    <!-- Parent's Declaration Section -->
+                    <h5 class="mt-4"></h5>
+
+                    <p style="font-style: normal; color: #333;">
+                        I, Mr./Mrs./Ms.
+                        <span {% if view_mode %}contenteditable="false" {% else %}contenteditable="true" {% endif %} style="border-bottom: 1px dotted #333; min-width: 150px; display: inline-block;"></span>,
+                        Parent/Guardian of Master/Kumari
+                        <span id="studentNameInsert" {% if view_mode %}contenteditable="false" {% else %}contenteditable="true" {% endif %} style="border-bottom: 1px dotted #333; min-width: 150px; display: inline-block;"></span>,
+                        hereby agree to take full responsibility for my ward in all academic, co-curricular, and disciplinary matters during the course of study at the institution.
+                    </p>
+
+                    <p style="font-style: normal; color: #333;">
+                        I permit my ward to participate in co-curricular and extra-curricular activities organized by the institution. I understand necessary safety measures will be ensured and I support their involvement in such activities. <br><br>
+                        If my ward has participated at Taluk, District, or State level events, I will submit a copy of the supporting documents in the documents section below.
+                    </p>
+
+                    <!-- Parent Date, Place, Signature -->
+                    <div class="form-grid mt-3">
+                        <div class="form-group">
+                            <label class="form-label">Date </label>
+                            {{ form.parent_declaration_date }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Place </label>
+                            {{ form.parent_declaration_place }}
+                        </div>
+                        <div class="form-group mt-4" style="display: flex; justify-content: flex-end;">
+                            <div style="text-align: right; margin-top: 15px; margin-right: -1px">
+                                <div style="border-bottom: 1px solid #000; width: 200px; height: 30px; margin-left: 545px;"></div>
+                                <small>Father/Mother/Guardian Signature</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4" style="font-size: 15px; line-height: 1.6; color: #333;">
+                        <hr class="my-4">
+
+                        <!-- Student's Declaration Section -->
+                        <h5 class="mt-4">Student's Undertaking</h5>
+
+                        <p style="font-style: normal; color: #333;">
+                            I hereby declare that I will abide by all the rules and regulations of the University, the State Government, and the college regarding my admission, attendance, conduct, and academics. I understand that my admission is subject to eligibility verification and submission of all original documents as prescribed.
+                        </p>
+
+                        <p style="font-style: normal; color: #333;">
+                            I agree to follow the fee payment policies of the institution. I acknowledge that fee payment is my responsibility and that delayed payments may attract fines.
+                            I understand that fees once paid are non-refundable.
+                        </p>
+                        <p style="font-style: normal; color: #333;">
+                            I also undertake not to engage in any form of ragging, eve-teasing, substance abuse, or any anti-social activity.
+                        </p>
+
+                        <p style="font-style: normal; color: #333;">
+                            I also undertake not to engage in any form of ragging, eve-teasing, substance abuse, or any anti-social activity. I accept that failure to adhere to these rules will result in disciplinary action by the institution.
+                        </p>
+
+                        <p style="font-style: normal; color: #333;">
+                            I agree to comply with the prescribed dress code and maintain discipline throughout my course of study.
+                        </p>
+
+                        <!-- Student Date, Place, Signature -->
+                        <div class="form-grid mt-3">
+                            <div class="form-group">
+                                <label class="form-label">Date </label>
+                                {{ form.student_declaration_date }}
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Place </label>
+                                {{ form.student_declaration_place }}
+                            </div>
+                            <div class="form-group mt-4" style="display: flex; justify-content: flex-end;">
+                                <div style="text-align: right; margin-top: 15px; margin-right: 38px;">
+                                    <div style="border-bottom: 1px solid #000; width: 200px; height: 30px; margin-left:599px;"></div>
+                                    <small>Student's Signature</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <!-- Full-width horizontal line OUTSIDE the grid -->
+                <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
+
+                <h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; ">For Office Use Only</h4>
+
+
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label class="form-label">Program Choosen </label>
+                    {{ form.admitted_to }}
+                </div>
+
+                <!-- REQUIRED DOCUMENTS SECTION -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <h4 class="mt-4 mb-3">Documents Submitted <span style="color:red">*</span></h4>
+                    <div class="form-grid">
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">
+                                <input type="checkbox" name="doc_aadhar" {% if view_mode %}disabled{% endif %} />
+                                Aadhar Card
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">
+                                <input type="checkbox" name="doc_marks_card" {% if view_mode %}disabled{% endif %} />
+                                Marks Card (Grade 10 CBSE, ICSE, IGCSE)
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">
+                                <input type="checkbox" name="doc_caste_certificate" {% if view_mode %}disabled{% endif %} />
+                                Caste Certificate
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">
+                                <input type="checkbox" name="doc_income_certificate" {% if view_mode %}disabled{% endif %} />
+                                Income Certificate
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">
+                                <input type="checkbox" name="doc_income_certificate" {% if view_mode %}disabled{% endif %} />
+                                Transfer Certificate
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">
+                                <input type="checkbox" name="doc_migration" {% if view_mode %}disabled{% endif %} />
+                                Migration/Eligibility Certificate
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">
+                                <input type="checkbox" name="doc_study" {% if view_mode %}disabled{% endif %} />
+                                Study Certificate
+                            </label>
+                        </div>
+                    </div>
+                    <div id="doc_check_error" style="color:red; font-size:13px;"></div>
+                </div>
+
+
+
+                <!-- OFFICE USE ONLY -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <h4 class="mt-4 mb-3">Fees Details</h4> <!-- Heading Added -->
+                    <div class="form-grid">
+                        {# Replace the Receipt No section with this block in your template #}
+                        <div class="form-group">
+                            <label class="form-label">Receipt No</label>
+                            <input type="text" class="form-control bg-light" name="receipt_no" id="id_receipt_no"
+                                   value="{{ next_receipt_no }}" readonly>
+                            {{ form.receipt_no.as_hidden }}
+                            {% if last_receipt_no %}
+                            <small class="text-muted">Last receipt no: {{ last_receipt_no }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Receipt Date (YYYY-MM-DD)</label>
+                            {{ form.receipt_date }}
+                        </div>
+                        <!--<div class="form-group">
+        <label class="form-label">Caution Fee*</label>
+        {{ form.tuition_advance_amount }}
+    </div>-->
+                        <div class="form-group">
+                            <label class="form-label">Transcation ID/Reference No</label>
+                            {{ form.utr_no }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Admission Date:</label>
+                            {{ form.admission_date }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Application Fee*</label>
+                            {{ form.application_fee }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tuition Fee*</label>
+                            {{ form.tuition_fee }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Books Fee*</label>
+                            {{ form.books_fee }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Uniform Fee*</label>
+                            {{ form.uniform_fee }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Payment Mode</label>
+                            {{ form.payment_mode }}
+                        </div>
+
+                        <!-- QR Code Display Section -->
+                        <!-- QR Code Display Section -->
+                        <div id="qr-code-section" class="mt-3" style="display: none;">
+                            <label>Scan to Pay (QR Code)</label><br>
+                            <div id="qrcode" class="border p-2"></div>
+                        </div>
+                        <!-- TRANSPORT & HOSTEL -->
+                        <!-- Hostel Required Yes/No -->
+                        <div class="form-group checkbox-inline" style="grid-column: 1 / 2;">
+                            <label class="form-label me-2">Hostel Required:</label>
+                            <input type="radio" id="hostel_yes" name="hostel_required" value="yes" class="form-check-input me-1" style="margin-left:10px;" {% if view_mode %}disabled{% endif %}>
+                            <label for="hostel_yes" class="me-3" style="margin-right:10px;">Yes</label>
+                            <input type="radio" id="hostel_no" name="hostel_required" value="no" class="form-check-input me-1" style="margin-left:10px;" {% if view_mode %}disabled{% endif %}>
+                            <label for="hostel_no">No</label>
+                        </div>
+                        <!-- Hostel Amount Field (hidden initially) -->
+                        <div class="form-group" id="hostel_amount_group" style="display: none;">
+                            <label class="form-label">Enter Hostel Amount</label>
+                            <input type="text" name="hostel_amount" class="form-control" placeholder="Enter amount" />
+                        </div>
+
+
+                        <div class="form-group checkbox-inline" style="grid-column: 1 / 2;">
+                            <label class="form-label me-2">Transport:</label>
+                            <input type="radio" id="transport_yes" name="wants_transport" value="yes" class="form-check-input me-1" style="margin-left:10px;" {% if view_mode %}disabled{% endif %}>
+                            <label for="transport_yes" class="me-3" style="margin-right:10px;">Yes</label>
+                            <input type="radio" id="transport_no" name="wants_transport" value="no" class="form-check-input me-1" style="margin-left:10px;" {% if view_mode %}disabled{% endif %}>
+                            <label for="transport_no">No</label>
+                        </div>
+
+                        <div class="form-group" id="transport_amount_group" style="display: none;">
+                            <label class="form-label">Enter Transport Amount</label>
+                            <input type="text" name="transport_amount" class="form-control" placeholder="Enter amount" />
+                        </div>
+                        <div class="form-group" id="transport_dropdown_div" style="display: none;">
+                            <label class="form-label">Transport Route/Details</label>
+                            {{ form.transport }}
+                        </div>
+
+
+                        <!-- SCHOLARSHIP SECTION -->
+                        <div class="form-group checkbox-inline" style="grid-column: 1 / 2;">
+                            <label class="form-label me-2">Scholarship:</label>
+                            <input type="radio" id="scholarship_yes" name="has_scholarship" value="yes" class="form-check-input me-1" style="margin-left:10px;" {% if view_mode %}disabled{% endif %}>
+                            <label for="scholarship_yes" class="me-3" style="margin-right:10px;">Yes</label>
+                            <input type="radio" id="scholarship_no" name="has_scholarship" value="no" class="form-check-input me-1" style="margin-left:10px;" {% if view_mode %}disabled{% endif %}>
+                            <label for="scholarship_no">No</label>
+                        </div>
+                        <div class="form-group" id="scholarship_amount_group" style="display: none;">
+                            <label class="form-label">Enter Scholarship Amount</label>
+                            <input type="text" name="scholarship_amount" class="form-control" placeholder="Enter amount" />
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <div style="flex: 1; text-align: center;">
+                                <div style="border-bottom: 1px solid #000; width: 30%; height: 30px;"></div>
+                                <small style=" margin-left: -570px; ">Accountant's Signature</small>
+                            </div>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <div style="flex: 1; text-align: center;">
+                                <div style="border-bottom: 1px solid #000; width: 30%; height: 30px;"></div>
+                                <small style=" margin-left: -520px;">Dean & Director's Signature with seal</small>
+                            </div>
+
+                        </div>
+                        <div class="form-group mt-4" style="display: flex; justify-content: space-between; gap: 40px;">
+                            <div style="flex: 1;text-align: center;
+                           margin-top: 15px;
+                           margin-left: 348px; ">
+                                <div style=" border-bottom: 1px solid #000; width: 54%; height: 0px; margin-top: -51px; margin-left: 198px;">Chairman Signature with Seal</div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-4" style=" margin-top: -42px; display: flex; justify-content: space-between; width: 100%;">
+                            <button type="submit" class="btn btn-primary btn-lg no-print">Submit</button>
+                            <button style="text-align:end;" type="button" class="btn btn-secondary btn-sm no-print" onclick="window.print();">
+                                <i class="fa fa-print"></i> Print
+                            </button>
+                        </div>
+
+                        <!--<div class="mt-4" style=" margin-top: -42px; display: flex; justify-content: space-between; width: 100%;">
+        <button type="submit" class="btn btn-primary btn-lg no-print">Submit</button>
+    </div>-->
+                        {% if form_submission_success %}
+                        <div class="alert alert-success text-center mt-3" role="alert">
+                            Admission form has been successfully submitted!
+                        </div>
+                        {% endif %}
+                        <!--{% if form.errors %}
+    <div class="alert alert-danger text-center mt-3" role="alert">
+        Please correct the errors in the form.
+        {{ form.errors }}
+    </div>
+    {% endif %}-->
+                        {% if form.errors %}
+                        <div id="form-errors" data-errors="{{ form.errors.as_text|escapejs }}" style="display:none;"></div>
+                        {% endif %}
+                    </div> <!-- End form-grid -->
+            </form>
+
+        </div> <!-- End form-card -->
+    </div> <!-- End container -->
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var errorDiv = document.getElementById('form-errors');
+    if (errorDiv) {
+        var errorMsg = errorDiv.getAttribute('data-errors');
+        // You can customize how the errors are shown
+        alert("Please correct the errors in the form:\n\n" + errorMsg.replace(/\\n/g, '\n'));
+    }
+});
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const checkboxes = document.querySelectorAll('input[name="education_boards"]');
+        checkboxes.forEach(cb => {
+            cb.addEventListener("change", function () {
+                if (this.checked) {
+                    checkboxes.forEach(other => {
+                        if (other !== this) {
+                            other.checked = false;
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const studentNameInput = document.getElementById('id_student_name');
+
+        studentNameInput.addEventListener('input', function () {
+            // Remove invalid characters and convert to uppercase
+            this.value = this.value.toUpperCase().replace(/[^A-Z\s]/g, '');
+        });
+    });
+</script>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#id_course_type').change(function () {
+            var url = "{% url 'ajax_load_courses' %}";  // PU-specific URL
+            var courseTypeId = $(this).val();
+
+            $.ajax({
+                url: url,
+                data: {
+                    'course_type': courseTypeId
+                },
+                success: function (data) {
+                    $("#id_course").html('<option value="">---------</option>');
+                    data.forEach(function (course) {
+                        $("#id_course").append(`<option value="${course.id}">${course.name}</option>`);
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const ROWS = 6;
+
+    function computeRow(i) {
+        // Get max marks
+        let total = parseFloat(document.getElementById(`total${i}`).value);
+        if (isNaN(total) || total <= 0) total = 100;
+
+        // Get obtained marks
+        let marks = parseFloat(document.getElementById(`marks${i}`).value) || 0;
+
+        // Calculate percentage
+        const pct = (marks / total) * 100;
+
+        // Display percentage in input field
+        const pctEl = document.getElementById(`percent${i}`);
+        if (pctEl) pctEl.value = pct.toFixed(2) + " %";
+
+        return { total, marks };
+    }
+
+    function computeGrandTotals() {
+        let sumTotal = 0, sumMarks = 0;
+
+        for (let i = 1; i <= ROWS; i++) {
+            const { total, marks } = computeRow(i);
+            sumTotal += total;
+            sumMarks += marks;
+        }
+
+        // Display totals
+        const grandTotalMaxEl = document.getElementById("grandTotalMax");
+        const grandTotalObtainedEl = document.getElementById("grandTotalObtained");
+        const grandOverallPercentEl = document.getElementById("grandOverallPercent");
+
+        const overallPct = sumTotal > 0 ? (sumMarks / sumTotal) * 100 : 0;
+
+        if (grandTotalMaxEl) grandTotalMaxEl.value = sumTotal.toFixed(2);
+        if (grandTotalObtainedEl) grandTotalObtainedEl.value = sumMarks.toFixed(2);
+        if (grandOverallPercentEl) grandOverallPercentEl.value = overallPct.toFixed(2) + " %";
+    }
+
+    // Add event listeners
+    for (let i = 1; i <= ROWS; i++) {
+        const totalInput = document.getElementById(`total${i}`);
+        const marksInput = document.getElementById(`marks${i}`);
+
+        if (totalInput) totalInput.addEventListener("input", computeGrandTotals);
+        if (marksInput) marksInput.addEventListener("input", computeGrandTotals);
+    }
+
+    // Initial calculation
+    computeGrandTotals();
+});
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Elements
+        const appFeeInput = document.getElementById('id_application_fee');
+        const tuitionAdvanceInput = document.getElementById('id_tuition_advance_amount');
+        const paymentModeSelect = document.getElementById('id_payment_mode');
+        const qrCodeSection = document.getElementById('qr-code-section');
+        const qrCodeContainer = document.getElementById('qrcode');
+
+        // Set default values and readonly
+        if (appFeeInput) {
+            appFeeInput.value = 1000;
+            appFeeInput.readOnly = true;
+        }
+        if (tuitionAdvanceInput) {
+            tuitionAdvanceInput.value = 5000;
+            tuitionAdvanceInput.readOnly = true;
+        }
+
+        // Calculate total
+        function getTotalAmount() {
+            const appFee = parseFloat(appFeeInput.value) || 0;
+            const tuitionFee = parseFloat(tuitionAdvanceInput.value) || 0;
+            return appFee + tuitionFee;
+        }
+
+        // Generate QR code for total amount
+        function showQRCode() {
+            // Clear any previous QR code
+            qrCodeContainer.innerHTML = '';
+
+            const amount = getTotalAmount();
+            const upiId = "9483508971@ybl";
+            const payeeName = "Pinnacle School of Commerce & Management";
+            const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+
+            new QRCode(qrCodeContainer, {
+                text: upiLink,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // Toggle QR code display
+        function toggleQRCode() {
+            if (paymentModeSelect && paymentModeSelect.value.toLowerCase() === "online") {
+                qrCodeSection.style.display = 'block';
+                showQRCode();
+            } else {
+                qrCodeSection.style.display = 'none';
+                qrCodeContainer.innerHTML = '';
+            }
+        }
+
+        // Initial check and event listener
+        toggleQRCode();
+        if (paymentModeSelect) {
+            paymentModeSelect.addEventListener('change', toggleQRCode);
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Find inputs by their Django-generated names or IDs
+    // (Adjust selectors if your form uses IDs or different names)
+    const appFeeInput = document.querySelector('input[name="{{ form.application_fee.name }}"]');
+    const tuitionInput = document.querySelector('input[name="{{ form.tuition_advance_amount.name }}"]');
+
+    // Set default values
+    if (appFeeInput) {
+      appFeeInput.value = 1000;
+      appFeeInput.readOnly = true;
+    }
+
+    if (tuitionInput) {
+      tuitionInput.value = 5000;
+      tuitionInput.readOnly = true;
+    }
+
+    // Calculate total
+    const totalAmount = (parseFloat(appFeeInput.value) || 0) + (parseFloat(tuitionInput.value) || 0);
+
+    // Prepare UPI link
+    const upiId = "9483508971@ybl";
+    const payeeName = "Pinnacle School of Commerce & Management";
+    const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount}&cu=INR`;
+
+    // Generate QR code
+    new QRCode(document.getElementById("qrcode"), {
+      text: upiLink,
+      width: 256,
+      height: 256,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const paymentModeSelect = document.getElementById("id_payment_mode");
+        const tuitionAdvanceInput = document.getElementById("id_tuition_advance_amount");
+        const qrSection = document.getElementById("qr-code-section");
+        const qrImg = document.getElementById("qr-code-img");
+
+        // === QR Code Logic ===
+        function updateQRCode() {
+            const paymentMode = paymentModeSelect.value.trim().toLowerCase();
+            const amount = tuitionAdvanceInput.value.trim();
+
+            if (paymentMode === "online" && amount) {
+                const qrUrl = /generate_qr_dynamic?amount=${amount};
+                qrImg.src = qrUrl;
+                qrSection.style.display = "block";
+            } else {
+                qrSection.style.display = "none";
+                qrImg.src = "";
+            }
+        }
+
+        // === Enforce ₹5000 Advance ===
+        function enforceAdvanceAmount() {
+            if (tuitionAdvanceInput) {
+                tuitionAdvanceInput.value = 5000;
+                tuitionAdvanceInput.readOnly = true;
+            }
+        }
+
+        // === Validate on Submit ===
+        document.querySelector('form').addEventListener('submit', function (e) {
+            if (!tuitionAdvanceInput || parseFloat(tuitionAdvanceInput.value) !== 5000) {
+                alert("Tuition Advance Fee is mandatory and must be ₹5000.");
+                e.preventDefault();
+            }
+        });
+
+        // === Initialize all on page load ===
+        enforceAdvanceAmount();
+        updateQRCode();
+
+        // === Attach event listeners ===
+        if (paymentModeSelect) paymentModeSelect.addEventListener('change', updateQRCode);
+        if (tuitionAdvanceInput) tuitionAdvanceInput.addEventListener('input', updateQRCode);
+    });
+</script>
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const paymentMethod = document.getElementById("payment_method");
+
+        const qrSection = document.getElementById("qr-code-section");
+
+        const qrImg = document.getElementById("qr-code-img");
+
+        // All fee amount fields to be tracked
+
+        const amountFields = [
+
+            "tuition_amount",
+
+            "transport_amount",
+
+            "hostel_amount",
+
+            "books_amount",
+
+            "uniform_amount",
+
+            "other_amount"
+
+        ].map(id => document.getElementById(id));
+
+        function calculateTotalAmount() {
+
+            return amountFields.reduce((total, field) => {
+
+                const value = parseFloat(field.value) || 0;
+
+                return total + value;
+
+            }, 0).toFixed(2);
+
+        }
+
+        function updateQR() {
+
+            const method = paymentMethod.value.trim().toLowerCase();
+
+            const totalAmount = calculateTotalAmount();
+
+            if (method === "online" && totalAmount > 0) {
+
+                qrSection.style.display = "block";
+
+                qrImg.src = /generate_qr_dynamic?amount=${totalAmount};
+
+            } else {
+
+                qrSection.style.display = "none";
+
+                qrImg.src = "";
+
+            }
+
+        }
+
+        // Trigger on any change in payment method or amount fields
+
+        paymentMethod.addEventListener('change', updateQR);
+
+        amountFields.forEach(field => field.addEventListener('input', updateQR));
+
+    });
+</script>
+
+
+<script>
+document.getElementById("id_pincode").addEventListener("change", function () {
+    var pincode = this.value;
+
+    if (pincode.length === 6 && /^\d+$/.test(pincode)) {
+        fetch("https://api.postalpincode.in/pincode/" + pincode)
+            .then(response => response.json())
+            .then(data => {
+                console.log("API Response:", data);  // Debugging line
+
+                if (data[0].Status === "Success") {
+                    const postOfficeData = data[0].PostOffice[0];
+
+                    document.getElementById("id_state").value = postOfficeData.State;
+                    document.getElementById("id_district").value = postOfficeData.District || "";
+                    document.getElementById("id_city").value = postOfficeData.Block || postOfficeData.Name;
+                } else {
+                    alert("Invalid PIN code");
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching pincode data:", err);
+                alert("Something went wrong while fetching PIN code info.");
+            });
+    }
+});
+</script>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const photoInput = document.querySelector('input[name="photo"]');
+        const preview = document.getElementById('photoPreview');
+
+        photoInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+
+            if (file) {
+                // Validate file size (< 500 KB)
+                if (file.size > 500 * 1024) {
+                    alert("Photo size should be less than 500KB.");
+                    photoInput.value = ""; // Clear the selected file
+                    preview.src = "";
+                    preview.style.display = 'none';
+                    return;
+                }
+
+                // Display preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const hostelYes = document.getElementById('hostel_yes');
+        const hostelNo = document.getElementById('hostel_no');
+        const hostelAmountGroup = document.getElementById('hostel_amount_group');
+
+        function toggleHostelAmount() {
+            if (hostelYes.checked) {
+                hostelAmountGroup.style.display = 'block';
+            } else {
+                hostelAmountGroup.style.display = 'none';
+            }
+        }
+
+        hostelYes.addEventListener('change', toggleHostelAmount);
+        hostelNo.addEventListener('change', toggleHostelAmount);
+
+        // Run once on page load in case default is checked
+        toggleHostelAmount();
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        const satsInput = form.querySelector('input[name="sats_number"]');
+
+        form.addEventListener('submit', function (e) {
+            const satsValue = satsInput.value.trim();
+            const satsPattern = /^\d{9}$/;
+
+            // Basic validation: 9 digits only
+            if (satsValue && !satsPattern.test(satsValue)) {
+                alert("Please enter a valid 9-digit SATS number.");
+                satsInput.focus();
+                e.preventDefault(); // Stop form submission
+                return false;
+            }
+        });
+    });
+</script>
+
+<!--Fee QR code-->
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const appFeeInput = document.getElementById('id_application_fee');
+
+        const paymentModeSelect = document.getElementById('id_payment_mode');
+
+        const qrCodeSection = document.getElementById('qr-code-section');
+
+        const qrCodeContainer = document.getElementById('qrcode');
+
+        if (appFeeInput) {
+
+            appFeeInput.value = 1000;
+
+            appFeeInput.readOnly = true;
+
+        }
+
+        function getTotalAmount() {
+
+            const appFee = parseFloat(appFeeInput.value) || 0;
+
+            return appFee;
+
+        }
+
+        function showQRCode() {
+
+            qrCodeContainer.innerHTML = '';
+
+            const amount = getTotalAmount();
+
+            const upiId = "9483508971@ybl";
+
+            const payeeName = "Pinnacle School of Commerce & Management";
+
+            const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR`;
+
+            new QRCode(qrCodeContainer, {
+
+                text: upiLink,
+
+                width: 200,
+
+                height: 200,
+
+                colorDark: "#000000",
+
+                colorLight: "#ffffff",
+
+                correctLevel: QRCode.CorrectLevel.H
+
+            });
+
+        }
+
+        function toggleQRCode() {
+
+            if (paymentModeSelect && paymentModeSelect.value.toLowerCase() === "online") {
+
+                qrCodeSection.style.display = 'block';
+
+                showQRCode();
+
+            } else {
+
+                qrCodeSection.style.display = 'none';
+
+                qrCodeContainer.innerHTML = '';
+
+            }
+
+        }
+
+        toggleQRCode();
+
+        if (paymentModeSelect) {
+
+            paymentModeSelect.addEventListener('change', toggleQRCode);
+
+        }
+
+    });
+
+</script>
+
+
+<script>
+
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("form");
+
+        const requiredFields = [
+            "id_student_name",
+            "id_gender",
+            "id_parent_mobile_no",
+            "id_aadhar_no",
+            "id_permanent_address",
+            "id_emergency_contact"
+        ];
+
+        const docCheckboxNames = [
+            "doc_aadhar",
+            "doc_marks_card",
+            "doc_caste_certificate",
+            "doc_income_certificate",
+            "doc_transfer",
+            "doc_migration"
+        ];
+
+        form.addEventListener("submit", function (event) {
+            let isValid = true;
+
+            // Validate input/select fields
+            requiredFields.forEach(function (id) {
+                const input = document.getElementById(id);
+                const errorId = id + "_error";
+
+                let errorSpan = document.getElementById(errorId);
+                if (!errorSpan && input) {
+                    errorSpan = document.createElement("span");
+                    errorSpan.id = errorId;
+                    errorSpan.style.color = "red";
+                    errorSpan.style.fontSize = "12px";
+                    input.parentNode.appendChild(errorSpan);
+                }
+
+                if (input && input.value.trim() === "") {
+                    input.style.border = "2px solid red";
+                    if (errorSpan) errorSpan.textContent = "This field is required.";
+                    isValid = false;
+                } else if (input) {
+                    input.style.border = "1px solid #ced4da";
+                    if (errorSpan) errorSpan.textContent = "";
+                }
+            });
+
+            // Validate document checkboxes
+            const atLeastOneChecked = docCheckboxNames.some(name => {
+                const checkbox = document.querySelector(input[name = "${name}"]);
+                return checkbox && checkbox.checked;
+            });
+
+            let docError = document.getElementById("doc_check_error");
+            if (!docError) {
+                const docSection = document.querySelector("div.form-group h4:contains('Documents Submitted')")?.parentNode;
+                if (docSection) {
+                    docError = document.createElement("div");
+                    docError.id = "doc_check_error";
+                    docError.style.color = "red";
+                    docError.style.fontSize = "13px";
+                    docSection.appendChild(docError);
+                }
+            }
+
+            if (!atLeastOneChecked && docError) {
+                docError.textContent = "Please select at least one submitted document.";
+                isValid = false;
+            } else if (docError) {
+                docError.textContent = "";
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+                alert("Please fill all required fields.");
+            }
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Existing Transport Logic ...
+        const yes = document.getElementById('transport_yes');
+        const no = document.getElementById('transport_no');
+        const dropdown = document.getElementById('transport_dropdown_div');
+        let hostelInput = document.getElementById('id_hostel_required') || document.querySelector('[name="hostel_required"]');
+
+        function toggleTransportDropdown() {
+            if (yes && yes.checked) {
+                dropdown.style.display = 'block';
+                if (hostelInput) {
+                    hostelInput.disabled = true;
+                    if (hostelInput.type === "checkbox" || hostelInput.type === "radio") hostelInput.checked = false;
+                    else if (hostelInput.tagName === "SELECT") hostelInput.value = "";
+                }
+            } else if (no && no.checked) {
+                dropdown.style.display = 'none';
+                const select = dropdown.querySelector('select');
+                if (select) select.selectedIndex = 0;
+                if (hostelInput) hostelInput.disabled = false;
+            }
+        }
+
+        if (yes) yes.addEventListener('change', toggleTransportDropdown);
+        if (no) no.addEventListener('change', toggleTransportDropdown);
+        toggleTransportDropdown();
+
+        // ✅ Scholarship logic
+        const schYes = document.getElementById('scholarship_yes');
+        const schNo = document.getElementById('scholarship_no');
+        const schGroup = document.getElementById('scholarship_amount_group');
+
+        function toggleScholarshipField() {
+            if (schYes && schYes.checked) {
+                schGroup.style.display = 'block';
+            } else {
+                schGroup.style.display = 'none';
+                const input = schGroup.querySelector('input');
+                if (input) input.value = '';
+            }
+        }
+
+        if (schYes) schYes.addEventListener('change', toggleScholarshipField);
+        if (schNo) schNo.addEventListener('change', toggleScholarshipField);
+        toggleScholarshipField(); // Initialize
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const transportYes = document.getElementById('transport_yes');
+        const transportNo = document.getElementById('transport_no');
+        const transportDropdown = document.getElementById('transport_dropdown_div');
+        const transportAmountGroup = document.getElementById('transport_amount_group');
+        const transportAmountInput = transportAmountGroup ? transportAmountGroup.querySelector('input[name="transport_amount"]') : null;
+
+        const hostelYes = document.getElementById('hostel_yes');
+        const hostelNo = document.getElementById('hostel_no');
+        const hostelAmountGroup = document.getElementById('hostel_amount_group');
+        const hostelAmountInput = hostelAmountGroup ? hostelAmountGroup.querySelector('input[name="hostel_amount"]') : null;
+
+        function toggleHostelState(disable) {
+            hostelYes.disabled = disable;
+            hostelNo.disabled = disable;
+            if (hostelAmountInput) {
+                hostelAmountInput.disabled = disable;
+                if (disable) hostelAmountInput.value = '';
+            }
+            if (disable && hostelAmountGroup) hostelAmountGroup.style.display = 'none';
+        }
+
+        function toggleTransportState(disable) {
+            transportYes.disabled = disable;
+            transportNo.disabled = disable;
+
+            if (transportDropdown) {
+                transportDropdown.style.display = disable ? 'none' : (transportYes.checked ? 'block' : 'none');
+                const select = transportDropdown.querySelector('select');
+                if (select) {
+                    select.disabled = disable;
+                    if (disable) select.selectedIndex = 0;
+                }
+            }
+
+            if (transportAmountGroup) {
+                transportAmountGroup.style.display = disable ? 'none' : (transportYes.checked ? 'block' : 'none');
+                if (transportAmountInput) {
+                    transportAmountInput.disabled = disable;
+                    if (disable) transportAmountInput.value = '';
+                }
+            }
+        }
+
+        function toggleHostelAmount() {
+            if (hostelYes.checked && !hostelYes.disabled) {
+                hostelAmountGroup.style.display = 'block';
+            } else {
+                hostelAmountGroup.style.display = 'none';
+                if (hostelAmountInput) hostelAmountInput.value = '';
+            }
+        }
+
+        function masterToggle() {
+            if (transportYes.checked) {
+                transportDropdown.style.display = 'block';
+                if (transportAmountGroup) transportAmountGroup.style.display = 'block';
+                toggleHostelState(true);
+            } else if (transportNo.checked) {
+                transportDropdown.style.display = 'none';
+                if (transportAmountGroup) transportAmountGroup.style.display = 'none';
+                toggleHostelState(false);
+            }
+
+            if (hostelYes.checked) {
+                toggleHostelAmount();
+                toggleTransportState(true);
+            } else if (hostelNo.checked) {
+                toggleHostelAmount();
+                toggleTransportState(false);
+            }
+        }
+
+        if (transportYes) transportYes.addEventListener('change', masterToggle);
+        if (transportNo) transportNo.addEventListener('change', masterToggle);
+        if (hostelYes) hostelYes.addEventListener('change', masterToggle);
+        if (hostelNo) hostelNo.addEventListener('change', masterToggle);
+
+        masterToggle();
+    });
+</script>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const aadharInput = document.getElementById('id_aadhar_no');
+        let aadharErrorShown = false;
+
+        if (aadharInput) {
+            // Only allow numbers while typing
+            aadharInput.addEventListener('keypress', function (e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Remove non-digit characters if pasted
+            aadharInput.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+                aadharErrorShown = false;
+            });
+
+            // Validate on blur
+            aadharInput.addEventListener('blur', function () {
+                const pattern = /^\d{12}$/;
+                if (!pattern.test(this.value) && this.value.length > 0) {
+                    if (!aadharErrorShown) {
+                        alert("Please enter a valid 12-digit Aadhar number (digits only).");
+                        aadharErrorShown = true;
+                    }
+                    this.focus();
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const phoneFields = [
+            document.getElementById('id_parent_phone_no'),
+            document.getElementById('id_student_phone_no'),
+            document.getElementById('id_emergency_contact')
+        ];
+
+        let errorShown = false;
+
+        phoneFields.forEach(function (input) {
+            if (input) {
+                // Only allow digits while typing
+                input.addEventListener('keypress', function (e) {
+                    const char = String.fromCharCode(e.which);
+                    if (!/[0-9]/.test(char)) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Validate on blur
+                input.addEventListener('blur', function () {
+                    const pattern = /^[6-9]\d{9}$/;
+                    if (!pattern.test(this.value) && this.value.length > 0) {
+                        if (!errorShown) {
+                            alert("Please enter a valid 10-digit Indian phone number starting with 6-9.");
+                            errorShown = true;
+                        }
+                        this.focus();
+                    }
+                });
+
+                // Reset error flag on input change
+                input.addEventListener('input', function () {
+                    errorShown = false;
+                    // Remove any non-digit characters pasted in
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            }
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailInput = document.getElementById('id_email'); // Adjust ID if needed
+        let emailErrorShown = false;
+
+        if (emailInput) {
+            // Remove spaces or invalid characters if pasted
+            emailInput.addEventListener('input', function () {
+                this.value = this.value.replace(/\s/g, '');
+                emailErrorShown = false;
+            });
+
+            // Validate format on blur
+            emailInput.addEventListener('blur', function () {
+                const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (this.value.length > 0 && !pattern.test(this.value)) {
+                    if (!emailErrorShown) {
+                        alert("Please enter a valid email address.");
+                        emailErrorShown = true;
+                    }
+                    this.focus();
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    document.getElementById('parent_mobile_no').addEventListener('input', function () {
+        const phoneInput = this.value;
+        const phoneError = document.getElementById('phoneError');
+        const isValid = /^[6-9]\d{9}$/.test(phoneInput);
+
+        if (!isValid && phoneInput.length > 0) {
+            phoneError.style.display = 'block';
+        } else {
+            phoneError.style.display = 'none';
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const capitalizeInputs = document.querySelectorAll('.capitalize-first-letter');
+
+        capitalizeInputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                if (this.value.length === 1) {
+                    this.value = this.value.toUpperCase();
+                }
+            });
+        });
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const capitalizeInputs = document.querySelectorAll('.capitalize-on-input');
+
+        capitalizeInputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                if (this.value.length === 1) {
+                    this.value = this.value.toUpperCase();
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const input = document.querySelector(".capitalize-name");
+
+        if (input) {
+            input.addEventListener("input", function () {
+                let value = input.value;
+
+                if (value.length === 1) {
+                    // Force first character to be uppercase
+                    input.value = value.toUpperCase();
+                } else if (value.length > 1) {
+                    // Keep first letter uppercase, rest as typed
+                    input.value = value.charAt(0).toUpperCase() + value.slice(1);
+                }
+            });
+        }
+    });
+</script>
+    {% endblock %}

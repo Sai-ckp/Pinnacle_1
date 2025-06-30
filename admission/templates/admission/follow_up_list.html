@@ -1,0 +1,122 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}Follow-up List{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+    }
+
+    .container {
+        background-color: #ffffff;
+        padding: 19px;
+        margin-top: -34px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+        text-align: center;
+        color: #800000;
+        font-size: 22px;
+    }
+
+    .table {
+        border-radius: 8px;
+        overflow: hidden;
+        width: 100%;
+        font-size: 13px;
+        border-collapse: collapse;
+    }
+
+        .table th {
+            background-color: #800000 !important;
+            color: #fff;
+            font-weight: 500;
+            font-size: 12px;
+            text-align: center;
+            padding: 2px;
+            border: 1px solid #dee2e6;
+        }
+
+        .table td {
+            vertical-align: middle;
+            font-size: 9px;
+            text-align: center;
+            padding: 1px;
+            border: 1px solid #dee2e6;
+        }
+
+    .form-select-sm {
+        border-radius: 11px;
+        font-size: 9px;
+        padding: 2px 7px;
+        background-color: #800000;
+        color: white;
+    }
+    select.form-select-sm:focus {
+        border-color: #0f6bc6;
+        box-shadow: 0 0 0 0.2rem rgba(15, 107, 198, 0.25);
+    }
+
+    .text-center {
+        font-style: italic;
+        color: #888;
+    }
+</style>
+
+<div class="container mt-5">
+    <h3 class="mb-4">Follow-up History</h3>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry</th>
+                <th>Type</th>
+                <th>Follow-up Date</th>
+                <th>Priority</th>
+                <th>Notes</th>
+                <th>Next Action</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in followups %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                    {% if f.pu_enquiry %}
+                    PU: {{ f.pu_enquiry.student_name }}
+                    {% else %}
+                    Degree: {{ f.degree_enquiry.student_name }}
+                    {% endif %}
+                </td>
+                <td>{{ f.follow_up_type }}</td>
+                <td>{{ f.follow_up_date|date:"Y-m-d H:i" }}</td>
+                <td>{{ f.priority }}</td>
+                <td>{{ f.notes }}</td>
+                <td>{{ f.next_action_required }}</td>
+                <td>
+                    <form method="post" action="{% url 'update_followup_status' f.id %}">
+                        {% csrf_token %}
+                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="Pending" {% if f.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Completed" {% if f.status == 'Completed' %}selected{% endif %}>Completed</option>
+                        </select>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">No follow-up records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

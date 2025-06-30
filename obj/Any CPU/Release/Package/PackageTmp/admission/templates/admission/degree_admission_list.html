@@ -1,0 +1,140 @@
+{% extends 'master/layout.html' %}
+{% block title %}Degree Admission List{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Degree Admission List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f8f8;
+            padding: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: #fff;
+            box-shadow: 0 0 10px #ccc;
+        }
+
+        th {
+            padding: 7px 11px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 12px;
+
+        }
+
+        td {
+            padding: 7px 9px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 9px;
+        }
+
+        th {
+            background-color: #8B0000;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #d7e2fb;
+        }
+
+        thead {
+            border-color: #8b0000;
+            border-style: solid;
+            border-width: 0;
+        }
+
+        th {
+            border-color: #000;
+            border-style: solid;
+            border-width: 0;
+            padding: 1px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .caption {
+            caption-side: top;
+            font-size: 1.5em;
+            margin-bottom: -29px;
+            font-weight: bold;
+            color: #800000 !important;
+            margin-top: -29px;
+            margin-left: 216px;
+        }
+
+        .content {
+            padding: 32px 26px 18px;
+        }
+
+
+        .btn-colors {
+            min-width: 58px;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            padding: 0px;
+            font-size: 9px;
+            background: #800;
+            color: white;
+            padding: 2px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <h4 class="caption">Degree Admission List</h4>
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry No</th>
+                <th>Admission No</th>
+                <th>Student Name</th>
+                <th>Gender</th>
+                <th>Course</th>
+                <th>PU %</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Admission Taken By </th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in admissions %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ student.enquiry_no }}</td>
+                <td>{{ student.admission_no }}</td>
+                <td>{{ student.student_name }}</td>
+                <td>{{ student.gender }}</td>
+                <td>{{ student.course }}</td>
+                <td>{{ student.pu_percentage }}</td>
+                <td>{{ student.student_phone_no }}</td>
+                <td>{{ student.status }}</td>
+                <td>{{ student.created_by_username }}</td>
+                <td>
+                    <a href="{% url 'edit_degree_admission' student.pk %}"  class="btn-colors">View/Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align:center;">No admissions found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+{% endblock %}

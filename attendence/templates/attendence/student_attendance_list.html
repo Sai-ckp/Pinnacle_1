@@ -1,0 +1,390 @@
+{% extends 'master/layout.html' %}
+{% block title %}Student Attendance List{% endblock %}
+
+{% block content %}
+
+<style>
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: -14px;
+        margin-left: 101px;
+        margin-right: 27px;
+        width: 904px;
+    }
+
+    .filter-form input, .filter-form select {
+        margin: 4px;
+        padding: 6px;
+        font-size: 13px;
+    }
+
+    .export-btn {
+        margin: 4px;
+        padding: 6px 12px;
+        background-color: #800000;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+        .export-btn:hover {
+            background-color: #660000;
+        }
+
+    th {
+        background-color: #800000;
+        color: white;
+    }
+</style>
+
+<style>
+    .attendance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+
+    }
+
+    .attendance-header .heading {
+        font-size: 18px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin: 0;
+
+    }
+
+    .btn-attendance {
+        padding: 10px 15px;
+        font-size: 12px;
+        background-color: white;
+        color: black;
+        border: none;
+        border-radius: 5px !important;
+        border: 1px solid #6c757d !important;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+        margin-left: 778px;
+        margin-top: -36px;
+    }
+
+        .btn-attendance:hover {
+            background-color: #800000;
+            color: white;
+            text-decoration: none;
+        }
+
+    @media (max-width: 576px) {
+        .attendance-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .btn-attendance {
+            align-self: flex-end;
+        }
+    }
+</style>
+
+
+
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        table-layout: auto;
+
+    }
+
+    th, td {
+        padding: 5px;
+        border: 1px solid #dee2e6;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    th {
+        background-color: #800000 !important; /* Ensures override */
+        color: white !important;
+    }
+
+    .btn-add {
+        float: right;
+        margin-bottom: 15px;
+        background-color: white;
+        color: white;
+        font-size: 14px;
+        padding: 6px 12px;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+        .btn-add:hover {
+            background-color: #800000;
+            color: white;
+        }
+
+    .table-responsive {
+        margin-top: 20px;
+    }
+    h4{
+    text-align: center;
+    font-weight: 700;
+    color: #800000;
+    margin-bottom: 24px;
+    margin-top: -17px;
+    font-size: 22px;
+    }
+</style>
+
+<style>
+    .btn-custom-sm {
+        padding: 10px 61px; /* Top/Bottom, Left/Right */
+        font-size: 12px; /* Text size */
+        border-radius: 5px !important;
+        border: 1px solid #6c757d !important;
+        background-color: white; /* Dark background */
+        color: black; /* Text color */
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-custom-sm:hover {
+        background-color: #800000;; /* Slightly darker on hover */
+        color: #fff;
+    }
+
+    .btn-custom-sm:focus,
+    .btn-custom-sm:active {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+    }
+
+    @media (max-width: 576px) {
+        .btn-custom-sm {
+            font-size: 11px;
+            padding: 3px 8px;
+        }
+    }
+</style>
+
+<style>
+    .btn-custom-outline-sm {
+        padding: 10px 61px;
+        font-size: 12px;
+        border-radius: 5px;
+        background-color: white;
+        color: black; /* Secondary gray */
+        border: 1px solid #6c757d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-custom-outline-sm:hover {
+            background-color: #800000;
+            color: #fff;
+            text-decoration: none;
+        }
+
+
+    .btn-custom-outline-sm:focus,
+    .btn-custom-outline-sm:active {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.4);
+    }
+
+    @media (max-width: 576px) {
+        .btn-custom-outline-sm {
+            font-size: 11px;
+            padding: 3px 8px;
+        }
+    }
+</style>
+
+<style>
+    .pagination {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding-left: 0;
+        list-style: none;
+        margin: 1rem 0;
+        gap: 6px;
+    }
+
+    .page-item {
+        display: inline;
+    }
+
+    .page-link {
+        display: inline-block;
+        padding: 6px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background-color: white;
+        color: #212529;
+        text-decoration: none;
+    }
+        /* Hover effect for all pagination links */
+        .page-link:hover {
+            background-color: #800000; /* Maroon on hover */
+            color: white;
+            border-color: #800000;
+        }
+    .page-item.active .page-link {
+        background-color: white;
+        color: black;
+        border-color: #343a40;
+    }
+
+
+    .page-item.disabled .page-link {
+        color: #aaa;
+        pointer-events: none;
+        background-color: #f8f9fa;
+    }
+    .pagination-sm .page-link {
+        font-size: 13px;
+        padding: 4px 8px;
+    }
+
+    .content {
+        padding: 66px 26px 40px;
+        margin-left: 125px;
+    }
+
+</style>
+
+
+<div class="container mt-4">
+    <h4 style="text-align:center" class="heading">Student Attendance List</h4>
+    <!--<div class="attendance-header">
+        <a href="{% url 'student_attendance_form' %}" class="btn-attendance">+ Add Attendance</a>
+    </div>-->
+
+
+
+    <!-- Filter & Search Form -->
+    <form method="get" class="filter-form mb-3 d-flex flex-wrap align-items-center gap-2">
+
+        <select name="course" class="form-select form-select-sm" style="width: 148px;">
+            <option value="">-- Course --</option>
+            {% for course in courses %}
+            <option value="{{ course.name }}" {% if course.name == course_filter %}selected{% endif %}>{{ course.name }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="subject" class="form-select form-select-sm" style="width: 148px;">
+            <option value="">-- Subject --</option>
+            {% for subject in subjects %}
+            <option value="{{ subject.name }}" {% if subject.name == subject_filter %}selected{% endif %}>{{ subject.name }}</option>
+            {% endfor %}
+        </select>
+
+        <input type="date" name="date" class="form-control form-control-sm" value="{{ date_filter }}" style="width: 148px;">
+
+        <button class="btn-custom-sm">Filter</button>
+
+        <a href="{% url 'student_attendance_list' %}" class="btn-custom-outline-sm">Clear</a>
+
+    </form>
+
+
+    <!-- Export Buttons (placeholders) -->
+    <!--<div class="mb-2">
+        <a href="#" class="export-btn">Export PDF</a>
+        <a href="#" class="export-btn">Export Excel</a>
+    </div>-->
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover mt-3">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Course</th>
+                    <th>Subject</th>
+                    <th>Faculty Name</th>
+                    <th>Student Name</th>
+                    <th>Admission No</th>
+                    <th>Student UserID</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                    <th>Attendance (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in page_obj %}
+                <tr>
+                    <td>{{ rec.attendance_date }}</td>
+                    <td>{{ rec.course }}</td>
+                    <td>{{ rec.subject }}</td>
+                    <td>{{ rec.faculty_name }}</td>
+                    <td>{{ rec.student_name }}</td>
+                    <td>{{ rec.admission_no }}</td>
+                    <td>{{ rec.student_userid }}</td>
+                    <td>{{ rec.get_status_display }}</td>
+                    <td>{{ rec.remarks }}</td>
+                    <td>{{ rec.overall_attendance|default_if_none:"" }}</td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center">No attendance records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+<nav class="mt-3">
+  <ul class="pagination d-flex flex-wrap justify-content-center pagination-sm" style="gap: 6px; font-size: 13px;">
+    
+    {% if page_obj.number > 1 %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1">« First</a>
+      </li>
+    {% endif %}
+
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">‹ Prev</a>
+      </li>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next ›</a>
+      </li>
+    {% endif %}
+
+    {% if page_obj.number < page_obj.paginator.num_pages %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last »</a>
+      </li>
+    {% endif %}
+    
+  </ul>
+</nav>
+
+
+
+
+
+
+</div>
+{% endblock %}
+
+

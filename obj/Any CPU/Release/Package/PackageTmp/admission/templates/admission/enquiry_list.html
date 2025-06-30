@@ -1,0 +1,219 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}Enquiry List{% endblock %}
+
+{% block content %}
+<style>
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: 1px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .icon-btn i {
+            font-size: 9px;
+            color: #800000;
+        }
+
+
+   /* .icon-btn:hover {
+        background-color: #e2e6ea;
+    }*/
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+   /* .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 10px;
+        margin-left: -94px;
+    }*/
+   
+    td:contains("Pending Follow-up") {
+        color: red;
+        font-weight: bold;
+    }
+
+    td:contains("Follow-up Scheduled") {
+        color: orange;
+        font-weight: 600;
+    }
+
+    td:contains("Follow-up Required") {
+        color: gray;
+    }
+
+
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        color: #333;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+
+    th {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+    }
+    .mb-4 {
+        color: #800000;
+        font-size: 20px;
+    }
+
+    td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+        font-size: 9px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    @media (max-width: 768px) {
+        table {
+            font-size: 11px;
+        }
+    }
+  
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    .content {
+        padding: 79px 17px 18px;
+        flex-grow: 1;
+        margin-left: -76px;
+        /* border-radius: 5px; */
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Enquiry List</h2>
+
+    {% if selected_form %}
+    <div class="card mt-4 p-4">
+        <h5 class="mb-3">Viewing Enquiry: {{ enquiry_no }}</h5>
+        <form>
+            {{ selected_form.as_p }}
+            <a href="{% url 'enquiry_list' %}" class="btn btn-secondary mt-3">Close</a>
+        </form>
+    </div>
+    {% endif %}
+
+    <table class="table table-bordered table-striped table-hover mt-4">
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry No</th>
+                <th>Student Name</th>
+                <th>Date</th>
+                <th>Phone</th>
+                <th>Course</th>
+                <th>Enquiry Created_by</th>
+                <th>Status</th>
+
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enquiry in enquiries %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ enquiry.enquiry_no }}</td>
+                <td>{{ enquiry.student_name }}</td>
+                <td>{{ enquiry.enquiry_date }}</td>
+                <td>{{ enquiry.parent_phone }}</td>
+                <td>{{ enquiry.course_type.name }} - {{ enquiry.course.name }}</td>
+                <td>{{ enquiry.created_by_username }}</td>
+                <td {% if enquiry.followup_status == 'Pending Follow-up' %}
+                    style="color: red; font-weight: bold;"
+                    {% elif enquiry.followup_status == 'Follow-up Scheduled' %}
+                    style="color: orange; font-weight: bold;"
+                    {% elif enquiry.followup_status == 'Follow-up Required' %}
+                    style="color: blue; font-weight: bold;"
+                    {% endif %}>
+                    {{ enquiry.followup_status }}
+                </td>
+                <td>
+                    <a href="{% url 'view_enquiry' enquiry.enquiry_no %}" class="icon-btn" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="tel:{{ enquiry.parent_phone }}" class="icon-btn" title="Call">
+                        <i class="fas fa-phone-alt"></i>
+                    </a>
+                    <a href="{% url 'upload_excel' %}?enquiry_no={{ enquiry.enquiry_no }}" class="icon-btn" title="Upload WhatsApp Message">
+                        <i class="fas fa-comment-alt"></i>
+                    </a>
+
+                    <a href="{% url 'convert_enquiry' enquiry.enquiry_no %}" class="icon-btn" title="Convert to Admission">
+                        <i class="fas fa-exchange-alt"></i>
+                    </a>
+                </td>
+
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center alert">No enquiries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if show_bulk_upload %}
+    <hr>
+    <h4 class="mt-4 text-primary">Upload Excel for WhatsApp Bulk Messaging</h4>
+    <form method="post" enctype="multipart/form-data" action="{% url 'upload_excel' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="template_name">Template Name</label>
+            <input type="text" name="template_name" id="template_name" class="form-control" required>
+        </div>
+        <div class="form-group mt-2">
+            <label for="file">Upload Excel File</label>
+            <input type="file" name="file" id="file" accept=".xlsx, .xls" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Upload and Send</button>
+    </form>
+    {% endif %}
+
+</div>
+{% endblock %}
+

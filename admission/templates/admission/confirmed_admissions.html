@@ -1,0 +1,139 @@
+{% extends 'master/layout.html' %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(to bottom right, #f0f0f0, #d6d6d6);
+    }
+
+    .container {
+        width: 95%;
+        max-width: 1000px;
+        margin: 0 auto;
+        margin-top: -42px;
+        background-color: #fff;
+        padding: 17px 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    h2 {
+        color: #800000;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    thead {
+        background-color: #800000;
+        color: white;
+    }
+
+    th {
+        padding: 0px 3px;
+        border: 1px solid #ddd;
+        font-size: 12px;
+    }
+
+    td {
+        padding: 0px 3px;
+        border: 1px solid #ddd;
+        font-size: 9px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .btn-sm {
+        font-size: 10px;
+        padding: 1px 4px;
+        border-radius: 4px;
+    }
+
+    .btn-primary {
+        background-color: #800000;
+        border-color: #800000;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background-color: #660000;
+            border-color: #660000;
+        }
+
+    .btn-warning {
+        background-color: #800;
+        /* border-color: #e6b800; */
+        color: #eee;
+    }
+
+        .btn-warning:disabled {
+            background-color: #f5f5f5;
+            border-color: #ccc;
+            color: #aaa;
+        }
+
+    .text-success {
+        color: #28a745;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container">
+    <h2>Confirmed Admissions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Admission ID</th>
+                <th>Student Name</th>
+                <th>Course</th>
+                <th>Application Date</th>
+                <th>Tuition Advance</th>
+                <th>UserID</th>
+                <th>Password</th>
+                <th>Action</th>
+                <th>Send Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for admission in admissions_list %}
+            <tr>
+                <td>{{ admission.admission_no }}</td>
+                <td>{{ admission.student_name }}</td>
+                <td>{{ admission.course }}</td>
+                <td>{{ admission.admission_date }}</td>
+                <td>
+                    {% if admission.tuition_advance_amount != None %}
+                    {{ admission.tuition_advance_amount|floatformat:2 }}
+                    {% else %}
+                    0.00
+                    {% endif %}
+                </td>
+                <td>{{ admission.student_userid|default:"-" }}</td>
+                <td>{{ admission.student_password|default:"-" }}</td>
+                <td>
+                    {% if not admission.student_userid %}
+                    <form method="post" action="{% url 'generate_student_userid' admission.admission_no %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm">Generate ID</button>
+                    </form>
+                    {% else %}
+                    <span class="text-success">ID Generated</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-warning btn-sm" {% if not admission.student_userid %}disabled{% endif %}>Send Email</button>
+                </td>
+            </tr>
+            {% endfor %}
+    </table>
+    {% endblock %}

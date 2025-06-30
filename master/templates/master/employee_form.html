@@ -1,0 +1,195 @@
+﻿{% extends 'master/layout.html' %}
+{% block title %}Add Employee{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f4f6f9;
+        color: #333;
+    }
+
+    .form-container {
+        max-width: 900px;
+        margin: -64px auto;
+        background: #ffffff;
+        padding: 64px;
+        padding-bottom: 12px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    }
+
+    h3 {
+        font-weight: 600;
+        color: #8b0000;
+        margin-bottom: 20px;
+        font-size: 20px;
+        text-align: center;
+        margin-top: -37px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        font-size: 12px;
+        margin-bottom: 2px;
+    }
+
+    input, textarea, select {
+        font-size: 10px;
+        width: 100%;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        padding: 3px 5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        font-size: 10px;
+        padding: 3px 5px;
+        border-radius: 5px;
+    }
+
+    .btn-save {
+        background-color: #a23030;
+        font-weight: 500;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: white;
+        width: 100px;
+        margin-top: 10px;
+    }
+
+        .btn-save:hover {
+            background-color: #8b0000;
+        }
+
+    .text-danger {
+        font-size: 10px;
+    }
+</style>
+
+<div class="container form-container">
+    <h3>Add Employee</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <!-- Employee Code -->
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="{{ form.emp_code.id_for_label }}">Employee Code</label>
+                {{ form.emp_code }}
+                {% if form.emp_code.errors %}
+                <div class="text-danger">{{ form.emp_code.errors }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Category (required for JS toggle) -->
+            {% for field in form %}
+            {% if field.name == 'category' %}
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="text-danger">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+
+            <!-- Designation -->
+            <div class="col-md-6 mb-3" id="designation-wrapper">
+                <label class="form-label" for="{{ form.designation.id_for_label }}">{{ form.designation.label }}</label>
+                {{ form.designation }}
+                {% if form.designation.errors %}
+                <div class="text-danger">{{ form.designation.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3" id="role-in-subject-wrapper">
+                <label class="form-label" for="{{ form.role_in_subject.id_for_label }}">{{ form.role_in_subject.label }}</label>
+                {{ form.role_in_subject }}
+                {% if form.role_in_subject.errors %}
+                <div class="text-danger">{{ form.role_in_subject.errors }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Role -->
+            <div class="col-md-6 mb-3" id="role-wrapper">
+                <label class="form-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+                {{ form.role }}
+                {% if form.role.errors %}
+                <div class="text-danger">{{ form.role.errors }}</div>
+                {% endif %}
+            </div>
+
+            <!-- All Other Fields -->
+            {% for field in form %}
+            {% if field.name not in excluded_fields %}
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="text-danger">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-save">Save</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const categoryField = document.getElementById("{{ form.category.id_for_label }}");
+
+        const designationWrapper = document.getElementById("designation-wrapper");
+        const roleWrapper = document.getElementById("role-wrapper");
+        const roleInSubjectWrapper = document.getElementById("role-in-subject-wrapper");
+
+        // Store original elements for restoration
+        const designationClone = designationWrapper.cloneNode(true);
+        const roleClone = roleWrapper.cloneNode(true);
+        const roleSubjectClone = roleInSubjectWrapper.cloneNode(true);
+
+        function removeElementIfExists(el) {
+            if (el && el.parentNode) {
+                el.parentNode.removeChild(el);
+            }
+        }
+
+        function toggleFields() {
+            const value = categoryField.value;
+
+            // Remove all 3 first
+            removeElementIfExists(document.getElementById("designation-wrapper"));
+            removeElementIfExists(document.getElementById("role-wrapper"));
+            removeElementIfExists(document.getElementById("role-in-subject-wrapper"));
+
+            if (value !== "Non-Teaching Staff") {
+                // Insert them back in order
+                const row = document.querySelector(".container form .row");
+
+                // Find where to insert (after Category)
+                const categoryIndex = Array.from(row.children).findIndex(child =>
+                    child.contains(categoryField)
+                );
+
+                row.insertBefore(designationClone, row.children[categoryIndex + 1]);
+                row.insertBefore(roleSubjectClone, row.children[categoryIndex + 2]);
+                row.insertBefore(roleClone, row.children[categoryIndex + 3]);
+            }
+        }
+
+        categoryField.addEventListener("change", toggleFields);
+
+        // Initial toggle on load
+        toggleFields();
+    });
+</script>
+
+
+{% endblock %}

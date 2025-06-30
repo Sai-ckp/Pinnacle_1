@@ -1,0 +1,92 @@
+{% extends 'master/layout.html' %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Course List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h2 {
+            color: #343a40;
+            font-size: 20px;
+            margin-left: 235px;
+            margin-top: -52px;
+        }
+
+        .btn-success {
+            font-weight: bold;
+        }
+
+        table.table {
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+            table.table thead th {
+                background-color: #0274ee;
+                color: #495057;
+                text-align: center;
+                padding: 0px;
+                font-size: 12px;
+            }
+
+            table.table tbody td {
+                text-align: center;
+                vertical-align: middle;
+                padding: 0px;
+                font-size: 9px;
+            }
+
+        .container {
+            max-width: 900px;
+        }
+
+        .btn {
+            background-color: #0274ee;
+            padding: 0px;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 41px 26px 18px;
+        }
+    </style>
+</head>
+<body class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Courses</h2>
+        <a href="{% url 'course_create' %}">Add Course</a>
+        <table border="1">
+            <tr>
+                <th>Name</th>
+                <th>Course Type</th>
+                <th>Duration (Years)</th>
+                <th>Semesters</th>
+                <th>Actions</th>
+            </tr>
+            {% for course in courses %}
+            <tr>
+                <td>{{ course.name }}</td>
+                <td>{{ course.course_type.name }}</td>
+                <td>{{ course.duration_years }}</td>
+                <td>{{ course.total_semesters }}</td>
+                <td>
+                    <a href="{% url 'course_edit' course.pk %}">Edit</a> |
+                    <a href="{% url 'course_delete' course.pk %}">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+</body>
+</html>
+
+{% endblock %}

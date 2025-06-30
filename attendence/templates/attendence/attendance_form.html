@@ -1,0 +1,199 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}Attendance Entry{% endblock %}
+
+{% block content %}
+<div style="width: 100vw; padding: 2rem;">
+    <div class="form-card mx-auto" style="width: 65%; max-width: 100%;">
+        <div class="form-title">
+            {% if mode == 'edit' %}
+            Edit Attendance Entry
+            {% elif mode == 'view' %}
+            View Attendance Entry
+            {% else %}
+            Add Attendance Entry
+            {% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="alert">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <!-- Employee Dropdown -->
+                <div class="form-group">
+                    {{ form.employee.label_tag }}
+                    {{ form.employee }}
+                </div>
+
+                <!-- Auto-filled Read-only Fields -->
+                <div class="form-group">
+                    <label for="emp_code">Employee Code</label>
+                    <input type="text" id="emp_code" readonly placeholder="Auto-filled">
+                </div>
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" readonly placeholder="Auto-filled">
+                </div>
+
+                <!-- Date Field -->
+                <div class="form-group">
+                    {{ form.date.label_tag }}
+                    {% if mode == 'view' %}
+                    <input type="date" value="{{ attendance.date|date:'Y-m-d' }}" readonly>
+                    {% else %}
+                    {{ form.date }}
+                    {% endif %}
+                </div>
+
+                <!-- Check-in Field -->
+                <div class="form-group">
+                    {{ form.check_in.label_tag }}
+                    {% if mode == 'view' %}
+                    <input type="time" value="{{ attendance.check_in|time:'H:i' }}" readonly>
+                    {% else %}
+                    {{ form.check_in }}
+                    {% endif %}
+                </div>
+
+                <!-- Check-out Field -->
+                <div class="form-group">
+                    {{ form.check_out.label_tag }}
+                    {% if mode == 'view' %}
+                    <input type="time" value="{{ attendance.check_out|time:'H:i' }}" readonly>
+                    {% else %}
+                    {{ form.check_out }}
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if mode != 'view' %}
+            <div class="form-actions">
+                <button type="submit" class="btn">
+                    {% if mode == 'edit' %}Update{% else %}Submit{% endif %}
+                </button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-card {
+            background: #fff;
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #800000;
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+            .form-group label {
+                font-weight: 500;
+                margin-bottom: 6px;
+                color: #333;
+                font-size: 13px;
+            }
+
+            .form-group input,
+            .form-group select {
+                padding: 8px 10px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                font-size: 13px;
+            }
+
+        .form-actions {
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .btn {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            background-color: #800000;
+            color: white;
+        }
+
+        /*    .btn-primary {
+            background-color: #0274ee;
+            color: white;
+        }
+
+            .btn-primary:hover {
+                background-color: #025fc1;
+            }
+    */
+        .alert {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #f5c6cb;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+    .content {
+        padding: 2px 26px 40px;
+        margin-left: 200px;
+    }
+</style>
+
+<script>
+    function fetchDepartmentAndCode() {
+        var select = document.getElementById("id_employee");
+        var empId = select.value;
+        if (!empId) return;
+        fetch(`/api/employee/${empId}/`)
+            .then(resp => resp.json())
+            .then(data => {
+                document.getElementById("department").value = data.department;
+                document.getElementById("emp_code").value = data.emp_code;
+            });
+    }
+
+    window.addEventListener("DOMContentLoaded", function () {
+        const employeeSelect = document.getElementById("id_employee");
+        if (employeeSelect && (employeeSelect.value || '{{ mode }}' !== 'add')) {
+            fetchDepartmentAndCode();
+        }
+        if (employeeSelect) {
+            employeeSelect.addEventListener("change", fetchDepartmentAndCode);
+        }
+    });
+</script>
+{% endblock %}

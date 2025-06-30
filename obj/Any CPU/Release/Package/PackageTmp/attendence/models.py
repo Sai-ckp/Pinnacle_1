@@ -1,0 +1,106 @@
+﻿from django.db import models
+
+
+
+# Create your models here.
+class Period(models.Model):
+    name = models.CharField(max_length=20)  # e.g., "Period 1"
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_extra = models.BooleanField(default=False)
+ 
+    def __str__(self):
+        return self.name
+
+# from your_student_app.models import Student
+from django.utils import timezone
+from master.models import Student,Employee
+
+class PeriodAttendance(models.Model):
+    STATUS_CHOICES = [
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+    ]
+ 
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    period = models.ForeignKey(Period, on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    marked_by = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True)
+    marked_time = models.DateTimeField(default=timezone.now)
+ 
+    class Meta:
+        unique_together = ('student', 'period', 'date')
+ 
+    def __str__(self):
+        return f"{self.student.name} - {self.period.name} - {self.date} - {self.status}"
+
+
+    from django.db import models
+from master.models import Employee  # Adjust if Employee is in another app
+
+class attendancesettings(models.Model):
+    check_in_time = models.TimeField(default="09:00")
+    grace_period = models.IntegerField(default=15)  # in minutes
+    late_threshold = models.IntegerField(default=40)  # in minutes
+
+    class Meta:
+        db_table = 'attendence_attendancesettings'
+
+import datetime
+
+class attendance(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    date = models.DateField()
+    check_in = models.TimeField()
+    check_out = models.TimeField(null=True, blank=True)
+    status = models.CharField(max_length=20)  # 'Present', 'Late', 'Absent'
+ 
+    def save(self, *args, **kwargs):
+        # Define time boundaries
+        present_start = datetime.time(9, 0)
+        present_end = datetime.time(9, 5)
+        late_end = datetime.time(9, 15)
+ 
+        if self.check_in:
+            if present_start <= self.check_in <= present_end:
+                self.status = "Present"
+            elif present_end < self.check_in <= late_end:
+                self.status = "Late"
+            else:
+                self.status = "Absent"
+        else:
+            self.status = "Absent"
+        super().save(*args, **kwargs)
+
+
+from django.db import models
+from master.models import StudentDatabase, Subject
+
+
+class StudentAttendance(models.Model):
+    STATUS_CHOICES = [
+        ('present', 'Present'),
+        ('late', 'Late'),
+        ('absent', 'Absent'),
+    ]
+
+    course = models.CharField(max_length=100, null=True, blank=True)
+    subject = models.CharField(max_length=100, null=True, blank=True)
+    attendance_date = models.DateField(null=True, blank=True)
+    faculty_name = models.CharField(max_length=100, null=True, blank=True)
+
+    student_name = models.CharField(max_length=100, null=True, blank=True)
+    admission_no = models.CharField(max_length=20, null=True, blank=True)
+    student_userid = models.CharField(max_length=50, null=True, blank=True)
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
+    remarks = models.CharField(max_length=255, blank=True, null=True)
+    overall_attendance = models.FloatField(default=0, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.student_name} ({self.admission_no}) - {self.subject} on {self.attendance_date}: {self.status}"
+
+    class Meta:
+        unique_together = ('admission_no', 'subject', 'attendance_date')
+

@@ -1,0 +1,1025 @@
+﻿{% extends 'master/layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="form-card mx-auto" style="max-width: 800px; position: relative; display: flex; flex-direction: column;">
+
+        <!-- Logo & Heading -->
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/fbZjQX3j/Untitled-Project.jpg" alt="College Logo">
+            <h2>DEGREE Admission Form</h2>
+        </div>
+
+        <!-- Upload Photo -->
+        <div class="photo-section">
+            <label class="photo-label">Photo</label>
+            <div class="photo-upload" id="uploadBox">
+                {{ form.photo }}
+                <img id="photoPreview" src="" alt="Photo Preview" style="max-height: 150px; display: none; margin-top: 10px;" />
+            </div>
+        </div>
+
+
+        <form method="POST" enctype="multipart/form-data" style="flex: 1; display: flex; flex-direction: column;">
+            {% csrf_token %}
+
+            <div class="form-grid" style="flex: 1;">
+                <!-- IDENTIFIERS -->
+                <div class="form-group">
+                    <label class="form-label">Admission Number</label>
+                    <input type="text" class="form-control bg-light" value="{{ next_admission_no }}" readonly>
+                    {{ form.admission_no.as_hidden }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Enquiry Number:</label>
+                    <input type="text" id="id_enquiry_no" name="enquiry_no" maxlength="20" autocomplete="off" class="form-control" value="{{ form.enquiry_no.value|default:'' }}" />
+
+                    <small id="enquiry-error" style="color: red; display: none;">Enquiry number not found or not for PU</small>
+                </div>
+                <!-- PERSONAL DETAILS -->
+                <div class="form-group">
+                    <label for="id_student_name">Student Name <span style="color:red">*</span></label>
+                    {{ form.student_name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SATS Number</label>
+                    <input type="text" name="sats_number" class="form-control bg-light" placeholder="Enter SATS Number" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date of Birth</label>
+                    {{ form.dob }}
+                </div>
+                <div class="form-group">
+                    <label for="id_gender">Gender <span style="color:red">*</span></label>
+                    {{ form.gender }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Blood Group</label>
+                    {{ form.blood_group }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nationality</label>
+                    {{ form.nationality }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Religion</label>
+                    {{ form.religion }}
+                </div>
+
+                <!-- CONTACT DETAILS -->
+                <div class="form-group">
+                    <label class="form-label">Parent Name</label>
+                    {{ form.parent_name }}
+                </div>
+                <div class="form-group">
+                    <label for="id_parent_mobile_no">Parent Phone No <span style="color:red">*</span></label>
+                    {{ form.parent_phone_no }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Parent Email</label>
+                    {{ form.email }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Student Phone No</label>
+                    {{ form.student_phone_no }}
+                </div>
+                <div class="form-group">
+                    <label for="id_aadhar_no">Aadhar No <span style="color:red">*</span></label>
+                    {{ form.aadhar_no }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pincode</label>
+                    {{ form.pincode }}
+                </div>
+
+
+                <div class="form-group">
+                    <label class="form-label">Current Address</label>
+                    {{ form.current_address }}
+                </div>
+                <div class="form-group">
+                    <label for="id_permanent_address">Permanent Address <span style="color:red">*</span></label>
+                    {{ form.permanent_address }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    {{ form.city }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">State</label>
+                    {{ form.state }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Parent's Occupation</label>
+                    {{ form.parents_occupation }}
+                </div>
+                <div class="form-group">
+                    <label for="id_emergency_contact">Emergency Contact <span style="color:red">*</span></label>
+                    {{ form.emergency_contact }}
+                </div>
+
+                <!-- ACADEMIC DETAILS -->
+                <h4 class="mt-4 mb-3">Academic Details</h4>
+                <div class="form-group">
+                    <label class="form-label">PU Registration No</label>
+                    {{ form.pu_reg_no }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">PU Percentage</label>
+                    {{ form.pu_percentage }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Year of Passing (MM-YYYY)</label>
+                    {{ form.year_of_passing }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SSLC Registration No</label>
+                    {{ form.sslc_reg_no }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SSLC Percentage</label>
+                    {{ form.sslc_percentage }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">PU College Name</label>
+                    {{ form.pu_college_name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Medium</label>
+                    {{ form.medium }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Second Language</label>
+                    {{ form.second_language }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">College Last Attended</label>
+                    {{ form.college_last_attended }}
+                </div>
+                <!-- COURSE DETAILS -->
+                <div class="form-group">
+                    <label class="form-label">Course Type</label>
+                    {{ form.course_type }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Combination (Course)</label>
+                    {{ form.course }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quota Type</label>
+                    {{ form.quota_type }}
+                </div>
+
+                <!-- TRANSPORT & HOSTEL -->
+                <!-- Hostel Required Yes/No -->
+                <div class="form-group checkbox-inline" style="grid-column: 1 / 2;">
+                    <label class="form-label me-2">Hostel Required:</label>
+                    <input type="radio" id="hostel_yes" name="hostel_required" value="yes" class="form-check-input me-1" style="margin-left:10px;">
+                    <label for="hostel_yes" class="me-3" style="margin-right:10px;">Yes</label>
+                    <input type="radio" id="hostel_no" name="hostel_required" value="no" class="form-check-input me-1" style="margin-left:10px;">
+                    <label for="hostel_no">No</label>
+                </div>
+
+                <!-- Hostel Amount Field (hidden initially) -->
+                <div class="form-group" id="hostel_amount_group" style="display: none;">
+                    <label class="form-label">Enter Hostel Amount</label>
+                    <input type="text" name="hostel_amount" class="form-control" placeholder="Enter amount" />
+                </div>
+
+                <div class="form-group checkbox-inline" style="grid-column: 1 / 2;">
+                    <label class="form-label me-2">Transport:</label>
+                    <input type="radio" id="transport_yes" name="wants_transport" value="yes" class="form-check-input me-1" style="margin-left:10px;">
+                    <label for="transport_yes" class="me-3" style="margin-right:10px;">Yes</label>
+                    <input type="radio" id="transport_no" name="wants_transport" value="no" class="form-check-input me-1" style="margin-left:10px;">
+                    <label for="transport_no">No</label>
+                </div>
+                <div class="form-group" id="transport_dropdown_div" style="display: none;">
+                    <label class="form-label">Transport Route/Details</label>
+                    {{ form.transport }}
+                </div>
+
+                <!-- SCHOLARSHIP SECTION -->
+                <div class="form-group checkbox-inline" style="grid-column: 1 / 2;">
+                    <label class="form-label me-2">Scholarship:</label>
+                    <input type="radio" id="scholarship_yes" name="has_scholarship" value="yes" class="form-check-input me-1" style="margin-left:10px;">
+                    <label for="scholarship_yes" class="me-3" style="margin-right:10px;">Yes</label>
+                    <input type="radio" id="scholarship_no" name="has_scholarship" value="no" class="form-check-input me-1" style="margin-left:10px;">
+                    <label for="scholarship_no">No</label>
+                </div>
+                <div class="form-group" id="scholarship_amount_group" style="display: none;">
+                    <label class="form-label">Enter Scholarship Amount</label>
+                    <input type="text" name="scholarship_amount" class="form-control" placeholder="Enter amount" />
+                </div>
+
+                <!-- LAST STUDIED COURSE DETAILS -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <h4 class="mt-4 mb-3">Last Studied Course Details</h4>
+                    <table class="table table-bordered table-striped mb-4">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Register No (Course)</th>
+                                <th>Month & Year Passed</th>
+                                <th>Subject Studied</th>
+                                <th>Marks Obtained</th>
+                                <th>Total Marks / %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="6">{{ form.register_no_course }}</td>
+                                <td rowspan="6">{{ form.month_year_passed }}</td>
+                                <td>{{ form.subject1 }}</td>
+                                <td>{{ form.marks_obtained1 }}</td>
+                                <td>{{ form.total_marks_percentage1 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ form.subject2 }}</td>
+                                <td>{{ form.marks_obtained2 }}</td>
+                                <td>{{ form.total_marks_percentage2 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ form.subject3 }}</td>
+                                <td>{{ form.marks_obtained3 }}</td>
+                                <td>{{ form.total_marks_percentage3 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ form.subject4 }}</td>
+                                <td>{{ form.marks_obtained4 }}</td>
+                                <td>{{ form.total_marks_percentage4 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ form.subject5 }}</td>
+                                <td>{{ form.marks_obtained5 }}</td>
+                                <td>{{ form.total_marks_percentage5 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ form.subject6 }}</td>
+                                <td>{{ form.marks_obtained6 }}</td>
+                                <td>{{ form.total_marks_percentage6 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ACTIVITIES -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label class="form-label fw-bold">Co-Curricular Activities</label>
+                    {{ form.co_curricular_activities }}
+                </div>
+
+                <!-- DECLARATION DETAILS -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <h4 class="mt-4 mb-3">Declaration Details</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Student Declaration Date</label>
+                            {{ form.student_declaration_date }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Student Declaration Place</label>
+                            {{ form.student_declaration_place }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parent Declaration Date</label>
+                            {{ form.parent_declaration_date }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parent Declaration Place</label>
+                            {{ form.parent_declaration_place }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <label class="form-label">Admitted To</label>
+                    {{ form.admitted_to }}
+                </div>
+
+                <!-- REQUIRED DOCUMENTS SECTION -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <h4 class="mt-4 mb-3">Documents Submitted <span style="color:red">*</span></h4>
+                    <div class="form-grid">
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">Aadhar Card</label>
+                            <input type="checkbox" name="doc_aadhar" />
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">General/Relevant Marks Card</label>
+                            <input type="checkbox" name="doc_marks_card" />
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">Caste Certificate</label>
+                            <input type="checkbox" name="doc_caste_certificate" />
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">Income Certificate</label>
+                            <input type="checkbox" name="doc_income_certificate" />
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">Transfer Certificate</label>
+                            <input type="checkbox" name="doc_transfer" />
+                        </div>
+                        <div class="form-group checkbox-inline">
+                            <label class="form-label">Migration/Eligibility Certificate</label>
+                            <input type="checkbox" name="doc_migration" />
+                        </div>
+                    </div>
+                    <div id="doc_check_error" style="color:red; font-size:13px;"></div>
+                </div>
+                <!-- OFFICE USE ONLY -->
+                <div class="form-group" style="grid-column: 1/-1;">
+                    <h4 class="mt-4 mb-3 text-uppercase text-primary">For Office Use Only</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Receipt No</label>
+                            {{ form.receipt_no }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Receipt Date (YYYY-MM-DD)</label>
+                            {{ form.receipt_date }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Payment Mode</label>
+                            {{ form.payment_mode }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">UTR No</label>
+                            {{ form.utr_no }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Admission Date:</label>
+                            {{ form.admission_date }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4" style="display: flex; justify-content: space-between; width: 100%;">
+                    <button type="submit" class="btn btn-primary btn-lg no-print">Submit</button>
+                </div>
+
+                {% if form_submission_success %}
+                <div class="alert alert-success text-center mt-3" role="alert">
+                    Admission form has been successfully submitted!
+                </div>
+                {% endif %}
+                {% if form.errors %}
+                <div class="alert alert-danger text-center mt-3" role="alert">
+                    Please correct the errors in the form.
+                    {{ form.errors }}
+                </div>
+                {% endif %}
+
+            </div> <!-- End form-grid -->
+        </form>
+
+    </div> <!-- End form-card -->
+</div> <!-- End container -->
+<script>
+    document.getElementById("id_pincode").addEventListener("change", function () {
+        var pincode = this.value;
+
+        if (pincode.length === 6 && /^\d+$/.test(pincode)) {
+            fetch("https://api.postalpincode.in/pincode/" + pincode)
+                .then(response => response.json())
+                .then(data => {
+                    if (data[0].Status === "Success") {
+                        const postOfficeData = data[0].PostOffice[0];
+                        document.getElementById("id_state").value = postOfficeData.State;
+
+                        // Instead of District, set City/Taluk from PostOffice 'Block' or 'Name'
+                        document.getElementById("id_city").value = postOfficeData.Block || postOfficeData.Name;
+                    } else {
+                        alert("Invalid PIN code");
+                    }
+                })
+                .catch(err => console.log(err));
+        }
+    });
+
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const photoInput = document.querySelector('input[name="photo"]');
+        const preview = document.getElementById('photoPreview');
+
+        photoInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+
+            if (file) {
+                // Validate file size (< 500 KB)
+                if (file.size > 500 * 1024) {
+                    alert("Photo size should be less than 500KB.");
+                    photoInput.value = ""; // Clear the selected file
+                    preview.src = "";
+                    preview.style.display = 'none';
+                    return;
+                }
+
+                // Display preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const hostelYes = document.getElementById('hostel_yes');
+        const hostelNo = document.getElementById('hostel_no');
+        const hostelAmountGroup = document.getElementById('hostel_amount_group');
+
+        function toggleHostelAmount() {
+            if (hostelYes.checked) {
+                hostelAmountGroup.style.display = 'block';
+            } else {
+                hostelAmountGroup.style.display = 'none';
+            }
+        }
+
+        hostelYes.addEventListener('change', toggleHostelAmount);
+        hostelNo.addEventListener('change', toggleHostelAmount);
+
+        // Run once on page load in case default is checked
+        toggleHostelAmount();
+    });
+</script>
+
+<style>
+    body {
+        background-color: #f1f1f1;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .form-card {
+        background: #fff;
+        padding: 40px 50px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    .form-title {
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+        font-size: 24px;
+        color: #343a40;
+    }
+
+    .photo-section {
+        position: absolute;
+        top: 82px;
+        right: 50px;
+        text-align: center;
+    }
+
+    .photo-label {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+        color: #555;
+    }
+
+    .logo-container {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+        .logo-container img {
+            max-width: 400px;
+            margin-bottom: -18px;
+        }
+
+        .logo-container h2 {
+            margin-top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+    .photo-upload {
+        width: 89px;
+        height: 82px;
+        border: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        cursor: pointer;
+        background-color: #fafafa;
+        font-size: 14px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .photo-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+    .edit-icon {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        font-size: 9px;
+        background-color: #0274ee;
+        color: white;
+        padding: 1px 1px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px 36px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .form-group.checkbox-inline {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+            .form-group.checkbox-inline .form-label {
+                margin: 0;
+                min-width: 180px; /* Adjust this value for standard spacing */
+                font-size: 12px;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .form-group.checkbox-inline input[type="checkbox"] {
+                margin-left: 8px;
+                width: 16px;
+                height: 16px;
+            }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: #333;
+        font-size: 12px;
+    }
+
+    .form-group select,
+    .form-group input {
+        padding: 5px 4px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 9px;
+    }
+
+    .btn {
+        font-size: 9px;
+        padding: 4px 7px;
+        border-radius: 5px;
+        margin-bottom: 0px;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: #800000;
+        color: white;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #025fc1;
+        }
+
+    @media print {
+        .btn,
+        .alert,
+        .photo-upload input,
+        .edit-icon,
+        .no-print,
+        .sidebar,
+        .topbar {
+            display: none !important;
+        }
+
+        body {
+            background: white;
+        }
+
+        .form-card {
+            box-shadow: none;
+            border: none;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .form-title {
+            font-size: 16pt;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+    }
+
+    .btn-sm {
+        padding: 3px 7px;
+        font-size: 8px;
+    }
+
+    .sidebar {
+        width: 200px;
+        height: 100vh;
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+        padding-top: 0px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 11px 8px;
+            display: block;
+            font-weight: 500;
+        }
+
+    .content {
+        padding: 0px 74px 18px;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Existing Transport Logic ...
+        const yes = document.getElementById('transport_yes');
+        const no = document.getElementById('transport_no');
+        const dropdown = document.getElementById('transport_dropdown_div');
+        let hostelInput = document.getElementById('id_hostel_required') || document.querySelector('[name="hostel_required"]');
+
+        function toggleTransportDropdown() {
+            if (yes && yes.checked) {
+                dropdown.style.display = 'block';
+                if (hostelInput) {
+                    hostelInput.disabled = true;
+                    if (hostelInput.type === "checkbox" || hostelInput.type === "radio") hostelInput.checked = false;
+                    else if (hostelInput.tagName === "SELECT") hostelInput.value = "";
+                }
+            } else if (no && no.checked) {
+                dropdown.style.display = 'none';
+                const select = dropdown.querySelector('select');
+                if (select) select.selectedIndex = 0;
+                if (hostelInput) hostelInput.disabled = false;
+            }
+        }
+
+        if (yes) yes.addEventListener('change', toggleTransportDropdown);
+        if (no) no.addEventListener('change', toggleTransportDropdown);
+        toggleTransportDropdown();
+
+        // ✅ Scholarship logic
+        const schYes = document.getElementById('scholarship_yes');
+        const schNo = document.getElementById('scholarship_no');
+        const schGroup = document.getElementById('scholarship_amount_group');
+
+        function toggleScholarshipField() {
+            if (schYes && schYes.checked) {
+                schGroup.style.display = 'block';
+            } else {
+                schGroup.style.display = 'none';
+                const input = schGroup.querySelector('input');
+                if (input) input.value = '';
+            }
+        }
+
+        if (schYes) schYes.addEventListener('change', toggleScholarshipField);
+        if (schNo) schNo.addEventListener('change', toggleScholarshipField);
+        toggleScholarshipField(); // Initialize
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const transportYes = document.getElementById('transport_yes');
+        const transportNo = document.getElementById('transport_no');
+        const transportDropdown = document.getElementById('transport_dropdown_div');
+
+        const hostelYes = document.getElementById('hostel_yes');
+        const hostelNo = document.getElementById('hostel_no');
+        const hostelAmountGroup = document.getElementById('hostel_amount_group');
+        const hostelAmountInput = hostelAmountGroup ? hostelAmountGroup.querySelector('input[name="hostel_amount"]') : null;
+
+        // Disable/Enable entire hostel block
+        function toggleHostelState(disable) {
+            hostelYes.disabled = disable;
+            hostelNo.disabled = disable;
+            if (hostelAmountInput) {
+                hostelAmountInput.disabled = disable;
+                if (disable) hostelAmountInput.value = '';
+            }
+            if (disable && hostelAmountGroup) hostelAmountGroup.style.display = 'none';
+        }
+
+        // Disable/Enable entire transport block
+        function toggleTransportState(disable) {
+            transportYes.disabled = disable;
+            transportNo.disabled = disable;
+            if (transportDropdown) {
+                transportDropdown.style.display = disable ? 'none' : (transportYes.checked ? 'block' : 'none');
+                const select = transportDropdown.querySelector('select');
+                if (select) {
+                    select.disabled = disable;
+                    if (disable) select.selectedIndex = 0;
+                }
+            }
+        }
+
+        // Show/hide hostel amount
+        function toggleHostelAmount() {
+            if (hostelYes.checked && !hostelYes.disabled) {
+                hostelAmountGroup.style.display = 'block';
+            } else {
+                hostelAmountGroup.style.display = 'none';
+                if (hostelAmountInput) hostelAmountInput.value = '';
+            }
+        }
+
+        // Master toggle logic
+        function masterToggle() {
+            if (transportYes.checked) {
+                transportDropdown.style.display = 'block';
+                toggleHostelState(true);
+            } else if (transportNo.checked) {
+                transportDropdown.style.display = 'none';
+                toggleHostelState(false);
+            }
+
+            if (hostelYes.checked) {
+                toggleHostelAmount();
+                toggleTransportState(true);
+            } else if (hostelNo.checked) {
+                toggleHostelAmount();
+                toggleTransportState(false);
+            }
+        }
+
+        // Event listeners
+        if (transportYes) transportYes.addEventListener('change', masterToggle);
+        if (transportNo) transportNo.addEventListener('change', masterToggle);
+        if (hostelYes) hostelYes.addEventListener('change', masterToggle);
+        if (hostelNo) hostelNo.addEventListener('change', masterToggle);
+
+        // Initialize state on page load
+        masterToggle();
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const aadharInput = document.getElementById('id_aadhar_no');
+        let aadharErrorShown = false;
+
+        if (aadharInput) {
+            // Only allow numbers while typing
+            aadharInput.addEventListener('keypress', function (e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Remove non-digit characters if pasted
+            aadharInput.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+                aadharErrorShown = false;
+            });
+
+            // Validate on blur
+            aadharInput.addEventListener('blur', function () {
+                const pattern = /^\d{12}$/;
+                if (!pattern.test(this.value) && this.value.length > 0) {
+                    if (!aadharErrorShown) {
+                        alert("Please enter a valid 12-digit Aadhar number (digits only).");
+                        aadharErrorShown = true;
+                    }
+                    this.focus();
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const phoneFields = [
+            document.getElementById('id_parent_phone_no'),
+            document.getElementById('id_student_phone_no'),
+            document.getElementById('id_emergency_contact')
+        ];
+
+        let errorShown = false;
+
+        phoneFields.forEach(function (input) {
+            if (input) {
+                // Only allow digits while typing
+                input.addEventListener('keypress', function (e) {
+                    const char = String.fromCharCode(e.which);
+                    if (!/[0-9]/.test(char)) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Validate on blur
+                input.addEventListener('blur', function () {
+                    const pattern = /^[6-9]\d{9}$/;
+                    if (!pattern.test(this.value) && this.value.length > 0) {
+                        if (!errorShown) {
+                            alert("Please enter a valid 10-digit Indian phone number starting with 6-9.");
+                            errorShown = true;
+                        }
+                        this.focus();
+                    }
+                });
+
+                // Reset error flag on input change
+                input.addEventListener('input', function () {
+                    errorShown = false;
+                    // Remove any non-digit characters pasted in
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            }
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailInput = document.getElementById('id_email'); // Adjust ID if needed
+        let emailErrorShown = false;
+
+        if (emailInput) {
+            // Remove spaces or invalid characters if pasted
+            emailInput.addEventListener('input', function () {
+                this.value = this.value.replace(/\s/g, '');
+                emailErrorShown = false;
+            });
+
+            // Validate format on blur
+            emailInput.addEventListener('blur', function () {
+                const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (this.value.length > 0 && !pattern.test(this.value)) {
+                    if (!emailErrorShown) {
+                        alert("Please enter a valid email address.");
+                        emailErrorShown = true;
+                    }
+                    this.focus();
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    document.getElementById('parent_mobile_no').addEventListener('input', function () {
+        const phoneInput = this.value;
+        const phoneError = document.getElementById('phoneError');
+        const isValid = /^[6-9]\d{9}$/.test(phoneInput);
+
+        if (!isValid && phoneInput.length > 0) {
+            phoneError.style.display = 'block';
+        } else {
+            phoneError.style.display = 'none';
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const capitalizeInputs = document.querySelectorAll('.capitalize-first-letter');
+
+        capitalizeInputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                if (this.value.length === 1) {
+                    this.value = this.value.toUpperCase();
+                }
+            });
+        });
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const capitalizeInputs = document.querySelectorAll('.capitalize-on-input');
+
+        capitalizeInputs.forEach(function (input) {
+            input.addEventListener('input', function () {
+                if (this.value.length === 1) {
+                    this.value = this.value.toUpperCase();
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const input = document.querySelector(".capitalize-name");
+
+        if (input) {
+            input.addEventListener("input", function () {
+                let value = input.value;
+
+                if (value.length === 1) {
+                    // Force first character to be uppercase
+                    input.value = value.toUpperCase();
+                } else if (value.length > 1) {
+                    // Keep first letter uppercase, rest as typed
+                    input.value = value.charAt(0).toUpperCase() + value.slice(1);
+                }
+            });
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const pincodeInput = document.getElementById('id_pincode');
+        const cityInput = document.getElementById('id_city');
+        const stateInput = document.getElementById('id_state');
+
+        function fetchPincodeData() {
+            const pincode = pincodeInput.value.trim();
+            if (pincode.length === 6 && /^\d+$/.test(pincode)) {
+                fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+                            const postOffice = data[0].PostOffice[0];
+                            cityInput.value = postOffice.Block && postOffice.Block !== "NA"
+                                ? postOffice.Block
+                                : postOffice.District || '';
+                            stateInput.value = postOffice.State || '';
+                        } else {
+                            // Optionally clear or show error if pincode not found
+                            // cityInput.value = "";
+                            // stateInput.value = "";
+                            // alert("Invalid or unknown pincode.");
+                        }
+                    })
+                    .catch(err => {
+                        // Optionally handle API error
+                        // alert("Unable to fetch city/state for pincode.");
+                    });
+            }
+        }
+
+        if (pincodeInput && cityInput && stateInput) {
+            // On blur (when field loses focus)
+            pincodeInput.addEventListener('blur', function () {
+                fetchPincodeData();
+            });
+
+            // On Enter key
+            pincodeInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    fetchPincodeData();
+                }
+            });
+        }
+    });
+
+</script>
+{% endblock %}

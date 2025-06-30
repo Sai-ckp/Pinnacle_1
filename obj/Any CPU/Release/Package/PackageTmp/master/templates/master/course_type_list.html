@@ -1,0 +1,7 @@
+<h2>Course Types</h2>
+<a href="{% url 'course_type_create' %}">Add Course Type</a>
+<ul>
+    {% for type in types %}
+    <li>{{ type.name }}</li>
+    {% endfor %}
+</ul>

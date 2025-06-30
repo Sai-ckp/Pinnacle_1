@@ -1,0 +1,23 @@
+{% extends 'master/bare.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<h2>Login</h2>
+{% if error %}
+<div class="alert">{{ error }}</div>
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    <select name="username" id="username" class="input-field" required>
+        <option value="">Select User</option>
+        {% for user in users %}
+        <option value="{{ user.username }}">{{ user.username }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="password" name="password" placeholder="Password" class="input-field" required>
+
+    <button type="submit">Login</button>
+</form>
+{% endblock %}

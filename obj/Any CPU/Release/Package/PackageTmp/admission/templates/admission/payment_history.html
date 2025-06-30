@@ -1,0 +1,198 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}Student Payment History{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(to bottom right, #f0f0f0, #d6d6d6);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    h2 {
+        color: maroon;
+        font-weight: bold;
+        margin-bottom: 14px;
+        text-align: center;
+        margin-top: -2px;
+    }
+
+    .btn-success {
+        background-color: maroon !important;
+        border-color: maroon !important;
+        color: white;
+        margin-left: 834px;
+        border-radius: 5px;
+    }
+
+    .btn-primary {
+        background-color: maroon !important;
+        border-color: maroon !important;
+        color: white;
+        margin-left: 554px;
+        margin-top: -24px;
+        border-radius: 5px;
+    }
+
+        .btn-success:hover, .btn-primary:hover {
+            background-color: #800000 !important;
+            border-color: #800000 !important;
+        }
+
+    .form-control, .form-select {
+        border-radius: 0.25rem;
+    }
+
+    .search-bar {
+        background: #eee;
+        padding: 3px;
+        border: 1px solid #ccc;
+        border-left: 0px solid maroon;
+        border-radius: 5px;
+        margin-bottom: 12px;
+    }
+
+
+    .table {
+        background-color: white;
+        border: 1px #000;
+        text-align: center;
+        width: 100%; /* Take full width of wrapper */
+        border-radius: 8px;
+    }
+
+        .table thead {
+            background: linear-gradient(to right, maroon, #800000);
+            color: white;
+        }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f2f2f2;
+    }
+
+    .action-link {
+        font-size: 11px;
+        color: maroon;
+        text-decoration: underline;
+    }
+
+        .action-link:hover {
+            color: #660000;
+        }
+
+    .info-message {
+        font-size: 13px;
+        color: #333;
+        margin-bottom: 10px;
+        background: #f0f0f0;
+        padding: 3px;
+        /* border-left: 0px solid #856404; */
+        border-radius: 3px;
+    }
+
+    .pagination a {
+        margin: 0 4px;
+        padding: 4px 8px;
+        color: maroon;
+        border: 1px solid maroon;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .pagination a:hover {
+            background-color: maroon;
+            color: white;
+        }
+
+    .pagination span {
+        font-weight: bold;
+        margin: 0 10px;
+    }
+</style>
+
+<h2>Student Payment History</h2>
+
+<a href="{% url 'export_payments_excel' %}" class="btn btn-success btn-sm mb-3">Export Payments to Excel</a>
+
+<div class="search-bar">
+    <form method="get" style="display: flex; flex-wrap: wrap; gap: 4px;">
+        <input type="text" name="search" placeholder="Enter Admission No or Name" value="{{ search_query }}" class="form-control" style="font-size: 12px; width: 220px;">
+
+       
+        <input type="date" name="due_date" value="{{ due_date }}" class="form-control" style="font-size: 12px; width: 160px;">
+
+         <select name="filter_status" class="form-select" style="font-size: 12px; width: 140px;">
+     <option value="">All Status</option>
+     <option value="paid" {% if filter_status == 'paid' %}selected{% endif %}>Paid</option>
+     <option value="pending" {% if filter_status == 'pending' %}selected{% endif %}>Pending</option>
+ </select>
+
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+
+        {% if not search_query and not filter_status and not due_date %}
+<div class="info-message">
+    Please search by Admission No or Name, or use filters above to view payment history.
+</div>
+{% endif %}
+    </form>
+</div>
+
+
+
+{% if history %}
+<table class="table table-bordered table-sm table-striped mt-2" style="font-size: 11px;">
+    <thead>
+        <tr>
+            <th>Admission No</th>
+            <th>Name</th>
+            <th>Course</th>
+            <th>Base Fee</th>
+            <th>Total Fee Paid</th>
+            <th>Pending Fee</th>
+            <th>Amount Paid</th>
+            <th>Payment Method</th>
+            <th>Paid On</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in history %}
+        <tr>
+            <td>{{ record.admission_no }}</td>
+            <td>{{ record.name }}</td>
+            <td>{{ record.course }}</td>
+            <td>{{ record.base_fee }}</td>
+            <td>{{ record.fee_paid }}</td>
+            <td>{{ record.final_fee }}</td>
+            <td>{{ record.amount }}</td>
+            <td>{{ record.payment_method }}</td>
+            <td>{{ record.payment_date|date:"Y-m-d" }}</td>
+            <td>
+                <a href="{% url 'download_student_receipt' record.id %}" target="_blank" class="action-link">Student PDF</a> |
+                <a href="{% url 'download_admin_receipt' record.id %}" target="_blank" class="action-link">Admin PDF</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10" class="text-center">No records found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination text-center mt-2" style="font-size: 12px; text-align: center; margin-top: 10px; ">
+    {% if page_obj.has_previous %}
+    <a href="?page=1&search={{ search_query }}&filter_status={{ filter_status }}&due_date={{ due_date }}">First</a>
+    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&filter_status={{ filter_status }}&due_date={{ due_date }}">Previous</a>
+    {% endif %}
+
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&filter_status={{ filter_status }}&due_date={{ due_date }}">Next</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&filter_status={{ filter_status }}&due_date={{ due_date }}">Last</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

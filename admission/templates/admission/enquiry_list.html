@@ -1,0 +1,331 @@
+﻿{% extends 'master/layout.html' %}
+
+{% block title %} Enquiries List{% endblock %}
+
+{% block content %}
+<style>
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+    h3.mb-4 {
+        text-align: center;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 24px;
+        font-size: 22px;
+    }
+
+    .container {
+        background-color: #ffffff;
+        padding: 19px;
+        margin-top: -62px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        margin-left: -88px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+        font-size: 9px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .form-select-sm {
+        border-radius: 4px;
+        font-size: 9px;
+        padding: 2px 6px;
+        background-color: #800000;
+        color: white;
+        border: none;
+    }
+
+    select.form-select-sm:focus {
+        border-color: #0f6bc6;
+        box-shadow: 0 0 0 0.2rem rgba(15, 107, 198, 0.25);
+        outline: none;
+    }
+
+    .text-center {
+        font-style: italic;
+        color: #888;
+    }
+
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    .icon-btn {
+        width: 19px;
+        height: 17px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 0;
+    }
+
+        .icon-btn i {
+            font-size: 11px;
+        }
+
+    /* Specific colors per action */
+
+    .btn-view {
+        background-color: #e2e6ea;
+        color: #800000;
+    }
+
+    .btn-call {
+        background-color: #d4edda;
+        color: #800000;
+    }
+
+    .btn-whatsapp {
+        background-color: #25D366;
+        color: #800000;
+    }
+
+    .btn-convert {
+        background-color: #800000;
+        color: #800000;
+    }
+</style>
+
+
+<div class="container mt-4">
+    <h2 class="mb-4" style=" color: #800000; margin-left: 452px; ">Enquiries List</h2>
+
+    <!-- Success and error messages block -->
+    {% if messages %}
+    <ul class="messages">
+
+        {% for message in messages %}
+        <li class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+
+            {{ message }}
+        </li>
+
+        {% endfor %}
+    </ul>
+
+    {% endif %}
+
+    <table class="table table-bordered table-striped table-hover mt-4">
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Enquiry No</th>
+                <th class="narrow-column">Student Name</th>
+                <th>Follow-up Date</th>
+                <th>Phone</th>
+                <th>Course</th>
+                <th class="narrow-column">Created By</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            {% csrf_token %}
+
+            {% for enquiry in enquiries %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ enquiry.enquiry_no }}</td>
+                <td class="narrow-column">{{ enquiry.student_name }}</td>
+                <td>
+
+                    {% if enquiry.latest_followup_date %}
+
+                    {{ enquiry.latest_followup_date|date:"Y-m-d H:i" }}
+
+                    {% else %}
+
+                    N/A
+
+                    {% endif %}
+                </td>
+                <td>{{ enquiry.parent_phone }}</td>
+                <td>{{ enquiry.course.name }}</td>
+                <td class="narrow-column">{{ enquiry.created_by_username }}</td>
+                <td>
+
+                    {% if enquiry.is_converted %}
+                    <span style="color: green; font-weight: bold;">Converted</span>
+
+                    {% else %}
+
+                    {% if enquiry.followup_status == 'Pending Follow-up' %}
+                    <span style="color: red; font-weight: bold;">{{ enquiry.followup_status }}</span>
+
+                    {% elif enquiry.followup_status == 'Follow-up Scheduled' %}
+                    <span style="color: orange; font-weight: bold;">{{ enquiry.followup_status }}</span>
+
+                    {% elif enquiry.followup_status == 'Follow-up Required' %}
+                    <a href="{% url 'schedule_follow_up_form' %}?enquiry_no={{ enquiry.enquiry_no }}&student_name={{ enquiry.student_name }}"
+                       style="color: blue; font-weight: bold;">
+
+                        {{ enquiry.followup_status }}
+                    </a>
+
+                    {% endif %}
+
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <!-- View -->
+                        <a href="{% url 'view_enquiry' enquiry.enquiry_no %}" class="icon-btn" title="View" style="background-color: #800000;">
+                            <i class="fas fa-eye" style="color: #ffffff;"></i>
+                        </a>
+
+                        <!-- Call -->
+                        <a href="tel:{{ enquiry.parent_phone }}" class="icon-btn" title="Call" style="background-color: #800000;">
+                            <i class="fas fa-phone-alt" style="color: #ffffff;"></i>
+                        </a>
+
+                        <!-- WhatsApp -->
+                        <button type="button"
+                                class="icon-btn send-whatsapp-btn"
+                                style="background-color: #800000;"
+                                data-enquiry="{{ enquiry.enquiry_no }}"
+                                title="Send WhatsApp">
+                            <i class="fab fa-whatsapp" style="color: #ffffff;"></i>
+                        </button>
+
+                        <!-- Convert -->
+                        {% if not enquiry.is_converted %}
+                        <form method="post" action="{% url 'convert_enquiry' enquiry.enquiry_no %}">
+
+                            {% csrf_token %}
+                            <button type="submit" class="icon-btn" style="background-color: #800000;" title="Convert to Admission">
+                                <i class="fas fa-user-check" style="color: #ffffff;"></i>
+                            </button>
+                        </form>
+
+                        {% endif %}
+                    </div>
+                </td>
+
+            </tr>
+
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center alert">No enquiries found.</td>
+            </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const buttons = document.querySelectorAll(".send-whatsapp-btn");
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        buttons.forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                const enquiryNo = button.getAttribute("data-enquiry");
+
+                button.disabled = true;
+
+                button.textContent = "Sending...";
+
+                fetch(`/send-whatsapp-message/${enquiryNo}/`, {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type": "application/json",
+
+                        "X-CSRFToken": csrfToken
+
+                    }
+
+                })
+
+                    .then(response => response.json())
+
+                    .then(data => {
+
+                        if (data.status === "success") {
+
+                            alert("✅ " + data.message + "\nTxn ID: " + (data.transaction_id || 'N/A'));
+
+                            button.textContent = "✅ Sent";
+
+                            button.style.backgroundColor = "gray";
+
+                        } else {
+
+                            alert("❌ " + data.message);
+
+                            button.disabled = false;
+
+                            button.textContent = "Send WhatsApp";
+
+                        }
+
+                    })
+
+                    .catch(error => {
+
+                        console.error("Error:", error);
+
+                        alert("Something went wrong.");
+
+                        button.disabled = false;
+
+                        button.textContent = "Send WhatsApp";
+
+                    });
+
+            });
+
+        });
+
+    });
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,32 @@
+{% extends 'master/layout.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Transport</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="mb-3">
+            <label for="id_route" class="form-label">Route</label>
+            {{ form.route }}
+        </div>
+        <div class="mb-3">
+            <label for="id_route_name" class="form-label">Route Name</label>
+            {{ form.route_name }}
+        </div>
+        <div class="mb-3">
+            <label for="id_bus_no" class="form-label">Bus No</label>
+            {{ form.bus_no }}
+        </div>
+        <div class="mb-3">
+            <label for="id_driver_name" class="form-label">Driver Name</label>
+            {{ form.driver_name }}
+        </div>
+        <div class="mb-3">
+            <label for="id_driver_contact_no" class="form-label">Driver Contact No</label>
+            {{ form.driver_contact_no }}
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'transport_list' %}" class="btn btn-secondary">Back to List</a>
+    </form>
+</div>
+{% endblock %}

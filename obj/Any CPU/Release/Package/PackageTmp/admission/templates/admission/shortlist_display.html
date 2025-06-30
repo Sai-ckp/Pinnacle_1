@@ -1,0 +1,165 @@
+﻿{% extends 'master/layout.html' %}
+
+{% block content %}
+<div class="form-card">
+    <h3 class="form-title">Confirmed Admissions - Fee Entry</h3>
+
+    <!-- 🔽 Stream Selection Dropdown -->
+    <form method="get" action="">
+        <label for="stream"><strong>Select Stream:</strong></label>
+        <select name="stream" id="stream" onchange="this.form.submit()">
+            <option value="PUC" {% if stream == 'PUC' %}selected{% endif %}>PU</option>
+            <option value="Degree" {% if stream == 'Degree' %}selected{% endif %}>Degree</option>
+        </select>
+    </form>
+
+    <!-- 📋 Student Records Table -->
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Admission No</th>
+                <th>Student Name</th>
+                <th>Course</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ student.admission_no }}</td>
+                <td>{{ student.student_name }}</td>
+                <td>{{ student.course }}</td>
+                <td>
+                    <!-- 🔗 Conditional routing based on selected stream -->
+                    {% if stream == 'PUC' %}
+                    <a href="{% url 'pu_fee_detail_form' student.id %}" class="icon-btn" title="View Fee Details">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'pu_fee_detail_form' student.id %}" class="icon-btn" title="Add Fee">
+                        <i class="fas fa-plus-circle"></i>
+                    </a>
+                    {% elif stream == 'Degree' %}
+                    <a href="{% url 'degree_fee_detail_form' student.id %}" class="icon-btn" title="View Fee Details">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'degree_fee_detail_form' student.id %}" class="icon-btn" title="Add Fee">
+                        <i class="fas fa-plus-circle"></i>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align:center;">No students found for selected stream.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 🎨 CSS Styling -->
+<style>
+    .form-card {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 12px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-title {
+        font-size: 20px;
+        font-weight: 700;
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    form select {
+        font-size: 10px;
+        padding: 3px 6px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        cursor: pointer;
+        margin-top: 0;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 12px;
+        background-color: #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-top: 20px;
+    }
+
+        .styled-table thead {
+            background-color: #800000;
+            color: white;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+            .styled-table thead th {
+                padding: 4px 6px;
+                text-align: center;
+                font-size: 12px;
+            }
+
+        .styled-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.2s ease;
+        }
+
+            .styled-table tbody tr:hover {
+                background-color: #f5faff;
+            }
+
+        .styled-table td {
+            padding: 4px 6px;
+            color: #333;
+            vertical-align: middle;
+            text-align: center;
+            font-size: 10px;
+        }
+
+    .icon-btn {
+        border: 1px solid #ddd;
+        background-color: #fff;
+        padding: 4px 6px;
+        margin: 0 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+        display: inline-block;
+        text-decoration: none;
+    }
+
+        .icon-btn i {
+            font-size: 13px;
+            color: #800000;
+        }
+
+        .icon-btn.text-danger i {
+            color: #b30000;
+        }
+
+        .icon-btn:hover {
+            background-color: #f3f3f3;
+        }
+</style>
+
+<!-- 🧩 Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      integrity="sha512-dYdAvXpHoA4rYUNFTZcmu9BsvZTCbNbsn/gyLv2eD9Ox8gVNk0Fqaq7mj2WyZKQXHTA1zOK6nDtxb4Ib8FJ/Og=="
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% endblock %}

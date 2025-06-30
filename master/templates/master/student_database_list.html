@@ -1,0 +1,177 @@
+﻿{% extends 'master/layout.html' %}
+
+{% block title %}Student List{% endblock %}
+
+{% block content %}
+
+<style>
+
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: -5px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .icon-btn i,
+        .action-link svg {
+            font-size: 10px;
+            color: #800000;
+            vertical-align: middle;
+        }
+
+        .icon-btn:hover,
+        .action-link:hover svg {
+            background-color: #e2e6ea;
+            color: #800000;
+        }
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 10px;
+        margin-left: -64px;
+        margin-right: 27px;
+    }
+
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        color: #800000;
+        margin-bottom: 24px;
+        margin-top: -17px;
+        font-size: 22px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+    }
+
+    td {
+        font-size: 10px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    .action-link {
+        margin-right: 4px;
+        padding: 2px 4px;
+        display: inline-block;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        background-color: #fff;
+        transition: background-color 0.2s;
+    }
+
+        .action-link:hover {
+            background-color: #e2e6ea;
+        }
+
+        .action-link svg {
+            width: 16px;
+            height: 16px;
+            fill: #800000;
+        }
+
+    .content {
+        padding: 18px 26px 40px;
+        margin-left: 200px;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2>All Students</h2>
+
+    <table class="table table-bordered table-striped table-hover mt-3">
+        <thead>
+            <tr>
+                <th>SLN No</th>
+                <th>Admission No</th>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Course Type</th>
+                <th>Quota Type</th>
+                <th>Status</th>
+                <th>User ID</th>
+                <th>Student Phone No</th>
+                <th>Parent Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            {% for student in students %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ student.admission_no }}</td>
+                <td>{{ student.student_name }}</td>
+                <td>{{ student.course }}</td>
+                <td>{{ student.course_type }}</td>
+                <td>{{ student.quota_type }}</td>
+                <td>{{ student.status }}</td>
+                <td>{{ student.student_userid|default:"-" }}</td>
+                <td>{{ student.student_phone_no|default:"-" }}</td>
+                <td>{{ student.parent_name|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'master_student_view' student.pk %}" class="action-link" title="View">
+                        <svg viewBox="0 0 20 20"><path d="M10 3C5 3 1.73 7.11 1.13 9.1a1 1 0 0 0 0 .8C1.73 12.89 5 17 10 17s8.27-4.11 8.87-6.1a1 1 0 0 0 0-.8C18.27 7.11 15 3 10 3zm0 12c-3.87 0-7-3.13-7.73-5C3 8.13 6.13 5 10 5s7 3.13 7.73 5C17 11.87 13.87 15 10 15zm0-9a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" /></svg>
+                    </a>
+                    <a href="{% url 'master_student_edit' student.pk %}" class="action-link" title="Edit">
+                        <svg viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 0 0-2.828 0l-9.793 9.793A2 2 0 0 0 4 14v2.5A1.5 1.5 0 0 0 5.5 18h2.5a2 2 0 0 0 1.414-.586l9.793-9.793a2 2 0 0 0 0-2.828l-2-2zM6.207 14.207l8.586-8.586 1.586 1.586-8.586 8.586H6.207v-1.586zm-1.707.793a.5.5 0 0 1-.5-.5v-2.5l8.586-8.586 2.5 2.5-8.586 8.586H4.5zm11.207-10.207l-1.5-1.5a1 1 0 0 1 1.414-1.414l1.5 1.5a1 1 0 0 1-1.414 1.414z" /></svg>
+                    </a>
+                </td>
+            </tr>
+
+            {% empty %}
+            <tr>
+                <td colspan="11" class="text-center alert">No students found.</td>
+            </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+

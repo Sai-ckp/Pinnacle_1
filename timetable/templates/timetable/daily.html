@@ -1,0 +1,229 @@
+{% extends 'master/layout.html' %}
+
+{% block content %}
+<style>
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: -5px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .icon-btn i {
+            font-size: 10px;
+            color: #800000;
+        }
+
+        .icon-btn:hover {
+            background-color: #e2e6ea;
+        }
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-left: 91px;
+    }
+
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 10px;
+        margin-left: -64px;
+        margin-right: 27px;
+    }
+
+    h2 {
+        text-align: center;
+        font-weight: 700;
+        color: #800000;
+        margin-bottom: 24px;
+        margin-top: -17px;
+        font-size: 22px;
+    }
+
+    table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        vertical-align: middle !important;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #dee2e6;
+    }
+
+    td {
+        font-size: 10px;
+    }
+
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    tr:hover {
+        background-color: #e9ecef;
+    }
+
+ 
+
+    .form-label {
+        font-weight: 600;
+    }
+
+    .filter-btn {
+        text-decoration: none;
+        color: black;
+        border: 1px solid black;
+        background-color: transparent;
+        width: 125px;
+        height: 29px;
+        border-radius: 5px;
+    }
+
+    .text-muted {
+        font-size: 14px;
+        font-style: italic;
+    }
+
+    h4.text-secondary {
+        margin-top: 20px;
+        font-weight: 600;
+        color: #4a4a4a !important;
+    }
+
+    /* Uniform dropdown and label spacing */
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        display: block;
+        color: #343a40;
+    }
+
+    .form-select {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 13px;
+        padding: 6px 10px;
+        transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+        .form-select:focus {
+            border-color: #800000;
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
+            outline: none;
+        }
+
+    form .col-md-3 {
+        padding-top: 5px;
+    }
+
+    .content {
+        padding: 40px 26px 40px;
+        margin-left: 200px;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">Daily Timetable</h2>
+
+   <!-- Horizontal Filter Form -->
+<form method="GET" class="mb-4 text-center">
+    <select name="course_type" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
+        <option value="">Select Course Type</option>
+        {% for ct in course_types %}
+        <option value="{{ ct.name }}" {% if selected_course_type == ct.name %}selected{% endif %}>{{ ct.name }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="course" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
+        <option value="">Select Course</option>
+        {% for course in courses %}
+        <option value="{{ course.id }}" {% if course.id|stringformat:"s" == selected_course_id %}selected{% endif %}>{{ course.name }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="semester" class="form-select d-inline w-auto me-2">
+        <option value="">Select Semester</option>
+        {% for sem in semesters %}
+        <option value="{{ sem.id }}" {% if sem.id|stringformat:"s" == selected_semester_id %}selected{% endif %}>{{ sem.number }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="day" class="form-select d-inline w-auto me-2">
+        <option value="">Select Day</option>
+        {% for d in week_days %}
+        <option value="{{ d }}" {% if selected_day == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="btn filter-btn">Filter</button>
+</form>
+
+
+    {% if entries %}
+    <h4 class="text-secondary mb-3">
+        {% if selected_semester %}
+        Semester {{ selected_semester.number }} -
+        {% endif %}
+        {{ selected_day }} Timetable
+    </h4>
+
+    <table class="table table-bordered text-center">
+        <thead class="table-primary">
+            <tr>
+                <th>Time</th>
+                <th>Subject</th>
+                <th>Faculty</th>
+                <th>Attendance</th>
+                <th>Room</th>
+                <th>Actions</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.time_slot }}</td>
+                <td>{{ entry.subject.name }}</td>
+                <td>
+                    {{ entry.faculty.name }}
+                    {% if entry.is_substituted %}
+                    <span class="badge text-white" style="background-color: #800000; height: 25px; line-height: 12px;width:30px;color:white; border-radius: 5px; ">Substitute</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <span class="{% if entry.attendance_status == 'Present' %}text-success{% else %}text-danger{% endif %}">
+                        {{ entry.attendance_status }}
+                    </span>
+                </td>
+                <td>{{ entry.room }}</td>
+                <td>
+                    <a href="{% url 'assign_substitute' entry.id %}" class="icon-btn" title="Assign Substitute">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </td>
+
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No timetable entries found. Please apply filters.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,272 @@
+﻿{% extends 'master/layout.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .dashboard-section {
+            display: none;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .py-5 {
+            padding-top: 0rem !important;
+            padding-bottom: 3rem !important;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h5, h2 {
+            font-size: 14px;
+        }
+
+        .mt-4 {
+            margin-top: 0.5rem !important;
+        }
+
+        .text-primary {
+            color: #8b0000 !important;
+            font-size: 20px;
+            margin-left: 424px;
+        }
+
+        .text-secondary {
+            color: #8b0000 !important;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .table-bordered > :not(caption) > * > * {
+            border-width: 0 var(--bs-border-width);
+            font-size: 12px;
+            text-align: center;
+            padding: 1px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 1rem;
+            transition: transform 0.3s ease;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+        }
+
+            .card:hover {
+                transform: scale(1.03);
+            }
+
+        .bg-gradient-green {
+            color: #1b4332;
+        }
+
+        .bg-gradient-blue {
+            color: #0c2d48;
+        }
+
+        .bg-gradient-orange {
+            color: #5c1e00;
+        }
+
+        .bg-gradient-yellow {
+            color: #5c4700;
+        }
+
+        .bg-gradient-purple {
+            color: #2e1065;
+        }
+
+        .text-white {
+            color: #020d17 !important;
+        }
+
+        .btn-outline-primary, .btn-outline-success, .btn-outline-info {
+            border-radius: 20px;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+        }
+
+        .badge-danger {
+            background-color: #8b0000;
+        }
+
+        .bg-warning {
+            --bs-bg-opacity: 1;
+            background-color: #8b0000 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-primary">📊 Dashboard</h2>
+        </div>
+
+        <!-- Overview Section -->
+        <div id="overview" class="row dashboard-section">
+            <div class="col-md-3">
+                <div class="card bg-gradient-green text-white p-3">
+                    <h5><i class="bi bi-people-fill me-2"></i>Total Students</h5>
+                    <h2>{{ total_admissions }}</h2>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-gradient-purple text-white p-3">
+                    <h5>Total Messages Sent</h5>
+                    <h2>{{ total_messages_sent }}</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-blue text-white p-3">
+                    <h5><i class="bi bi-wallet2 me-2"></i>Total Fee Collected</h5>
+                    <h2>₹{{ total_fee_collected|floatformat:0 }}</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-purple text-white p-3">
+                    <h5><i class="bi bi-person-lines-fill me-2"></i>Total Enquiries</h5>
+                    <h2>{{ total_enquiries }}</h2>
+                </div>
+            </div>
+
+            <div class="col-12 mt-4">
+                <h4 class="text-secondary">📩 Recent Messages</h4>
+                <table class="table table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Message</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in recent_messages %}
+                        <tr>
+                            <td>{{ msg.subject|truncatechars:50 }}</td>
+                            <td>
+                                <span class="badge
+                                    {% if msg.status == 'delivered' %}
+                                        badge-success
+                                    {% elif msg.status == 'failed' %}
+                                        badge-danger
+                                    {% else %}
+                                        bg-warning
+                                    {% endif %}">
+                                    {{ msg.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="text-center">No recent messages found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Fees Section -->
+        <div id="fees" class="row dashboard-section">
+            <div class="col-md-3">
+                <div class="card bg-gradient-blue text-white p-3">
+                    <h5>Total Final Fee</h5>
+                    <h2>₹{{ total_final_fee|floatformat:0 }}</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-green text-white p-3">
+                    <h5>Fee Collected</h5>
+                    <h2>₹{{ total_fee_collected|floatformat:0 }}</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-gradient-orange text-white p-3">
+                    <h5>Remaining Fee</h5>
+                    <h2>₹{{ remaining_fee|floatformat:0 }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admission Section -->
+        <div id="admission" class="row dashboard-section">
+            <div class="col-md-3"><div class="card bg-gradient-purple text-white p-3"><h5>Total Enquiries</h5><h2>{{ total_enquiries }}</h2></div></div>
+            <div class="col-md-3"><div class="card bg-gradient-blue text-white p-3"><h5>Total PU Admissions</h5><h2>{{ total_pu_admissions }}</h2></div></div>
+            <div class="col-md-3"><div class="card bg-gradient-green text-white p-3"><h5>Total Degree Admissions</h5><h2>{{ total_degree_admissions }}</h2></div></div>
+            <div class="col-md-3"><div class="card bg-gradient-orange text-white p-3"><h5>PU Enquiries Converted</h5><h2>{{ pu_converted_enquiries }}</h2></div></div>
+            <div class="col-md-3"><div class="card bg-gradient-purple text-white p-3"><h5>Degree Enquiries Converted</h5><h2>{{ degree_converted_enquiries }}</h2></div></div>
+        </div>
+
+        <!-- Messages Section -->
+        <div id="messages" class="row dashboard-section">
+            <div class="col-md-3"><div class="card bg-gradient-blue text-white p-3"><h5>Total Students</h5><h2>{{ total_students }}</h2></div></div>
+            <div class="col-md-3"><div class="card bg-gradient-orange text-white p-3"><h5>Messages Sent</h5><h2>{{ messages_sent }}</h2></div></div>
+            <div class="col-md-3"><div class="card bg-gradient-green text-white p-3"><h5>Messages not sent </h5><h2>{{ not_sent_count }}</h2></div></div>
+
+            <div class="col-12 mt-4">
+                <h4 class="text-secondary">📩 Recent Messages</h4>
+                <table class="table table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Message</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in recent_messages %}
+                        <tr>
+                            <td>{{ msg.subject|truncatechars:50 }}</td>
+                            <td>
+                                <span class="badge
+                                    {% if msg.status == 'delivered' %}
+                                        badge-success
+                                    {% elif msg.status == 'failed' %}
+                                        badge-danger
+                                    {% else %}
+                                        bg-warning
+                                    {% endif %}">
+                                    {{ msg.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="text-center">No recent messages found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            function showSection(id) {
+                document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
+                document.getElementById(id).style.display = 'flex';
+            }
+            document.addEventListener('DOMContentLoaded', () => showSection('overview'));
+        </script>
+    </div>
+</body>
+</html>
+{% endblock %}

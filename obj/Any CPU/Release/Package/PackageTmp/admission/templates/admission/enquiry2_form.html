@@ -1,0 +1,588 @@
+{% extends 'master/layout.html' %}
+
+{% block title %}DEGREE ENQUIRY Form{% endblock %}
+
+{% block content %}
+<div style="width: 100vw; padding: 2rem;">
+    <div class="form-card mx-auto" style="width: 67%; max-width: 100%; margin-left: 2px; margin-top: -52px; ">
+
+        <!-- ✅ LOGO AND HEADING -->
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/4xSpKtqg/college-logo-with-name-white-page-0001.jpg" alt="College Logo">
+            <h2>Degree Enquiry Form</h2>
+        </div>
+
+        {# Show success message if present #}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
+             style="color: green; font-weight: bold; margin-bottom: 10px;">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Enquiry No:</label>
+                    <input type="text" value="{{ next_enquiry_no }}" readonly style="background:#eee;">
+                </div>
+                <div class="form-group">
+                    <label for="id_student_name">Student Name <span style="color:red">*</span></label>
+                    <input type="text" id="id_student_name" name="student_name">
+                </div>
+
+                <div class="form-group">
+                    {{ form.enquiry_date.label_tag }} {{ form.enquiry_date }}
+                </div>
+                <div class="form-group">
+                    {{ form.gender.label_tag }} {{ form.gender }}
+                </div>
+                <div class="form-group">
+
+                    {{ form.parent_relation.label_tag }} {{ form.parent_relation }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_parent_name" id="label_parent_name">Parent Name</label>
+
+                    {{ form.parent_name }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_parent_phone" id="label_parent_phone">Parent Phone</label>
+
+                    {{ form.parent_phone }}
+                </div>
+                <div class="form-group" id="guardian_relation_group" style="display:none;">
+                    <label for="id_guardian_relation">Guardian Relation</label>
+                    {{ form.guardian_relation }}
+                </div>
+
+
+                <div class="form-group">
+                    {{ form.course_type.label_tag }}
+                    {{ form.course_type }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.course.id_for_label }}">Combination</label>
+                    {{ form.course }}
+                </div>
+                <div class="form-group">
+                    <label for="id_percentage_10th">
+                        {{ form.percentage_10th.label }} <span style="color:red">*</span>
+                    </label>
+                    {{ form.percentage_10th }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_percentage_12th">
+                        {{ form.percentage_12th.label }} <span style="color:red">*</span>
+                    </label>
+                    {{ form.percentage_12th }}
+                </div>
+
+
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email ID</label>
+                    {{ form.email }}
+                </div>
+                <div class="form-group">
+                    {{ form.source.label_tag }}
+                    {{ form.source }}
+                </div>
+
+                <div class="form-group" id="other_source_group" style="display:none;">
+                    <label for="id_other_source">Other</label>
+                    {{ form.other_source }}
+                </div>
+
+
+                <div class="form-group">
+                    <label for="{{ form.permanent_address.id_for_label }}">Parent Address </label>
+                    {{ form.permanent_address }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.current_address.id_for_label }}">Student Address</label>
+                    {{ form.current_address }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.city.label_tag }} {{ form.city }}
+            </div>
+            <div class="form-group">
+                {{ form.pincode.label_tag }} {{ form.pincode }}
+            </div>
+            <div class="form-group">
+                {{ form.state.label_tag }} {{ form.state }}
+            </div>
+
+
+    </div>
+    <div class="mt-4 d-flex justify-content-between">
+        <button type="button" class="btn btn-primary btn-sm no-print" onclick="window.print()">🖨️ Print</button>
+        <button type="submit" class="btn btn-primary btn-lg no-print">Submit</button>
+    </div>
+    </form>
+
+
+</div>
+<style>
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        overflow-x: hidden;
+        padding: 0;
+    }
+
+    .form-card {
+        background: #fff;
+        padding: 40px 50px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .fixed-footer {
+        margin-left: 50px;
+        margin-top: -35px;
+    }
+
+    .left-button {
+        flex: 1;
+        text-align: left;
+    }
+
+    /* .right-button {
+        flex: 1;
+        text-align: right;
+    }*/
+    /* .form-card {
+        background: #fff;
+        padding: 40px 50px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }*/
+
+    .form-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+
+    /*.form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px 32px;
+        margin-top: 10px;
+    }*/
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr)); /* ensures safe shrinking */
+        gap: 16px 32px;
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+
+
+    /*
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }*/
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%; /* ✅ Ensure each field spans full grid cell */
+    }
+
+
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 12px;
+        }
+
+        .form-group input {
+            padding: 2px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 9px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100% !important;
+        }
+
+
+        .form-group select,
+        .form-group textarea {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+    .btn {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: background-color 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background-color: #800000;
+        color: white;
+        padding: 5px;
+    }
+
+        .btn-primary:hover {
+            background-color: #800000;
+        }
+
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-top: 24px;
+    }
+
+    textarea#id_address {
+        height: 60px !important;
+    }
+
+    .sidebar a {
+        color: white;
+        text-decoration: none;
+        padding: 12px 8px;
+        display: block;
+        font-weight: 500;
+    }
+
+    @media print {
+
+        .btn,
+        .alert,
+        .photo-upload input,
+        .edit-icon,
+        .no-print,
+        .sidebar,
+        .topbar {
+            display: none !important;
+        }
+
+        body {
+            background: white;
+        }
+
+        .form-card {
+            box-shadow: none;
+            border: none;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .form-title {
+            font-size: 16pt;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+    }
+
+
+    @media (max-width: 600px) {
+        .form-card {
+            padding: 30px 20px;
+        }
+
+        .form-title {
+            font-size: 20px;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .form-grid {
+            gap: 12px;
+        }
+    }
+
+    .logo-container {
+        text-align: center;
+        margin-bottom: 2px;
+        margin-top: -37px;
+    }
+
+
+        .logo-container img {
+            max-width: 400px;
+            margin-bottom: -22px;
+            margin-top: -54px;
+            margin-left: 42px;
+        }
+
+        .logo-container h2 {
+            margin-top: -15px;
+            font-size: 28px;
+            font-weight: bold;
+            margin-left: 34px;
+        }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%; /* Ensures all form elements span full width of their grid cell */
+        box-sizing: border-box; /* Prevents padding from breaking the layout */
+        font-size: 13px; /* Adjust for consistency */
+    }
+</style>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+    //document.addEventListener("DOMContentLoaded", function () {
+    //    const form = document.querySelector("form");
+
+    //    const requiredFields = [
+    //        "id_student_name",
+    //        //"id_parent_name",
+    //        //"id_parent_phone",
+    //        "id_percentage_10th",
+    //        "id_percentage_12th"
+    //    ];
+
+    //    form.addEventListener("submit", function (event) {
+    //        let isValid = true;
+
+    //        requiredFields.forEach(function (id) {
+    //            const input = document.getElementById(id);
+    //            if (input) {
+    //                const value = input.value.trim();
+    //                const errorId = id + "_error";
+    //                let errorSpan = document.getElementById(errorId);
+
+    //                // Create error message span if not exists
+    //                if (!errorSpan) {
+    //                    errorSpan = document.createElement("span");
+    //                    errorSpan.id = errorId;
+    //                    errorSpan.style.color = "red";
+    //                    errorSpan.style.fontSize = "12px";
+    //                    input.parentNode.appendChild(errorSpan);
+    //                }
+
+    //                if (value === "") {
+    //                    input.style.border = "2px solid red";
+    //                    errorSpan.textContent = "This field is required.";
+    //                    isValid = false;
+    //                } else {
+    //                    input.style.border = "1px solid #ced4da";
+    //                    errorSpan.textContent = "";
+    //                }
+    //            }
+    //        });
+
+
+
+    // AJAX for dependent course dropdown
+    $(function () {
+        var defaultCourseType = '2';  // your default course type
+
+        function loadCombinations(courseTypeId) {
+            var url = "{% url 'ajax_load_courses_degree' %}";
+
+            $.ajax({
+                url: url,
+                data: {
+                    'course_type': courseTypeId
+                },
+                success: function (data) {
+                    var courseSelect = $('#id_course');
+                    courseSelect.html('<option value="">---------</option>');
+                    $.each(data, function (index, course) {
+                        courseSelect.append('<option value="' + course.id + '">' + course.name + '</option>');
+                    });
+                }
+            });
+        }
+
+        // Set default course_type and load combinations on page load
+        $('#id_course_type').val(defaultCourseType);
+        loadCombinations(defaultCourseType);
+
+        // Also bind change event to reload combinations
+        $('#id_course_type').change(function () {
+            var selectedCourseTypeId = $(this).val();
+            loadCombinations(selectedCourseTypeId);
+        });
+    });
+
+
+    //// Show/hide percentage fields based on course_type selection
+    //function updatePercentageFields() {
+    //    var courseTypeSelect = document.getElementById('id_course_type');
+    //    var perc10Field = document.getElementById('percentage_10th_field');
+    //    var perc12Field = document.getElementById('percentage_12th_field');
+    //    if (!courseTypeSelect) return;
+    //    // Get selected option text (case-insensitive)
+    //    var selectedText = courseTypeSelect.options[courseTypeSelect.selectedIndex]?.text.toLowerCase() || "";
+    //    if (selectedText.includes('puc')) {
+    //        perc10Field.style.display = 'block';
+    //        perc12Field.style.display = 'none';
+    //    } else if (selectedText.includes('degree')) {
+    //        perc10Field.style.display = 'block';
+    //        perc12Field.style.display = 'block';
+    //    } else {
+    //        perc10Field.style.display = 'block';
+    //        perc12Field.style.display = 'block';
+    //    }
+    //}
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const pincodeInput = document.getElementById('id_pincode');
+        const cityInput = document.getElementById('id_city');
+        const stateInput = document.getElementById('id_state');
+
+        function fetchPincodeData() {
+            const pincode = pincodeInput.value.trim();
+            if (pincode.length === 6 && /^\d+$/.test(pincode)) {
+                fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+                            const postOffice = data[0].PostOffice[0];
+                            cityInput.value = postOffice.Block && postOffice.Block !== "NA"
+                                ? postOffice.Block
+                                : postOffice.District || '';
+                            stateInput.value = postOffice.State || '';
+                        } else {
+                            // Optionally clear or show error if pincode not found
+                            // cityInput.value = "";
+                            // stateInput.value = "";
+                            // alert("Invalid or unknown pincode.");
+                        }
+                    })
+                    .catch(err => {
+                        // Optionally handle API error
+                        // alert("Unable to fetch city/state for pincode.");
+                    });
+            }
+        }
+
+        if (pincodeInput && cityInput && stateInput) {
+            // On blur (when field loses focus)
+            pincodeInput.addEventListener('blur', function () {
+                fetchPincodeData();
+            });
+
+            // On Enter key
+            pincodeInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    fetchPincodeData();
+                }
+            });
+        }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const pincodeInput = document.getElementById('id_pincode');
+        if (pincodeInput) {
+            pincodeInput.addEventListener('keydown', function (e) {
+                // Prevent form submission on Enter in pincode input
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    // Optionally: You could trigger your pincode lookup/ajax here if wanted
+                    // fetchPincodeData();
+                }
+            });
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const relationField = document.getElementById("id_parent_relation");
+        const nameLabel = document.getElementById("label_parent_name");
+        const phoneLabel = document.getElementById("label_parent_phone");
+
+        function updateLabels() {
+            const selected = relationField.value;
+            if (selected) {
+                nameLabel.textContent = selected + " Name";
+                phoneLabel.textContent = selected + " Phone";
+            } else {
+                nameLabel.textContent = "Parent Name";
+                phoneLabel.textContent = "Parent Phone";
+            }
+        }
+
+        relationField.addEventListener("change", updateLabels);
+        updateLabels();  // Initial call in case a default is selected
+    });
+
+
+
+    const parentRelationSelect = document.getElementById("id_parent_relation");
+    const guardianRelationGroup = document.getElementById("guardian_relation_group");
+
+    function toggleGuardianRelation() {
+        if (parentRelationSelect.value === "Guardian") {
+            guardianRelationGroup.style.display = "block";
+        } else {
+            guardianRelationGroup.style.display = "none";
+            document.getElementById("id_guardian_relation").value = "";
+        }
+    }
+
+    // Run on page load
+    toggleGuardianRelation();
+
+    // Listen for changes on dropdown
+    parentRelationSelect.addEventListener("change", toggleGuardianRelation);
+
+
+    const sourceSelect = document.getElementById("id_source");
+    const otherSourceGroup = document.getElementById("other_source_group");
+
+    function toggleOtherSource() {
+        if (sourceSelect.value === "Other") {
+            otherSourceGroup.style.display = "block";
+        } else {
+            otherSourceGroup.style.display = "none";
+            document.getElementById("id_other_source").value = "";
+        }
+    }
+
+    toggleOtherSource();
+    sourceSelect.addEventListener("change", toggleOtherSource);</script>
+{% endblock %}
