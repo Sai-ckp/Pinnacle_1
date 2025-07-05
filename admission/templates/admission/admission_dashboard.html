@@ -1,9 +1,24 @@
 {% extends 'master/layout.html' %}
-{% block title %}Admission Dashboard{% endblock %}
+{% block title %}Admission {% endblock %}
 {% block content %}
 
 <div class="container py-5">
-    <h2 class="fw-bold text-primary mb-4 text-center"> Admission Dashboard</h2>
+    <h2 class="fw-bold text-primary mb-4 text-center"> Admission </h2>
+
+    <!-- 🔽 Filter Dropdown -->
+    <div class="mb-4 d-flex justify-content-end">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary px-4 py-2 dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+            <ul class="dropdown-menu" style=" width: 100%;     font-size: 10px;" aria-labelledby="filterDropdown">
+                <li><a class="dropdown-item {% if active_filter == 'day' %}active{% endif %}" href="?filter=day">Per Day</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'week' %}active{% endif %}" href="?filter=week">Per Week</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'month' %}active{% endif %}" href="?filter=month">Per Month</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'all' %}active{% endif %}" href="?filter=all">All</a></li>
+            </ul>
+        </div>
+    </div>
 
     <div class="row mb-5">
         <div class="row mb-5">
@@ -12,6 +27,9 @@
                     <div class="card-body text-center">
                         <h6 class="text-muted">Total PU Admissions <i class="bi bi-person-lines-fill"></i></h6>
                         <h3 class="fw-bold">{{ total_pu_admissions }}</h3>
+                        <h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -21,6 +39,9 @@
                     <div class="card-body text-center">
                         <h6 class="text-muted">Total Degree Admissions <i class="bi bi-mortarboard"></i></h6>
                         <h3 class="fw-bold">{{ total_degree_admissions }}</h3>
+                        <h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -30,9 +51,12 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body text-center">
                         <h6 class="text-muted">
-                            <i class="fas fa-user-check me-1" style="color: #800000;"></i> Confirmed Admissions
+                            Confirmed Admissions <i class="fas fa-user-check me-1" style="color: #800000;"></i>
                         </h6>
                         <h3 class="fw-bold">{{ confirmed_admissions }}</h3>
+                        <h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -42,9 +66,12 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body text-center">
                         <h6 class="text-muted">
-                            <i class="fas fa-hourglass-half me-1" style="color: #800000;"></i> Pending Review
+                            Pending Review<i class="fas fa-hourglass-half me-1" style="color: #800000;"></i>
                         </h6>
                         <h3 class="fw-bold">{{ pending_review }}</h3>
+                        <h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>
                     </div>
                 </div>
             </div>
@@ -59,7 +86,7 @@
         <!-- Application Form Button -->
         <div class="d-flex flex-column align-items-start position-relative">
             <button id="toggle-applications" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-journal-text me-2"></i>Direct Admission 
+                <i class="bi bi-journal-text me-2"></i>Direct Admission
             </button>
             <div id="application-buttons" class="d-none flex-column custom-dropdown">
                 <!-- Redirecting buttons for forms -->
@@ -79,8 +106,8 @@
             </button>
             <div id="list-buttons" class="d-none flex-column custom-dropdown">
                 <!--<button class="btn btn-maroon px-4 py-3 load-form" data-url="{% url 'admission_list' %}">
-        <i class="bi bi-list-ul me-2"></i> PU Application List
-    </button>-->
+                    <i class="bi bi-list-ul me-2"></i> PU Application List
+                </button>-->
                 <a href="{% url 'admission_list' %}" class="btn btn-maroon px-4 py-3">
                     <i class="bi bi-list-ul me-2"></i> PU Application List
                 </a>
@@ -129,6 +156,7 @@
 <!-- Bootstrap CSS & Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- JavaScript -->
 <script>
@@ -212,6 +240,10 @@
     .text-muted {
         --bs-text-opacity: 1;
         color: #8b0000 !important;
+    }
+
+    .gap-3 {
+        gap: 5rem !important;
     }
 
     .fw-bold {
@@ -403,6 +435,12 @@
 
     .container {
         padding-bottom: 100px;
+    }
+
+    .dropdown-item.active {
+        color: var(--bs-dropdown-link-active-color);
+        text-decoration: none;
+        background-color: #800000;
     }
 </style>
 

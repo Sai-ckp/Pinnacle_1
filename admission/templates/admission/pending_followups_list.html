@@ -55,6 +55,12 @@
         font-style: italic;
         color: #888;
     }
+
+    .content {
+        margin-left: 200px;
+        padding: 40px 26px 40px;
+        min-height: 100vh;
+    }
 </style>
 
 <div class="container">
@@ -106,11 +112,11 @@
                 <td>{{ f.status }}</td>
                 <td>
                     {% if f.pu_enquiry %}
-                    <a href="{% url 'schedule_follow_up_form' %}?enquiry_no={{ f.pu_enquiry.enquiry_no }}&student_name={{ f.pu_enquiry.student_name }}" style="color: blue; font-weight: bold;">
+                    <a href="{% url 'schedule_follow_up_form_add' %}?enquiry_no={{ f.pu_enquiry.enquiry_no }}&student_name={{ f.pu_enquiry.student_name }}" style="color: #800000; font-weight: bold;">
                         Reschedule
                     </a>
                     {% else %}
-                    <a href="{% url 'schedule_follow_up_form' %}?enquiry_no={{ f.degree_enquiry.enquiry_no }}&student_name={{ f.degree_enquiry.student_name }}" style="color: blue; font-weight: bold;">
+                    <a href="{% url 'schedule_follow_up_form_add' %}?enquiry_no={{ f.degree_enquiry.enquiry_no }}&student_name={{ f.degree_enquiry.student_name }}" style="color: #800000; font-weight: bold;">
                         Reschedule
                     </a>
                     {% endif %}

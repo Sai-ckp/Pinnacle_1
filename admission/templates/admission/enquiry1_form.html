@@ -1,6 +1,6 @@
 {% extends 'master/layout.html' %}
 
-{% block title %}PU ENQUIRY Form{% endblock %}
+{% block title %}PU Enquiry Form{% endblock %}
 
 {% block content %}
 
@@ -11,7 +11,7 @@
 
         <div class="logo-container">
             <img src="https://i.postimg.cc/4xSpKtqg/college-logo-with-name-white-page-0001.jpg" alt="College Logo">
-            <h2>PU Enquiry Form</h2>
+            <h2>PU Course Enquiry Form</h2>
         </div>
 
         {# Show success message if present #}
@@ -35,8 +35,10 @@
                 </div>
                 <div class="form-group">
                     <label for="id_student_name">Student Name <span style="color:red">*</span></label>
-                    <input type="text" id="id_student_name" {{ form.student_name }} name="student_name">
+                    {{ form.student_name }}
                 </div>
+
+
 
 
                 <div class="form-group">
@@ -108,7 +110,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="{{ form.current_address.id_for_label }}">Student Address</label>
+                    <label for="{{ form.current_address.id_for_label }}">Local Address</label>
                     {{ form.current_address }}
                 </div>
                 <div class="form-group">
@@ -133,7 +135,7 @@
         <div class="left-button">
             <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print</button>
         </div>
-        <div class="right-button" style=" margin-left: 812px; margin-top: -27px;">
+        <div class="right-button" style=" margin-left: 757px; margin-top: -27px;">
             <button type="submit" class="btn btn-primary btn-lg">Submit</button>
         </div>
     </div>
@@ -145,11 +147,6 @@
 </div>
 
 <style>
-    /*body {
-        background-color: #f0f2f5;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin-left: 91px;
-    }*/
     body {
         background-color: #f0f2f5;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -177,17 +174,6 @@
         text-align: left;
     }
 
-    /* .right-button {
-        flex: 1;
-        text-align: right;
-    }*/
-    /* .form-card {
-        background: #fff;
-        padding: 40px 50px;
-        border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    }*/
-
     .form-title {
         text-align: center;
         font-size: 22px;
@@ -197,41 +183,25 @@
         text-transform: uppercase;
     }
 
-    /*.form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 16px 32px;
-        margin-top: 10px;
-    }*/
     .form-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr)); /* ensures safe shrinking */
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px 32px;
         width: 100%;
         box-sizing: border-box;
         overflow-x: hidden;
     }
 
-
-
-    /*
-    .form-group {
-        display: flex;
-        flex-direction: column;
-    }*/
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        width: 100%; /* ✅ Ensure each field spans full grid cell */
-    }
-
+    .form-group,
     .form-group1 {
         display: flex;
         flex-direction: column;
-        width: 50%; /* ✅ Ensure each field spans full grid cell */
+        width: 100%;
     }
 
-
+    .form-group1 {
+        width: 50%;
+    }
 
     .form-group label {
         font-weight: 500;
@@ -252,7 +222,6 @@
     .form-group textarea {
         width: 100% !important;
     }
-
 
     .form-group select,
     .form-group textarea {
@@ -304,42 +273,38 @@
         font-weight: 500;
     }
 
-    @media print {
-
-        .btn,
-        .alert,
-        .photo-upload input,
-        .edit-icon,
-        .no-print,
-        .sidebar,
-        .topbar {
-            display: none !important;
-        }
-
-        body {
-            background: white;
-        }
-
-        .form-card {
-            box-shadow: none;
-            border: none;
-        }
-
-        .container {
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        .form-title {
-            font-size: 16pt;
-        }
-
-        .form-group {
-            margin-bottom: 10px;
-        }
+    .content {
+        padding: 69px 112px 40px;
+        margin-left: 200px;
     }
 
+    .logo-container {
+        text-align: center;
+        margin-bottom: 2px;
+        margin-top: -37px;
+    }
+
+        .logo-container img {
+            max-width: 400px;
+            margin-bottom: -22px;
+            margin-top: -54px;
+            margin-left: 42px;
+        }
+
+        .logo-container h2 {
+            margin-top: -15px;
+            font-size: 28px;
+            font-weight: bold;
+            margin-left: 34px;
+        }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 13px;
+    }
 
     @media (max-width: 600px) {
         .form-card {
@@ -359,38 +324,89 @@
         }
     }
 
-    .logo-container {
-        text-align: center;
-        margin-bottom: 2px;
-        margin-top: -37px;
-    }
-
-
-        .logo-container img {
-            max-width: 400px;
-            margin-bottom: -22px;
-            margin-top: -54px;
-            margin-left: 42px;
+    @media print {
+        .sidebar,
+        .topbar,
+        .no-print,
+        .btn,
+        .alert,
+        .fixed-footer,
+        .footer { /* ✅ This hides "Designed & Developed by CKP" */
+            display: none !important;
         }
 
-        .logo-container h2 {
-            margin-top: -15px;
-            font-size: 28px;
+        body {
+            margin: 0;
+            padding: 0;
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+
+        .content {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .form-card {
+            width: 100% !important;
+            max-width: 190mm;
+            margin: 0 auto !important;
+            padding: 10mm !important;
+            background: white !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+            .logo-container img {
+                max-width: 100mm;
+                margin: 0 auto;
+            }
+
+            .logo-container h2 {
+                font-size: 18pt;
+                font-weight: bold;
+                margin: 5mm 0;
+                text-align: center;
+            }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 24px !important;
+        }
+
+        .form-group {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        label {
+            font-size: 10pt !important;
             font-weight: bold;
-            margin-left: 34px;
         }
 
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        width: 100%; /* Ensures all form elements span full width of their grid cell */
-        box-sizing: border-box; /* Prevents padding from breaking the layout */
-        font-size: 13px; /* Adjust for consistency */
-    }
-
-    .content {
-        padding: 69px 26px 40px;
-        margin-left: 200px;
+        input,
+        select,
+        textarea {
+            font-size: 10pt !important;
+            border: none !important;
+            border-bottom: 1px solid #000 !important;
+            background: none !important;
+            padding: 2px 4px !important;
+            box-shadow: none !important;
+        }
     }
 </style>
 

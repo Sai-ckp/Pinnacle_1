@@ -4,7 +4,7 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <Name>student_alerts_app</Name>
     <RootNamespace>student_alerts_app</RootNamespace>
-    <InterpreterId>Global|PythonCore|3.9</InterpreterId>
+    <InterpreterId>Global|PythonCore|3.13</InterpreterId>
     <TestFramework>Pytest</TestFramework>
   </PropertyGroup>
   <PropertyGroup>
@@ -40,6 +40,9 @@
     <Compile Include="admission\migrations\__init__.py" />
     <Compile Include="admission\models.py" />
     <Compile Include="admission\forms.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="admission\templatetags\custom_tags.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="admission\templatetags\form_filters.py">
@@ -79,6 +82,19 @@
     </Compile>
     <Compile Include="attendence\views.py" />
     <Compile Include="attendence\__init__.py" />
+    <Compile Include="core\admin.py" />
+    <Compile Include="core\apps.py" />
+    <Compile Include="core\migrations\__init__.py" />
+    <Compile Include="core\models.py" />
+    <Compile Include="core\tests.py" />
+    <Compile Include="core\urls.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="core\utils.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="core\views.py" />
+    <Compile Include="core\__init__.py" />
     <Compile Include="license\admin.py" />
     <Compile Include="license\apps.py" />
     <Compile Include="license\forms.py" />
@@ -99,6 +115,12 @@
     <Compile Include="master\forms.py" />
     <Compile Include="master\models.py" />
     <Compile Include="master\admin.py" />
+    <Compile Include="master\templatetags\permission_tags.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="master\templatetags\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="master\urls.py">
       <SubType>Code</SubType>
     </Compile>
@@ -141,6 +163,10 @@
     <Folder Include="attendence\templatetags\" />
     <Folder Include="attendence\templates\" />
     <Folder Include="attendence\templates\attendence\" />
+    <Folder Include="core\" />
+    <Folder Include="core\migrations\" />
+    <Folder Include="core\templates\" />
+    <Folder Include="core\templates\core\" />
     <Folder Include="license\" />
     <Folder Include="license\middleware\" />
     <Folder Include="license\migrations\" />
@@ -148,6 +174,7 @@
     <Folder Include="license\templates\license\" />
     <Folder Include="master\" />
     <Folder Include="master\migrations\" />
+    <Folder Include="master\templatetags\" />
     <Folder Include="master\static\" />
     <Folder Include="master\static\app\" />
     <Folder Include="master\static\app\content\" />
@@ -210,6 +237,7 @@
     <Content Include="attendence\templates\attendence\period_list.html" />
     <Content Include="attendence\templates\attendence\student_attendance_form.html" />
     <Content Include="attendence\templates\attendence\student_attendance_list.html" />
+    <Content Include="core\templates\core\recent_activity.html" />
     <Content Include="license\templates\license\extend_license.html" />
     <Content Include="license\templates\license\home.html" />
     <Content Include="license\templates\license\index.html" />
@@ -221,9 +249,11 @@
     <Content Include="master\static\image\logo.png" />
     <Content Include="master\static\image\Pinnacle-Main.png" />
     <Content Include="master\templates\master\add_event.html" />
+    <Content Include="master\templates\master\add_user.html" />
     <Content Include="master\templates\master\bare.html" />
     <Content Include="master\templates\master\blank.html" />
     <Content Include="master\templates\master\calendar.html" />
+    <Content Include="master\templates\master\choose_passcode.html" />
     <Content Include="master\templates\master\communication_dashboard.html" />
     <Content Include="master\templates\master\course_form.html" />
     <Content Include="master\templates\master\course_list.html" />
@@ -232,9 +262,11 @@
     <Content Include="master\templates\master\dashboard.html" />
     <Content Include="master\templates\master\dashboard2.html" />
     <Content Include="master\templates\master\employee_form.html" />
+    <Content Include="master\templates\master\employee_form_view.html" />
     <Content Include="master\templates\master\employee_list.html" />
     <Content Include="master\templates\master\layout.html" />
     <Content Include="master\templates\master\master_dashboard.html" />
+    <Content Include="master\templates\master\password_reset.html" />
     <Content Include="master\templates\master\semester_form.html" />
     <Content Include="master\templates\master\semester_list.html" />
     <Content Include="master\templates\master\student_database_form.html" />
@@ -247,6 +279,8 @@
     <Content Include="master\templates\master\subject_list.html" />
     <Content Include="master\templates\master\transport_form.html" />
     <Content Include="master\templates\master\transport_list.html" />
+    <Content Include="master\templates\master\user_list.html" />
+    <Content Include="master\templates\master\user_rights.html" />
     <Content Include="master\templates\master\whatsapp_bulk.html" />
     <Content Include="requirements.txt" />
     <Content Include="db.sqlite3" />
@@ -287,18 +321,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|PythonCore|3.9" />
+    <InterpreterReference Include="Global|PythonCore|3.13" />
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="env1\">
-      <Id>env1</Id>
-      <Version>3.13</Version>
-      <Description>env1 (Python 3.13 (64-bit))</Description>
-      <InterpreterPath>Scripts\python.exe</InterpreterPath>
-      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
-      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
-      <Architecture>X64</Architecture>
-    </Interpreter>
     <Interpreter Include="env\">
       <Id>env</Id>
       <Version>3.9</Version>

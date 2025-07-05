@@ -53,186 +53,182 @@ from datetime import date
 from django.shortcuts import render
 
 from .models import PUAdmission, Enquiry1
+from django import forms
 
 from .forms import PUAdmissionForm
 
 from .utils import generate_next_receipt_no_shared
- 
+from core.utils import get_logged_in_user,log_activity
 def admission_form(request, enquiry_no=None):
-
     success = False
- 
+
     # Compute the next admission number
-
     last_admission = PUAdmission.objects.filter(admission_no__startswith='PU-').order_by('-id').first()
-
     last_number = int(last_admission.admission_no.split('-')[1]) if last_admission and last_admission.admission_no else 0
-
     next_admission_no = f"PU-{last_number + 1:03d}"
- 
+
     # Compute the next shared receipt number
-
     next_receipt_no, last_receipt_no = generate_next_receipt_no_shared()
- 
+
+    # Default initial data for the marks table
+    marks_initial = {}
+    for i in range(1, 7):
+        marks_initial[f"subject{i}"] = ""
+        marks_initial[f"max_marks{i}"] = ""
+        marks_initial[f"marks_obtained{i}"] = ""
+        marks_initial[f"total_marks_percentage{i}"] = ""  # <-- FIX here
+
+    admission = None  # No admission object yet for add mode
+
     if request.method == 'POST':
-
         form = PUAdmissionForm(request.POST, request.FILES)
-
         if form.is_valid():
-
             student_name = form.cleaned_data.get('student_name')
-
             enquiry_from_form = form.cleaned_data.get('enquiry_no')
- 
+
             if not enquiry_no and not enquiry_from_form:
-
                 enquiry_obj = Enquiry1.objects.filter(student_name=student_name).first()
-
                 enquiry_no = enquiry_obj.enquiry_no if enquiry_obj else 'None'
- 
+
             pu_admission = form.save(commit=False)
-
             pu_admission.admission_no = next_admission_no
-
             pu_admission.enquiry_no = enquiry_no or enquiry_from_form
-
             pu_admission.receipt_no = next_receipt_no
-
             pu_admission.receipt_date = date.today()
- 
             user_id = request.session.get('user_id')
-
             pu_admission.admission_taken_by = user_id if user_id else None
- 
+
             if not pu_admission.admission_date:
-
                 pu_admission.admission_date = date.today()
- 
+
             # Backend fee calculation
-
             tuition_fee = pu_admission.tuition_fee or 0
-
             tuition_advance = pu_admission.tuition_advance_amount or 0
-
             scholarship = pu_admission.scholarship_amount or 0
-
             pu_admission.final_fee_after_advance = tuition_fee - tuition_advance - scholarship
- 
+
             pu_admission.save()
 
+
+
+
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', pu_admission)
+
+
+
             success = True
- 
+
             # Prepare new form with incremented numbers
-
             next_admission_no = f"PU-{last_number + 2:03d}"
-
             next_receipt_no, last_receipt_no = generate_next_receipt_no_shared()
-
             form = PUAdmissionForm(initial={
-
                 'admission_no': next_admission_no,
-
                 'admission_date': date.today(),
-
                 'receipt_no': next_receipt_no,
-
                 'receipt_date': date.today(),
-
+                **marks_initial
             })
-
         else:
-
             print("Form Errors:", form.errors)
- 
     else:
-
         initial_data = {
-
             'admission_no': next_admission_no,
-
             'admission_date': date.today(),
-
             'receipt_no': next_receipt_no,
-
             'receipt_date': date.today(),
-
+            **marks_initial
         }
- 
+
         if enquiry_no:
-
             try:
-
                 enquiry = Enquiry1.objects.get(enquiry_no=enquiry_no)
-
                 initial_data.update({
-
                     'enquiry_no': enquiry.enquiry_no,
-
                     "student_name": enquiry.student_name,
-
                     "gender": enquiry.gender,
-
                     "parent_name": enquiry.parent_name,
-
                     "parent_mobile_no": enquiry.parent_phone,
-
                     "email": enquiry.email,
-
                     "course_type": enquiry.course_type.id,
-
-                    "sslc_percentage": enquiry.percentage_10th, 
-
+                    "sslc_percentage": enquiry.percentage_10th,
                 })
+                # Optionally, if you have subject info in enquiry, add it here
+                # for i in range(1, 7):
+                #     initial_data[f"subject{i}"] = getattr(enquiry, f"subject{i}", "")
+                #     initial_data[f"max_marks{i}"] = getattr(enquiry, f"max_marks{i}", "")
+                #     initial_data[f"marks_obtained{i}"] = getattr(enquiry, f"marks_obtained{i}", "")
+                #     initial_data[f"total_marks_percentage{i}"] = getattr(enquiry, f"total_marks_percentage{i}", "")
 
             except Enquiry1.DoesNotExist:
-
                 pass
- 
+
         form = PUAdmissionForm(initial=initial_data)
- 
+
+    # Prepare rows for the template
+    subject_rows = []
+    for i in range(1, 7):
+        subject_rows.append({
+            "subject_field": form[f"subject{i}"],
+            "max_marks_field": form[f"max_marks{i}"],
+            "marks_field": form[f"marks_obtained{i}"],
+            "percent_field": form[f"total_marks_percentage{i}"],  # <-- FIX here
+            "subject_val": "",       # for add mode, values are blank
+            "max_marks_val": "",
+            "marks_val": "",
+            "percent_val": "",
+        })
+
     return render(request, 'admission/admission_form.html', {
-
         'form': form,
-
         'success': success,
-
         'next_admission_no': next_admission_no,
-
         'next_receipt_no': next_receipt_no,
-
         'last_receipt_no': last_receipt_no,
-
+        'subject_rows': subject_rows,
+        'add_mode': True,
+        'edit_mode': False,
+        'view_mode': False,
+        'admission': admission,
     })
 
- 
-from django.shortcuts import render, get_object_or_404
-from .models import PUAdmission  # use your actual model name
-from django import forms 
 def view_pu_admission(request, pk):
     admission = get_object_or_404(PUAdmission, pk=pk)
     form = PUAdmissionForm(instance=admission)
 
-    # Disable all fields properly
+    # Disable all fields for view mode
     for name, field in form.fields.items():
         widget = field.widget
-
-        # For checkboxes, use 'disabled' only
         if isinstance(widget, forms.CheckboxInput):
             widget.attrs['disabled'] = True
         else:
             widget.attrs['readonly'] = True
             widget.attrs['disabled'] = True
 
+    # Prepare subject rows for template rendering (includes both fields and values)
+    subject_rows = []
+    for i in range(1, 7):
+        percent_name = f"total_marks_percentage{i}"
+        subject_rows.append({
+            "subject_field": form[f"subject{i}"],
+            "max_marks_field": form[f"max_marks{i}"],
+            "marks_field": form[f"marks_obtained{i}"],
+            "percent_field": form[percent_name] if percent_name in form.fields else None,
+            "subject_val": getattr(admission, f"subject{i}", ""),
+            "max_marks_val": getattr(admission, f"max_marks{i}", ""),
+            "marks_val": getattr(admission, f"marks_obtained{i}", ""),
+            "percent_val": getattr(admission, percent_name, ""),
+        })
+
     return render(request, 'admission/admission_form.html', {
         'form': form,
         'admission': admission,
+        'subject_rows': subject_rows,
+        'add_mode': False,
         'edit_mode': False,
         'view_mode': True,
     })
-
-# views.py
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import PUAdmission
 
 
 def edit_pu_admission(request, pk):
@@ -243,21 +239,41 @@ def edit_pu_admission(request, pk):
         form = PUAdmissionForm(request.POST, request.FILES, instance=admission)
         if form.is_valid():
             form.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'edited', admission)
+
+
             success = True
-            # Redirect to list after saving, or show the same page with success message
             return redirect('admission_list')  # Replace with your list view name
     else:
         form = PUAdmissionForm(instance=admission)
+
+    # Prepare subject rows for template rendering (includes both fields and values)
+    subject_rows = []
+    for i in range(1, 7):
+        percent_name = f"total_marks_percentage{i}"
+        subject_rows.append({
+            "subject_field": form[f"subject{i}"],
+            "max_marks_field": form[f"max_marks{i}"],
+            "marks_field": form[f"marks_obtained{i}"],
+            "percent_field": form[percent_name] if percent_name in form.fields else None,
+            "subject_val": getattr(admission, f"subject{i}", ""),
+            "max_marks_val": getattr(admission, f"max_marks{i}", ""),
+            "marks_val": getattr(admission, f"marks_obtained{i}", ""),
+            "percent_val": getattr(admission, percent_name, ""),
+        })
 
     return render(request, 'admission/admission_form.html', {
         'form': form,
         'success': success,
         'edit_mode': True,
+        'add_mode': False,
+        'view_mode': False,
         'admission': admission,
-        'next_admission_no': admission.admission_no,  # Ensure admission_no is shown as readonly
+        'next_admission_no': admission.admission_no,
+        'subject_rows': subject_rows,
     })
-# views.py
-# views.py
 
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
@@ -266,6 +282,11 @@ from .models import PUAdmission
 def delete_pu_admission(request, pk):
     admission = get_object_or_404(PUAdmission, pk=pk)
     admission.delete()
+
+
+    user = get_logged_in_user(request)
+    log_activity(user, 'deleted', admission)
+
     messages.success(request, "PU Admission deleted successfully.")
     return redirect('admission_list')  # Must match name in urls.py
 
@@ -298,28 +319,34 @@ def degree_admission_list(request):
     return render(request, 'admission/degree_admission_list.html', {'admissions': admissions}) 
 
 # ---------- Degree Admission Form View ----------
-from datetime import date
-from django.shortcuts import render
-from .models import DegreeAdmission, Enquiry2
-from .forms import DegreeAdmissionForm
 
 from datetime import date
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import DegreeAdmission, Enquiry2
 from .forms import DegreeAdmissionForm
 from .utils import generate_next_receipt_no_shared
- 
+
 def degree_admission_form(request, enquiry_no=None):
     form_submission_success = False
- 
+
     # Compute next admission number
     last_admission = DegreeAdmission.objects.filter(admission_no__startswith='DG-').order_by('-id').first()
     last_number = int(last_admission.admission_no.split('-')[1]) if last_admission and last_admission.admission_no else 0
     next_admission_no = f"DG-{last_number + 1:03d}"
- 
+
     # Compute shared receipt number
     next_receipt_no, _ = generate_next_receipt_no_shared()
- 
+
+    # Default initial for subject/marks fields
+    marks_initial = {}
+    for i in range(1, 7):
+        marks_initial[f"subject{i}"] = ""
+        marks_initial[f"max_marks{i}"] = ""
+        marks_initial[f"marks_obtained{i}"] = ""
+        marks_initial[f"total_marks_percentage{i}"] = ""
+
+    admission = None  # No admission object yet for add mode
+
     if request.method == 'POST':
         form = DegreeAdmissionForm(request.POST, request.FILES)
         if form.is_valid():
@@ -327,31 +354,36 @@ def degree_admission_form(request, enquiry_no=None):
             degree_admission.admission_no = next_admission_no
             degree_admission.receipt_no = next_receipt_no
             degree_admission.receipt_date = date.today()
- 
+
             enquiry_from_form = form.cleaned_data.get('enquiry_no')
             student_name = form.cleaned_data.get('student_name')
- 
+
             if not enquiry_no and not enquiry_from_form:
                 enquiry_obj = Enquiry2.objects.filter(student_name=student_name).first()
                 enquiry_no = enquiry_obj.enquiry_no if enquiry_obj else 'None'
- 
+
             degree_admission.enquiry_no = enquiry_no or enquiry_from_form
- 
+
             user_id = request.session.get('user_id')
             degree_admission.admission_taken_by = user_id if user_id else None
- 
+
             if not degree_admission.admission_date:
                 degree_admission.admission_date = date.today()
- 
+
             tuition_fee = degree_admission.tuition_fee or 0
             tuition_advance = degree_admission.tuition_advance_amount or 0
             scholarship = degree_admission.scholarship_amount or 0
             degree_admission.final_fee_after_advance = tuition_fee - tuition_advance - scholarship
- 
+
             degree_admission.save()
+
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', degree_admission)
+
             form_submission_success = True
- 
-            # Prepare new form
+
+            # Prepare new form for next entry
             next_admission_no = f"DG-{last_number + 2:03d}"
             next_receipt_no, _ = generate_next_receipt_no_shared()
             form = DegreeAdmissionForm(initial={
@@ -359,19 +391,19 @@ def degree_admission_form(request, enquiry_no=None):
                 'admission_date': date.today(),
                 'receipt_no': next_receipt_no,
                 'receipt_date': date.today(),
+                **marks_initial
             })
         else:
             print("Form Errors:", form.errors)
- 
     else:
-        next_receipt_no, _ = generate_next_receipt_no_shared()
         initial_data = {
             'admission_no': next_admission_no,
             'admission_date': date.today(),
             'receipt_no': next_receipt_no,
             'receipt_date': date.today(),
+            **marks_initial
         }
- 
+
         if enquiry_no:
             try:
                 enquiry = Enquiry2.objects.get(enquiry_no=enquiry_no)
@@ -383,48 +415,83 @@ def degree_admission_form(request, enquiry_no=None):
                     "parent_mobile_no": enquiry.parent_phone,
                     "email": enquiry.email,
                     "course_type": enquiry.course_type.id,
-                    "sslc_percentage": enquiry.percentage_12th, 
+                    "sslc_percentage": enquiry.percentage_12th,
                 })
+                # Optionally fill subject marks fields from enquiry if available
+                # for i in range(1, 7):
+                #     initial_data[f"subject{i}"] = getattr(enquiry, f"subject{i}", "")
+                #     initial_data[f"max_marks{i}"] = getattr(enquiry, f"max_marks{i}", "")
+                #     initial_data[f"marks_obtained{i}"] = getattr(enquiry, f"marks_obtained{i}", "")
+                #     initial_data[f"total_marks_percentage{i}"] = getattr(enquiry, f"total_marks_percentage{i}", "")
             except Enquiry2.DoesNotExist:
                 pass
- 
+
         form = DegreeAdmissionForm(initial=initial_data)
- 
+
+    # Prepare subject rows for template rendering (form fields and empty values)
+    subject_rows = []
+    for i in range(1, 7):
+        subject_rows.append({
+            "subject_field": form[f"subject{i}"],
+            "max_marks_field": form[f"max_marks{i}"],
+            "marks_field": form[f"marks_obtained{i}"],
+            "percent_field": form[f"total_marks_percentage{i}"],
+            # For add mode, values are empty
+            "subject_val": "",
+            "max_marks_val": "",
+            "marks_val": "",
+            "percent_val": "",
+        })
+
     return render(request, 'admission/degree_admission_form.html', {
         'form': form,
         'form_submission_success': form_submission_success,
         'next_admission_no': next_admission_no,
+        'subject_rows': subject_rows,
+        'add_mode': True,  # This is add mode!
+        'edit_mode': False,
+        'view_mode': False,
+        'admission': admission,
     })
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import DegreeAdmission  # replace with your actual model name if different
-from django import forms 
+
 def view_degree_admission(request, pk):
     admission = get_object_or_404(DegreeAdmission, pk=pk)
     form = DegreeAdmissionForm(instance=admission)
 
-    # Disable all fields properly
-    for name, field in form.fields.items():
-        widget = field.widget
+    # Disable all fields in the form for view mode
+    for field in form.fields.values():
+        field.disabled = True
 
-        # For checkboxes, use 'disabled' only
-        if isinstance(widget, forms.CheckboxInput):
-            widget.attrs['disabled'] = True
-        else:
-            widget.attrs['readonly'] = True
-            widget.attrs['disabled'] = True
+    # Prepare subject rows
+    subject_rows = []
+    for i in range(1, 7):
+        # Handle missing percentage field gracefully
+        percent_field_name = f"total_marks_percentage{i}"
+        percent_field = form[percent_field_name] if percent_field_name in form.fields else None
+        percent_val = getattr(admission, percent_field_name, "")
 
-    return render(request, 'admission/degree_admission_form.html', {
-        'form': form,
-        'admission': admission,
-        'edit_mode': False,
-        'view_mode': True,
-    })
+        subject_rows.append({
+            "subject_field": form[f"subject{i}"],
+            "max_marks_field": form[f"max_marks{i}"],
+            "marks_field": form[f"marks_obtained{i}"],
+            "percent_field": percent_field,
+            "subject_val": getattr(admission, f"subject{i}", ""),
+            "max_marks_val": getattr(admission, f"max_marks{i}", ""),
+            "marks_val": getattr(admission, f"marks_obtained{i}", ""),
+            "percent_val": percent_val,
+        })
 
+    context = {
+        "form": form,
+        "admission": admission,
+        "subject_rows": subject_rows,
+        "add_mode": False,
+        "edit_mode": False,
+        "view_mode": True,
+    }
+    return render(request, "admission/degree_admission_form.html", context)
 
-
-from .models import DegreeAdmission
-from .forms import DegreeAdmissionForm  # Create this ModelForm if not present
 
 def edit_degree_admission(request, pk):
     admission = get_object_or_404(DegreeAdmission, pk=pk)
@@ -435,6 +502,11 @@ def edit_degree_admission(request, pk):
         form = DegreeAdmissionForm(request.POST, request.FILES, instance=admission)
         if form.is_valid():
             form.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'edited', admission)
+
+
             return redirect('degree_admission_list')
     else:
         form = DegreeAdmissionForm(instance=admission)
@@ -443,11 +515,28 @@ def edit_degree_admission(request, pk):
         for field in form.fields.values():
             field.disabled = True
 
+    # Build subject_rows for template rendering
+    subject_rows = []
+    for i in range(1, 7):
+        subject_rows.append({
+            "subject_field": form[f"subject{i}"],
+            "max_marks_field": form[f"max_marks{i}"],
+            "marks_field": form[f"marks_obtained{i}"],
+            "percent_field": form[f"total_marks_percentage{i}"],
+            "subject_val": getattr(admission, f"subject{i}", ""),
+            "max_marks_val": getattr(admission, f"max_marks{i}", ""),
+            "marks_val": getattr(admission, f"marks_obtained{i}", ""),
+            "percent_val": getattr(admission, f"total_marks_percentage{i}", ""),
+        })
+
     return render(request, 'admission/degree_admission_form.html', {
         'form': form,
         'success': success,
         'edit_mode': not view_only,
+        'view_mode': view_only,
         'admission': admission,
+        'subject_rows': subject_rows,
+        'add_mode': False,  # Explicitly add this for consistency
     })
 
 from django.shortcuts import redirect
@@ -458,10 +547,17 @@ def delete_degree_admission(request, pk):
     admission = DegreeAdmission.objects.filter(pk=pk).first()
     if admission:
         admission.delete()
+
+
+        user = get_logged_in_user(request)
+        log_activity(user, 'deleted', admission)
+
+
         messages.success(request, "Degree Admission deleted successfully.")
     else:
         messages.warning(request, "This admission record does not exist or was already deleted.")
     return redirect('degree_admission_list')
+
 
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -774,39 +870,83 @@ def degree_fee_detail_form(request, admission_id):
     })
 
 from django.shortcuts import render, redirect
+
 from django.http import JsonResponse
+
 from .forms import Enquiry1Form
+
 from .models import Enquiry1, Course
+
 from django.contrib import messages
-
-
-def enquiry_list1(request):
-    enquiries1 = Enquiry1.objects.all().annotate(enquiry_type=Value('PU', output_field=CharField()))
-    enquiries2 = Enquiry2.objects.all().annotate(enquiry_type=Value('DEG', output_field=CharField()))
-    enquiries = list(enquiries1) + list(enquiries2)
-   
-
-    # Extract all user IDs where admission_taken_by is not None
-    user_ids = [a.created_by for a in enquiries if a.created_by]
-
-        # Fetch corresponding users with their usernames
-    users = UserCustom.objects.filter(id__in=user_ids).values('id', 'username')
-
-        # Create a dictionary to map user IDs to usernames
-    user_dict = {user['id']: user['username'] for user in users}
-
-        # Add the username dynamically to each admission object
-    for enquiry in enquiries:
-            enquiry.created_by_username = user_dict.get(enquiry.created_by, "Unknown")
  
+from django.db.models import Value, CharField
 
-   
+from django.utils import timezone
+ 
+ 
+def enquiry_list1(request):
 
+    # Get current date and time
+
+    now = timezone.now()
+ 
+    # Calculate the start of the current month
+
+    start_of_month = now.replace(day=1)
+ 
+    # Calculate the end of the current month
+
+    # This is the first day of the next month
+
+    next_month = start_of_month.replace(month=now.month % 12 + 1)
+
+    end_of_month = next_month - timedelta(days=1)
+ 
+    # Filter Enquiries for this month
+
+    enquiries1 = Enquiry1.objects.filter(enquiry_date__range=[start_of_month, end_of_month]).annotate(
+
+        enquiry_type=Value('PU', output_field=CharField())
+
+    )
+
+    enquiries2 = Enquiry2.objects.filter(enquiry_date__range=[start_of_month, end_of_month]).annotate(
+
+        enquiry_type=Value('DEG', output_field=CharField())
+
+    )
+ 
+    # Combine both enquiry sets
+
+    enquiries = list(enquiries1) + list(enquiries2)
+ 
+    # Extract all user IDs where admission_taken_by is not None
+
+    user_ids = [a.created_by for a in enquiries if a.created_by]
+ 
+    # Fetch corresponding users with their usernames
+
+    users = UserCustom.objects.filter(id__in=user_ids).values('id', 'username')
+ 
+    # Create a dictionary to map user IDs to usernames
+
+    user_dict = {user['id']: user['username'] for user in users}
+ 
+    # Add the username dynamically to each enquiry object
+
+    for enquiry in enquiries:
+
+        enquiry.created_by_username = user_dict.get(enquiry.created_by, "Unknown")
+ 
+    # Render the enquiry list template with the filtered enquiries
 
     return render(request, 'admission/enquiry_list1.html', {
-        'enquiries': enquiries,
-    })
 
+        'enquiries': enquiries,
+
+    })
+ 
+ 
 
 
 
@@ -819,8 +959,30 @@ from .models import Enquiry1, Enquiry2
 from .utils import send_msgkart_template
 from django.core.exceptions import ObjectDoesNotExist
 
+from core.utils import get_logged_in_user, log_activity
+
+# @csrf_exempt
+
+# from django.http import JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
+# from django.shortcuts import get_object_or_404
+# from .models import Enquiry1, Enquiry2
+# from .utils import send_msgkart_template
+# from django.core.exceptions import ObjectDoesNotExist
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.utils.timezone import now
+from django.core.exceptions import ObjectDoesNotExist
+from admission.models import Enquiry1, Enquiry2
+from .utils import send_msgkart_template  # adjust this import as needed
+
+
 @csrf_exempt
 def send_whatsapp_message(request, enquiry_no):
+
+    user = get_logged_in_user(request)
+
     if request.method == "POST":
         # Try Enquiry1, then Enquiry2
         try:
@@ -870,7 +1032,8 @@ def send_whatsapp_message(request, enquiry_no):
             # Update DB status
             if response.status_code in [200, 202] and (transaction_id or (status and status.lower() == "success")):
                 enquiry.whatsapp_status = 'sent'
-                enquiry.save(update_fields=['whatsapp_status'])
+                enquiry.whatsapp_sent_date = now().date()  # ✅ Set sent date
+                enquiry.save(update_fields=['whatsapp_status', 'whatsapp_sent_date'])
                 return JsonResponse({
                     "status": "success",
                     "message": "WhatsApp message submitted for delivery.",
@@ -878,7 +1041,8 @@ def send_whatsapp_message(request, enquiry_no):
                 })
             else:
                 enquiry.whatsapp_status = 'failed'
-                enquiry.save(update_fields=['whatsapp_status'])
+                enquiry.whatsapp_sent_date = None  # Optional: clear date on failure
+                enquiry.save(update_fields=['whatsapp_status', 'whatsapp_sent_date'])
                 return JsonResponse({
                     "status": "error",
                     "message": f"Failed to send WhatsApp message. Error: {error_msg or response.text or 'Unknown error'}",
@@ -887,7 +1051,10 @@ def send_whatsapp_message(request, enquiry_no):
 
         except Exception as e:
             enquiry.whatsapp_status = 'failed'
-            enquiry.save(update_fields=['whatsapp_status'])
+            enquiry.whatsapp_sent_date = None
+            enquiry.save(update_fields=['whatsapp_status', 'whatsapp_sent_date'])
+
+            log_activity(user, 'error', enquiry)
             return JsonResponse({
                 "status": "error",
                 "message": f"Error sending WhatsApp: {str(e)}"
@@ -897,110 +1064,134 @@ def send_whatsapp_message(request, enquiry_no):
         return JsonResponse({"status": "error", "message": "Invalid request method."}, status=405)
 
 
-from django.shortcuts import render
+
+
 from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Q
+
+from django.shortcuts import render
+
 from admission.models import Enquiry1, Enquiry2, PUAdmission, DegreeAdmission, FollowUp
-
+ 
 def enquiry_dashboard(request):
+
     now = timezone.now()
-    today = now.date()
-    filter_type = request.GET.get('filter', 'all')  # Default to 'all'
 
-    # Determine the start date for filtering
-    if filter_type == 'day':
-        date_start = today
-        date_end = today
-    elif filter_type == 'week':
-        date_start = today - timedelta(days=today.weekday())  # Monday
-        date_end = date_start + timedelta(days=6)             # Sunday
-    elif filter_type == 'month':
-        date_start = today.replace(day=1)
-        date_end = today
-    else:
-        date_start = None
-        date_end = None
+    start_of_month = now.replace(day=1)
 
-    # Converted enquiries (enquiry_no is not null/empty)
+    start_of_week = now - timedelta(days=now.weekday())  # Monday
+
+    end_of_week = start_of_week + timedelta(days=6)       # Sunday
+ 
+    # Converted enquiry numbers
+
     pu_converted_nos = PUAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values_list('enquiry_no', flat=True)
-    degree_converted_nos = DegreeAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values_list('enquiry_no', flat=True)
 
-    # Enquiries within filter
-    if date_start and date_end:
-        pu_enquiries = Enquiry1.objects.filter(enquiry_date__range=(date_start, date_end))
-        degree_enquiries = Enquiry2.objects.filter(enquiry_date__range=(date_start, date_end))
-    else:
-        pu_enquiries = Enquiry1.objects.all()
-        degree_enquiries = Enquiry2.objects.all()
+    degree_converted_nos = DegreeAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values_list('enquiry_no', flat=True)
+ 
+    # Total enquiries this month
+
+    pu_enquiries = Enquiry1.objects.filter(enquiry_date__gte=start_of_month)
+
+    degree_enquiries = Enquiry2.objects.filter(enquiry_date__gte=start_of_month)
 
     total_enquiries = pu_enquiries.count() + degree_enquiries.count()
+ 
+    # Converted enquiries this month
 
-    # Converted enquiries count
     pu_converted = pu_enquiries.filter(enquiry_no__in=pu_converted_nos).count()
+
     degree_converted = degree_enquiries.filter(enquiry_no__in=degree_converted_nos).count()
+
     total_converted_enquiries = pu_converted + degree_converted
+ 
+    # Follow-up Scheduled: this week, after now, and not converted
 
-    # Weekly follow-up range (for followups_due logic)
-    start_of_week = today - timedelta(days=today.weekday())
-    end_of_week = start_of_week + timedelta(days=6)
-
-    # Follow-up Scheduled: future this week and still pending
     followup_scheduled = FollowUp.objects.filter(
+
         follow_up_date__gte=now,
+
         follow_up_date__lte=end_of_week,
+
         status='Pending'
+
     ).exclude(
+
         Q(pu_enquiry__enquiry_no__in=pu_converted_nos) |
+
         Q(degree_enquiry__enquiry_no__in=degree_converted_nos)
+
     ).count()
+ 
+    # Follow-up Required: enquiries this week, not converted, no follow-up at all
 
-    # Follow-up Required: this week's enquiries with no follow-up & not converted
     followup_required = 0
-    unconverted_enquiries = list(
-        pu_enquiries.exclude(enquiry_no__in=pu_converted_nos).filter(enquiry_date__range=(start_of_week, end_of_week))
-    ) + list(
-        degree_enquiries.exclude(enquiry_no__in=degree_converted_nos).filter(enquiry_date__range=(start_of_week, end_of_week))
-    )
 
+    unconverted_enquiries = list(
+
+        pu_enquiries.exclude(enquiry_no__in=pu_converted_nos).filter(enquiry_date__range=(start_of_week, end_of_week))
+
+    ) + list(
+
+        degree_enquiries.exclude(enquiry_no__in=degree_converted_nos).filter(enquiry_date__range=(start_of_week, end_of_week))
+
+    )
+ 
     for enquiry in unconverted_enquiries:
+
         if isinstance(enquiry, Enquiry1):
+
             has_followup = FollowUp.objects.filter(pu_enquiry=enquiry).exists()
+
         else:
+
             has_followup = FollowUp.objects.filter(degree_enquiry=enquiry).exists()
+
         if not has_followup:
+
             followup_required += 1
+ 
+    # Total Follow-ups Due = scheduled (future in week) + required (no follow-up)
 
     followups_due = followup_scheduled + followup_required
+ 
+    # Pending follow-ups: this month, missed (before now), and not converted
 
-    # Pending follow-ups (missed & not converted)
-    pending_followups_query = FollowUp.objects.filter(
+    pending_followups = FollowUp.objects.filter(
+
         follow_up_date__lt=now,
+
+        follow_up_date__gte=start_of_month,
+
         status='Pending'
-    )
 
-    if date_start and date_end:
-        pending_followups_query = pending_followups_query.filter(follow_up_date__range=(date_start, date_end))
+    ).exclude(
 
-    pending_followups = pending_followups_query.exclude(
         Q(pu_enquiry__enquiry_no__in=pu_converted_nos) |
+
         Q(degree_enquiry__enquiry_no__in=degree_converted_nos)
+
     ).count()
+ 
+    # Conversion rate
 
-    # Conversion Rate Calculation
     conversion_rate = (total_converted_enquiries / total_enquiries) * 100 if total_enquiries else 0
-
+ 
     context = {
+
         'followups_due': followups_due,
+
         'pending_followups': pending_followups,
+
         'total_enquiries': total_enquiries,
+
         'total_converted_enquiries': total_converted_enquiries,
+
         'conversion_rate': round(conversion_rate, 2),
-        'active_filter': filter_type,  # For frontend dropdown highlighting
+
     }
-
+ 
     return render(request, 'admission/enquiry_dashboard.html', context)
-
+ 
 
 from django.db.models import Exists, OuterRef, Q
 
@@ -1010,6 +1201,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import PUAdmission, DegreeAdmission, Enquiry1, Enquiry2, FollowUp
 from django.db.models import Q
+from .forms import FollowUpForm
 def followups_due_list(request):
     now = timezone.now()
     start_of_week = now - timedelta(days=now.weekday())
@@ -1077,13 +1269,7 @@ def pending_followups_list(request):
 
 
 
-
-
-
-
-
-
-def schedule_follow_up_form(request):
+def schedule_follow_up_form_add(request):
     enquiry_no = request.GET.get('enquiry_no')
     student_name = request.GET.get('student_name')  # NEW
     enquiry = None
@@ -1118,7 +1304,12 @@ def schedule_follow_up_form(request):
                 followup.degree_enquiry = enquiry
 
             followup.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'followup_scheduled', followup)
             messages.success(request, "Follow-up scheduled successfully!")
+
+
             return redirect('enquiry_list')
     else:
         form = FollowUpForm(initial=initial_data)
@@ -1128,6 +1319,75 @@ def schedule_follow_up_form(request):
         'enquiry': enquiry,
         'enquiry_no': enquiry_no
     })
+
+from django.http import JsonResponse
+from .models import Enquiry1, Enquiry2  # adjust to your model names
+ 
+from django.http import JsonResponse
+from .models import Enquiry1, Enquiry2
+ 
+def get_student_name(request):
+    value = request.GET.get('value')
+    if value:
+        prefix, obj_id = value.split('_', 1)
+        if prefix == 'pu':
+            try:
+                student_name = Enquiry1.objects.get(id=obj_id).student_name
+                return JsonResponse({'student_name': student_name})
+            except Enquiry1.DoesNotExist:
+                pass
+        elif prefix == 'deg':
+            try:
+                student_name = Enquiry2.objects.get(id=obj_id).student_name
+                return JsonResponse({'student_name': student_name})
+            except Enquiry2.DoesNotExist:
+                pass
+    return JsonResponse({'student_name': ''})
+
+
+from django.shortcuts import get_object_or_404, redirect, render
+from .models import FollowUp
+from .forms import FollowUpForm
+
+def schedule_follow_up_form_edit(request, pk):
+    followup = get_object_or_404(FollowUp, pk=pk)
+    if request.method == 'POST':
+        form = FollowUpForm(request.POST, instance=followup)
+        if form.is_valid():
+            form.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'followup_scheduled', followup)
+            messages.success(request, "Follow-up updated successfully!")
+
+            return redirect('follow_up_list')
+    else:
+        form = FollowUpForm(instance=followup)
+    
+    return render(request, 'admission/schedule_follow_up_form.html', {'form': form, 'edit': True})
+
+from django.shortcuts import render, get_object_or_404
+from .models import FollowUp
+from .forms import FollowUpForm
+
+def schedule_follow_up_form_view(request, pk):
+    followup = get_object_or_404(FollowUp, pk=pk)
+    form = FollowUpForm(instance=followup)
+    for field in form.fields.values():
+        field.disabled = True  # make all fields read-only
+
+    return render(request, 'admission/schedule_follow_up_form.html', {
+        'form': form,
+        'view': True
+    })
+
+def schedule_follow_up_form_delete(request, pk):
+    followup = get_object_or_404(FollowUp, pk=pk)
+    followup.delete()
+    user = get_logged_in_user(request)
+    log_activity(user, 'followup_scheduled', followup)
+    messages.success(request, "Follow-up deleted successfully!")
+    return redirect('follow_up_list')
 
 
 
@@ -1250,7 +1510,7 @@ from django.shortcuts import render, get_object_or_404
 from admission.models import Enquiry1, Enquiry2
 from admission.forms import Enquiry1Form, Enquiry2Form
 
-def view_enquiry(request, enquiry_no):
+def enquiry_form_view(request, enquiry_no):
     if enquiry_no.startswith("PU"):
         enquiry = get_object_or_404(Enquiry1, enquiry_no=enquiry_no)
         form = Enquiry1Form(instance=enquiry)
@@ -1272,7 +1532,56 @@ def view_enquiry(request, enquiry_no):
     })
 
 
-def enquiry1_create(request):
+
+def enquiry_form_edit(request, enquiry_no):
+    if enquiry_no.startswith("PU"):
+        enquiry = get_object_or_404(Enquiry1, enquiry_no=enquiry_no)
+        form_class = Enquiry1Form
+        template = 'admission/enquiry1_form.html'
+    else:
+        enquiry = get_object_or_404(Enquiry2, enquiry_no=enquiry_no)
+        form_class = Enquiry2Form
+        template = 'admission/enquiry2_form.html'
+
+    if request.method == "POST":
+        form = form_class(request.POST, instance=enquiry)
+        if form.is_valid():
+            form.save()
+
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'edited', enquiry)
+
+            return redirect('enquiry_list')  # Replace with your actual listing view name
+    else:
+        form = form_class(instance=enquiry)
+
+    return render(request, template, {
+        'form': form,
+        'next_enquiry_no': enquiry.enquiry_no,
+        'edit_mode': True
+    })
+from django.contrib import messages
+
+def enquiry_form_delete(request, enquiry_no):
+    if enquiry_no.startswith("PU"):
+        model = Enquiry1
+    else:
+        model = Enquiry2
+
+    enquiry = get_object_or_404(model, enquiry_no=enquiry_no)
+
+    # Perform the delete operation
+    enquiry.delete()
+
+    # Log the activity
+    user = get_logged_in_user(request)
+    log_activity(user, 'deleted', enquiry)
+
+    return redirect('enquiry_list')
+
+
+def enquiry_form_add(request):
     if request.method == 'POST':
         form = Enquiry1Form(request.POST)
         if form.is_valid():
@@ -1294,9 +1603,16 @@ def enquiry1_create(request):
                 enquiry.created_by = None
 
             enquiry.save()
+
+
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', enquiry)
+
+
             print("Enquiry saved with created_by:", enquiry.created_by)
             messages.success(request, "Saved successfully!")
-            return redirect('enquiry1_create')
+            return redirect('enquiry_list')
 
     else:
         last_enquiry = Enquiry1.objects.order_by('-id').first()
@@ -1327,7 +1643,9 @@ from admission.models import Enquiry2
 from admission.forms import Enquiry2Form
 from django.contrib import messages
 from django.shortcuts import render, redirect
-def enquiry2_create(request):
+
+
+def degree_enquiry_add(request):
     if request.method == 'POST':
         form = Enquiry2Form(request.POST)
         if form.is_valid():
@@ -1349,9 +1667,14 @@ def enquiry2_create(request):
                 enquiry.created_by = None
 
             enquiry.save()
+
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', enquiry)
+
             print("Enquiry saved with created_by:", enquiry.created_by)
             messages.success(request, "Saved successfully!")
-            return redirect('enquiry2_create')
+            return redirect('enquiry_list')
 
     else:
         last_enquiry = Enquiry2.objects.order_by('-id').first()
@@ -1635,7 +1958,7 @@ def generate_new_receipt_no_and_date():
 from django.contrib import messages
 from django.urls import reverse
 
-def student_create(request):
+def student_fee_form_add(request):
     if request.method == "POST":
         admission_no = request.POST.get('admission_no')
 
@@ -1663,6 +1986,10 @@ def student_create(request):
         save_student_data_from_request(student, request)
         save_payment_history(student, request)
 
+
+        user = get_logged_in_user(request)
+        log_activity(user, 'created', student)
+
         return redirect('student_list')
 
     # GET
@@ -1688,7 +2015,7 @@ def safe_decimal(val):
         return Decimal(0)
 
 
-def student_edit(request, admission_no):
+def student_fee_form_edit(request, admission_no):
     student = get_object_or_404(Student, admission_no=admission_no)
 
     if request.method == 'POST':
@@ -1739,6 +2066,9 @@ def student_edit(request, admission_no):
             )
 
             student.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'updated', student)
 
             # Save payment history
             StudentPaymentHistory.objects.create(
@@ -2046,7 +2376,28 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import StudentPaymentHistory
 
-def payment_history(request):
+
+from django.http import HttpResponseNotAllowed
+from django.contrib import messages
+ 
+from .models import StudentPaymentHistory
+ 
+def student_fee_form_delete(request, admission_no):
+    if request.method in ['POST', 'GET']:  # TEMPORARY for testing only
+        student = get_object_or_404(Student, admission_no=admission_no)
+        student.delete()
+
+
+        user = get_logged_in_user(request)
+        log_activity(user, 'deleted', student)
+
+
+        messages.success(request, f"Student {admission_no} deleted successfully.")
+        return redirect('student_list')
+    return HttpResponseNotAllowed(['POST'])
+
+
+def student_fee_form_view(request):
     query = request.GET.get('search')
     filter_status = request.GET.get('filter_status')
     due_date = request.GET.get('due_date')
@@ -2943,28 +3294,60 @@ def export_payments_excel(request):
 
 
 from django.shortcuts import render
-from admission.models import Enquiry1, PUAdmission, DegreeAdmission, PUAdmissionshortlist, DegreeAdmissionshortlist
- 
+from django.utils import timezone
+from datetime import timedelta
+from admission.models import Enquiry1, PUAdmission, DegreeAdmission
+
 def admission_dashboard(request):
-    # Enquiry & Admission Stats
-    total_enquiries = Enquiry1.objects.count()
-    total_pu_admissions = PUAdmission.objects.count()
-    total_degree_admissions = DegreeAdmission.objects.count()
- 
-    pu_converted_enquiries = PUAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').count()
-    degree_converted_enquiries = DegreeAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').count()
- 
-    # Confirmed & Pending Counts
-    pu_confirmed = PUAdmission.objects.filter(status__iexact='Confirmed').count()
-    pu_pending = PUAdmission.objects.filter(status__iexact='Pending').count()
- 
-    degree_confirmed = DegreeAdmission.objects.filter(status__iexact='Confirmed').count()
-    degree_pending = DegreeAdmission.objects.filter(status__iexact='Pending').count()
- 
-    # Total counts
+    now = timezone.now()
+    today = now.date()
+    filter_type = request.GET.get('filter', 'all')  # Default to 'all'
+
+    # Determine date range
+    if filter_type == 'day':
+        date_start = today
+        date_end = today
+    elif filter_type == 'week':
+        date_start = today - timedelta(days=today.weekday())  # Monday
+        date_end = date_start + timedelta(days=6)  # Sunday
+    elif filter_type == 'month':
+        date_start = today.replace(day=1)
+        date_end = today
+    else:
+        date_start = None
+        date_end = None
+
+    # Filter admissions by admission_date
+    if date_start and date_end:
+        pu_admissions = PUAdmission.objects.filter(admission_date__range=(date_start, date_end))
+        degree_admissions = DegreeAdmission.objects.filter(admission_date__range=(date_start, date_end))
+        enquiries = Enquiry1.objects.filter(enquiry_date__range=(date_start, date_end))
+    else:
+        pu_admissions = PUAdmission.objects.all()
+        degree_admissions = DegreeAdmission.objects.all()
+        enquiries = Enquiry1.objects.all()
+
+    # Counts
+    total_enquiries = enquiries.count()
+    total_pu_admissions = pu_admissions.count()
+    total_degree_admissions = degree_admissions.count()
+
+    pu_converted_enquiries = pu_admissions.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').count()
+    degree_converted_enquiries = degree_admissions.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').count()
+
+    pu_confirmed = pu_admissions.filter(status__iexact='Confirmed').count()
+    pu_pending = pu_admissions.filter(status__iexact='Pending').count()
+
+    degree_confirmed = degree_admissions.filter(status__iexact='Confirmed').count()
+    degree_pending = degree_admissions.filter(status__iexact='Pending').count()
+
     total_confirmed = pu_confirmed + degree_confirmed
     total_pending = pu_pending + degree_pending
- 
+
+    # Conversion rate
+    total_converted = pu_converted_enquiries + degree_converted_enquiries
+    conversion_rate = (total_converted / total_enquiries) * 100 if total_enquiries else 0
+
     context = {
         'total_enquiries': total_enquiries,
         'total_pu_admissions': total_pu_admissions,
@@ -2973,9 +3356,12 @@ def admission_dashboard(request):
         'degree_converted_enquiries': degree_converted_enquiries,
         'confirmed_admissions': total_confirmed,
         'pending_review': total_pending,
+        'conversion_rate': round(conversion_rate, 2),
+        'active_filter': filter_type,  # for frontend highlighting
     }
- 
+
     return render(request, 'admission/admission_dashboard.html', context)
+
  
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import PUAdmission, DegreeAdmission, ConfirmedAdmission
@@ -3113,12 +3499,19 @@ from .models import ConfirmedAdmission, PUAdmission, DegreeAdmission
 from master.models import StudentDatabase
 
 def generate_student_userid(request, admission_no):
+
+    user = get_logged_in_user(request)
+
     confirmed = get_object_or_404(ConfirmedAdmission, admission_no=admission_no, status='confirmed')
     existing = set(ConfirmedAdmission.objects.values_list('student_userid', flat=True))
     userid, password = generate_student_credentials(existing_userids=existing)
     confirmed.student_userid = userid
     confirmed.student_password = password
     confirmed.save()
+
+
+    log_activity(user, 'generated', confirmed)
+
 
     # Fetch admission details (PU or Degree)
     admission = PUAdmission.objects.filter(admission_no=admission_no).first()
@@ -3177,18 +3570,22 @@ def update_status(request, pk, new_status):
 
 from django.shortcuts import redirect, get_object_or_404
 from .models import Enquiry1, Enquiry2
+from  core.utils import get_logged_in_user, log_activity
 
 def convert_enquiry(request, enquiry_no):
+    user = get_logged_in_user(request)
+
     if enquiry_no.startswith("PU-ENQ-"):
         enquiry = get_object_or_404(Enquiry1, enquiry_no=enquiry_no)
+        log_activity(user, 'converted', enquiry)
         return redirect('admission_form', enquiry_no=enquiry.enquiry_no)
-  # and pass enquiry_no via GET or session
-
     elif enquiry_no.startswith("DEG-ENQ-"):
         enquiry = get_object_or_404(Enquiry2, enquiry_no=enquiry_no)
-        return redirect('degree_admission_form',enquiry_no=enquiry.enquiry_no)
+        log_activity(user, 'converted', enquiry)
+        return redirect('degree_admission_form', enquiry_no=enquiry.enquiry_no)
     else:
-        return redirect('enquiry_list')  # fallback
+        log_activity(user, 'convert_failed', enquiry_no)
+        return redirect('enquiry_list')
 
 from django.shortcuts import render
 from .models import PUAdmission, DegreeAdmission
@@ -3449,13 +3846,40 @@ def download_pu_admission_fee_receipt(request, admission_no):
 
 
 
-from django.db.models import F, Sum, DecimalField, Value, ExpressionWrapper, Case, When, Q
-from django.db.models.functions import Coalesce
+
+
 from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Case, When, Value
+from django.db.models.functions import Coalesce
 from .models import Student
-from django.contrib.auth.decorators import login_required
 
 def fee_management(request):
+    now = timezone.now()
+    today = now.date()
+    filter_type = request.GET.get('filter', 'all')  # Default to 'all'
+
+    # Determine date range
+    if filter_type == 'day':
+        date_start = today
+        date_end = today
+    elif filter_type == 'week':
+        date_start = today - timedelta(days=today.weekday())  # Monday
+        date_end = date_start + timedelta(days=6)  # Sunday
+    elif filter_type == 'month':
+        date_start = today.replace(day=1)
+        date_end = today
+    else:
+        date_start = None
+        date_end = None
+
+    # Apply date filter
+    if date_start and date_end:
+        students = Student.objects.filter(receipt_date__range=(date_start, date_end))
+    else:
+        students = Student.objects.all()
+
     decimal_type = DecimalField(max_digits=12, decimal_places=2)
 
     # Define deduction logic
@@ -3466,7 +3890,7 @@ def fee_management(request):
     )
 
     # Total Declared Fee
-    total_declared_fee = Student.objects.aggregate(
+    total_declared_fee = students.aggregate(
         total=Sum(
             ExpressionWrapper(
                 Coalesce(F('tuition_fee'), 0) +
@@ -3481,7 +3905,7 @@ def fee_management(request):
     )['total'] or 0
 
     # Total Collected Fee
-    total_collected_fee = Student.objects.aggregate(
+    total_collected_fee = students.aggregate(
         total=Sum(
             ExpressionWrapper(
                 Coalesce(F('tuition_fee_paid'), 0) +
@@ -3501,15 +3925,15 @@ def fee_management(request):
     remaining_fee_percentage = round((total_pending_fee / total_declared_fee) * 100) if total_declared_fee else 0
 
     context = {
-        "allowed_forms": request.session.get("allowed_forms", []),
-        "can_access_all": request.session.get("can_access_all", False),
-        "total_declared_fee": total_declared_fee,
-        "total_collected_fee": total_collected_fee,
-        "total_pending_fee": total_pending_fee,
-        "collected_fee_percentage": collected_fee_percentage,
-        "remaining_fee_percentage": remaining_fee_percentage,
+        'total_declared_fee': total_declared_fee,
+        'total_collected_fee': total_collected_fee,
+        'total_pending_fee': total_pending_fee,
+        'collected_fee_percentage': collected_fee_percentage,
+        'remaining_fee_percentage': remaining_fee_percentage,
+        'active_filter': filter_type,  # for frontend highlighting
     }
-    return render(request, "admission/fee_management.html", context)
+
+    return render(request, 'admission/fee_management.html', context)    
 
 
 

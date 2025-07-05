@@ -2,6 +2,7 @@
 from master.models import CourseType, Course  # adjust if your app name is different
 import datetime
 from django.utils.timezone import now
+from core.utils import get_logged_in_user,log_activity
 class Enquiry1(models.Model):
     enquiry_no = models.CharField(max_length=10, unique=True, blank=True)
     student_name = models.CharField(max_length=100)
@@ -48,6 +49,7 @@ class Enquiry1(models.Model):
 
     source = models.CharField(max_length=50, choices=SOURCE_CHOICES)
     other_source = models.CharField(max_length=100, blank=True, null=True)
+    whatsapp_sent_date = models.DateField(null=True, blank=True)
 
     whatsapp_status = models.CharField(
     max_length=15,
@@ -72,6 +74,8 @@ class Enquiry1(models.Model):
             else:
                 last_number = 0
             self.enquiry_no = f"PU-ENQ-{last_number+1:02d}"
+
+            
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -125,6 +129,7 @@ class Enquiry2(models.Model):
 
     source = models.CharField(max_length=50, choices=SOURCE_CHOICES)
     other_source = models.CharField(max_length=100, blank=True, null=True)
+    whatsapp_sent_date = models.DateField(null=True, blank=True)
     whatsapp_status = models.CharField(
     max_length=15,
     choices=[
@@ -177,219 +182,383 @@ class FollowUp(models.Model):
         verbose_name="Follow-up Status"
     )
     def __str__(self):
-        return f"{self.enquiry} - {self.follow_up_type} - {self.status}"
-
+        enquiry = self.pu_enquiry or self.degree_enquiry
+        return f"{enquiry} - {self.follow_up_type} - {self.status}"
+       
 
  
 
 
-from master.models import CourseType, Course  # adjust import as per your app structure
-from master.models import CourseType, Course  # adjust import as per your app structure
-from multiselectfield import MultiSelectField
 
+from master.models import CourseType, Course  # adjust import as per your app structure
+
+from master.models import CourseType, Course  # adjust import as per your app structure
+
+ 
 class PUAdmission(models.Model):
+
     medium_of_instruction = models.CharField(max_length=100, blank=True, null=True)
+
     converstion_fee = models.CharField(max_length=10, blank=True, null=True)
+
     enquiry_no = models.CharField(max_length=20, blank=True, null=True)
+
     admission_no = models.CharField(max_length=20, blank=True, null=True)
+
     student_name = models.CharField(max_length=100)
+
     dob = models.DateField()
+
     gender = models.CharField(
+
         max_length=10,
+
         choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')],
+
     )
+
     parent_name = models.CharField(max_length=100)
+
     guardian_name = models.CharField(max_length=30, blank=True, null=True)
+
     guardian_address = models.CharField(max_length=100, blank=True, null=True)
+
     mother_name = models.CharField(max_length=30, blank=True, null=True)
+
     annual_income = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+
     mother_annual_income = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+
     total_annual_income = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+
     parent_mobile_no = models.CharField(max_length=15, blank=True, null=True)  # Updated to match HTML
+
     mother_phone_no = models.CharField(max_length=15)
+
     email = models.EmailField(max_length=100, blank=True, null=True)
+
     mother_email = models.EmailField(max_length=100, blank=True, null=True)
+
     student_email = models.EmailField(max_length=100, blank=True, null=True)
+
     father_occupation = models.CharField(max_length=15)
+
     mother_occupation = models.CharField(max_length=15)
+
     student_phone_no = models.CharField(max_length=15, blank=True, null=True)
+
     aadhar_no = models.CharField(max_length=12, blank=True, null=True)
+
     mother_aadhar_no = models.CharField(max_length=12, blank=True, null=True)
+
     student_aadhar_no = models.CharField(max_length=12, blank=True, null=True)
+
     CASTE_CHOICES = [
+
     ('GENERAL', 'General'),
+
     ('OBC', 'OBC'),
+
     ('SC', 'SC'),
+
     ('ST', 'ST'),
-    ]
 
+    ]
+ 
     CATEGORY_CHOICES = [
+
         ('1', '1'),
+
         ('2A', '2A'),
+
         ('2B', '2B'),
+
         ('3A', '3A'),
+
         ('3B', '3B'),
+
         ('SC', 'SC'),
+
         ('ST', 'ST'),
+
         ('GM', 'General Merit'),
+
     ]
+
     BOARD_CHOICES = (
-        ('IGCSE', 'IGCSE'),
-        ('CBSE', 'CBSE'),
-        ('ICSE', 'ICSE'),
-        ('STATE', 'State Board'),
-        ('OTHER', 'Other'),
-    )
-
-    education_boards = MultiSelectField(choices=BOARD_CHOICES, blank=True, null=True)
-
-    # Field names swapped
-    caste = models.CharField(max_length=10, choices=CASTE_CHOICES)
-    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
-    sub_caste = models.CharField(max_length=50, blank=True, null=True)
-    BLOOD_GROUP_CHOICES = [
-        ('A+', 'A+'), ('A-', 'A-'), ('B+', 'B+'), ('B-', 'B-'),
-        ('O+', 'O+'), ('O-', 'O-'), ('AB+', 'AB+'), ('AB-', 'AB-')
-    ]
-    blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
-    nationality = models.CharField(max_length=50, blank=True, null=True)
-    country = models.CharField(max_length=50, blank=True, null=True)
-    religion = models.CharField(max_length=50, blank=True, null=True)
-    permanent_address = models.TextField(blank=True, null=True)
-    current_address = models.TextField(blank=True, null=True)
-    student_address = models.TextField(blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    pincode = models.CharField(max_length=6, blank=True, null=True)
-    state = models.CharField(max_length=100, blank=True, null=True)
-    birthplace = models.CharField(max_length=100,blank=True, null=True)
-    district = models.CharField(max_length=100,blank=True, null=True)
-
-    # parents_occupation = models.CharField(max_length=100, blank=True, null=True)
-    emergency_contact = models.CharField(max_length=15, blank=True, null=True)
-    emergency_contact_name = models.CharField(max_length=15, blank=True, null=True)
-    emergency_contact_relation = models.CharField(max_length=15, blank=True, null=True)
-    document_submitted = models.BooleanField(default=False)
-    hostel_required = models.BooleanField(default=False)
-    hostel_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # ✅ New field
-    transport = models.ForeignKey('master.Transport', on_delete=models.SET_NULL, null=True, blank=True)
- 
-    # Academic details
-    # year_of_passing = models.CharField(max_length=7, blank=True, null=True)
-    # sslc_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    medium = models.CharField(max_length=50, blank=True, null=True)
-    second_language = models.CharField(max_length=50, blank=True, null=True)
-    first_language = models.CharField(max_length=50, blank=True, null=True)
-    # Foreign keys for course
-    course_type = models.ForeignKey('master.CourseType', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admissions')
-    course = models.ForeignKey('master.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admissions')
- 
-    # Quota type
-    QUOTA_TYPE_CHOICES = [
-        ('Regular', 'Regular'),
-        ('Management', 'Management'),
-        ('NRI', 'NRI'),
-        ('RTE','RTE'),
-    ]
-    quota_type = models.CharField(
-        max_length=20,
-        blank=True, null=True)
-    admission_taken_by = models.IntegerField(null=True, blank=True)
-    admission_date = models.DateField(default=datetime.date.today)
-    # Last studied course details (subjects/marks)
-    register_no_course = models.CharField(max_length=100, blank=True, null=True)
-    month_year_passed = models.CharField(max_length=50, blank=True, null=True)
-    subject1 = models.CharField(max_length=100, blank=True, null=True)
-    marks_obtained1 = models.CharField(max_length=50, blank=True, null=True)
-    total_marks_percentage1 = models.CharField(max_length=50, blank=True, null=True)
-    subject2 = models.CharField(max_length=100, blank=True, null=True)
-    marks_obtained2 = models.CharField(max_length=50, blank=True, null=True)
-    total_marks_percentage2 = models.CharField(max_length=50, blank=True, null=True)
-    subject3 = models.CharField(max_length=100, blank=True, null=True)
-    marks_obtained3 = models.CharField(max_length=50, blank=True, null=True)
-    total_marks_percentage3 = models.CharField(max_length=50, blank=True, null=True)
-    subject4 = models.CharField(max_length=100, blank=True, null=True)
-    marks_obtained4 = models.CharField(max_length=50, blank=True, null=True)
-    total_marks_percentage4 = models.CharField(max_length=50, blank=True, null=True)
-    subject5 = models.CharField(max_length=100, blank=True, null=True)
-    marks_obtained5 = models.CharField(max_length=50, blank=True, null=True)
-    total_marks_percentage5 = models.CharField(max_length=50, blank=True, null=True)
-    subject6 = models.CharField(max_length=100, blank=True, null=True)
-    marks_obtained6 = models.CharField(max_length=50, blank=True, null=True)
-    total_marks_percentage6 = models.CharField(max_length=50, blank=True, null=True)
-    max_marks1 = models.CharField(max_length=50, blank=True, null=True)  # NEW    
-    max_marks2 = models.CharField(max_length=50, blank=True, null=True)  # NEW
-    max_marks3 = models.CharField(max_length=50, blank=True, null=True)  # NEW
-    max_marks4 = models.CharField(max_length=50, blank=True, null=True)  # NEW
-    max_marks5 = models.CharField(max_length=50, blank=True, null=True)  # NEW
-    max_marks6 = models.CharField(max_length=50, blank=True, null=True)  # NEW
-
-    total_marks_obtained = models.IntegerField(null=True, blank=True)
-    total_max_marks = models.IntegerField(null=True, blank=True)
-    overall_percentage = models.CharField(max_length=10, null=True, blank=True)
-
-    co_curricular_activities = models.TextField(blank=True, null=True)
- 
-    # Fee related fields
-    application_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    tuition_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    books_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    uniform_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    tuition_advance_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    final_fee_after_advance = models.DecimalField(max_digits=10, decimal_places=2)
-
- 
-    # Declaration
-    student_declaration_date = models.DateField(blank=True, null=True)
-    student_declaration_place = models.CharField(max_length=100, blank=True, null=True)
-    parent_declaration_date = models.DateField(blank=True, null=True)
-    parent_declaration_place = models.CharField(max_length=100, blank=True, null=True)
-    admitted_to = models.ForeignKey('master.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admitted_students')
- 
-    # Office use
-    receipt_no = models.CharField(max_length=50, blank=True, null=True)
-    receipt_date = models.DateField(blank=True, null=True)
-    payment_mode = models.CharField(
-        max_length=20,
-        choices=[('Online', 'Online'), ('Cash', 'Cash')]
-    )    
-    utr_no = models.CharField(max_length=50, blank=True, null=True)
-    # accountant_signature = models.CharField(max_length=255, blank=True, null=True)
- 
-    # Document submission flags
-    doc_aadhar = models.BooleanField(default=False)
-    doc_marks_card = models.BooleanField(default=False)
-    doc_caste_certificate = models.BooleanField(default=False)  # ✅ New field
-    doc_income_certificate = models.BooleanField(default=False)  # ✅ New field
-    doc_transfer = models.BooleanField(default=False)
-    doc_migration = models.BooleanField(default=False)
-    doc_study = models.BooleanField(default=False)
-    doc_participation_documents  = models.BooleanField(default=False)
-        # Scholarship details
-    has_scholarship = models.BooleanField(default=False)
-    scholarship_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    status = models.CharField(
-    max_length=20,
-    choices=[('Pending', 'Pending'), ('Confirmed', 'Confirmed'), ('Review', 'Review')],
-    default='Pending'
+    ('IGCSE', 'IGCSE'),
+    ('CBSE', 'CBSE'),
+    ('ICSE', 'ICSE'),
+    ('STATE', 'State Board'),
+    ('OTHER', 'Other'),
 )
+
+    education_boards = models.CharField(max_length=20,choices=BOARD_CHOICES,blank=True,null=True)
+ 
+    # Field names swapped
+
+    caste = models.CharField(max_length=10, choices=CASTE_CHOICES)
+
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
+
+    sub_caste = models.CharField(max_length=50, blank=True, null=True)
+
+    BLOOD_GROUP_CHOICES = [
+
+        ('A+', 'A+'), ('A-', 'A-'), ('B+', 'B+'), ('B-', 'B-'),
+
+        ('O+', 'O+'), ('O-', 'O-'), ('AB+', 'AB+'), ('AB-', 'AB-')
+
+    ]
+
+    blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
+
+    nationality = models.CharField(max_length=50, blank=True, null=True)
+
+    country = models.CharField(max_length=50, blank=True, null=True)
+
+    religion = models.CharField(max_length=50, blank=True, null=True)
+
+    permanent_address = models.TextField(blank=True, null=True)
+
+    current_address = models.TextField(blank=True, null=True)
+
+    student_address = models.TextField(blank=True, null=True)
+
+    city = models.CharField(max_length=100, blank=True, null=True)
+
+    pincode = models.CharField(max_length=6, blank=True, null=True)
+
+    state = models.CharField(max_length=100, blank=True, null=True)
+
+    birthplace = models.CharField(max_length=100,blank=True, null=True)
+
+    district = models.CharField(max_length=100,blank=True, null=True)
+ 
+    # parents_occupation = models.CharField(max_length=100, blank=True, null=True)
+
+    emergency_contact = models.CharField(max_length=15, blank=True, null=True)
+
+    emergency_contact_name = models.CharField(max_length=15, blank=True, null=True)
+
+    emergency_contact_relation = models.CharField(max_length=15, blank=True, null=True)
+
+    document_submitted = models.BooleanField(default=False)
+
+    hostel_required = models.BooleanField(default=False)
+
+    hostel_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # ✅ New field
+
+    transport = models.ForeignKey('master.Transport', on_delete=models.SET_NULL, null=True, blank=True)
+
+     # Academic details
+
+    # year_of_passing = models.CharField(max_length=7, blank=True, null=True)
+
+    # sslc_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+
+    medium = models.CharField(max_length=50, blank=True, null=True)
+
+    second_language = models.CharField(max_length=50, blank=True, null=True)
+
+    first_language = models.CharField(max_length=50, blank=True, null=True)
+
+    # Foreign keys for course
+
+    course_type = models.ForeignKey('master.CourseType', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admissions')
+
+    course = models.ForeignKey('master.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admissions')
+
+    # Quota type
+
+    QUOTA_TYPE_CHOICES = [
+
+        ('Regular', 'Regular'),
+
+        ('Management', 'Management'),
+
+        ('NRI', 'NRI'),
+
+        ('RTE','RTE'),
+
+    ]
+
+    quota_type = models.CharField(
+
+        max_length=20,
+
+        blank=True, null=True)
+
+    admission_taken_by = models.IntegerField(null=True, blank=True)
+
+    admission_date = models.DateField(default=datetime.date.today)
+
+    # Last studied course details (subjects/marks)
+
+    register_no_course = models.CharField(max_length=100, blank=True, null=True)
+
+    month_year_passed = models.CharField(max_length=50, blank=True, null=True)
+
+    subject1 = models.CharField(max_length=100, blank=True, null=True)
+
+    marks_obtained1 = models.CharField(max_length=50, blank=True, null=True)
+
+    total_marks_percentage1 = models.CharField(max_length=50, blank=True, null=True)
+
+    subject2 = models.CharField(max_length=100, blank=True, null=True)
+
+    marks_obtained2 = models.CharField(max_length=50, blank=True, null=True)
+
+    total_marks_percentage2 = models.CharField(max_length=50, blank=True, null=True)
+
+    subject3 = models.CharField(max_length=100, blank=True, null=True)
+
+    marks_obtained3 = models.CharField(max_length=50, blank=True, null=True)
+
+    total_marks_percentage3 = models.CharField(max_length=50, blank=True, null=True)
+
+    subject4 = models.CharField(max_length=100, blank=True, null=True)
+
+    marks_obtained4 = models.CharField(max_length=50, blank=True, null=True)
+
+    total_marks_percentage4 = models.CharField(max_length=50, blank=True, null=True)
+
+    subject5 = models.CharField(max_length=100, blank=True, null=True)
+
+    marks_obtained5 = models.CharField(max_length=50, blank=True, null=True)
+
+    total_marks_percentage5 = models.CharField(max_length=50, blank=True, null=True)
+
+    subject6 = models.CharField(max_length=100, blank=True, null=True)
+
+    marks_obtained6 = models.CharField(max_length=50, blank=True, null=True)
+
+    total_marks_percentage6 = models.CharField(max_length=50, blank=True, null=True)
+
+    max_marks1 = models.CharField(max_length=50, blank=True, null=True)  # NEW    
+
+    max_marks2 = models.CharField(max_length=50, blank=True, null=True)  # NEW
+
+    max_marks3 = models.CharField(max_length=50, blank=True, null=True)  # NEW
+
+    max_marks4 = models.CharField(max_length=50, blank=True, null=True)  # NEW
+
+    max_marks5 = models.CharField(max_length=50, blank=True, null=True)  # NEW
+
+    max_marks6 = models.CharField(max_length=50, blank=True, null=True)  # NEW
+ 
+    total_marks_obtained = models.IntegerField(null=True, blank=True)
+
+    total_max_marks = models.IntegerField(null=True, blank=True)
+
+    overall_percentage = models.CharField(max_length=10, null=True, blank=True)
+ 
+    co_curricular_activities = models.TextField(blank=True, null=True)
+
+    # Fee related fields
+
+    application_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    tuition_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    books_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    uniform_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    tuition_advance_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    final_fee_after_advance = models.DecimalField(max_digits=10, decimal_places=2)
+ 
+
+
+    # Declaration
+
+    student_declaration_date = models.DateField(blank=True, null=True)
+
+    student_declaration_place = models.CharField(max_length=100, blank=True, null=True)
+
+    parent_declaration_date = models.DateField(blank=True, null=True)
+
+    parent_declaration_place = models.CharField(max_length=100, blank=True, null=True)
+
+    admitted_to = models.ForeignKey('master.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admitted_students')
+
+    # Office use
+
+    receipt_no = models.CharField(max_length=50, blank=True, null=True)
+
+    receipt_date = models.DateField(blank=True, null=True)
+
+    payment_mode = models.CharField(
+
+        max_length=20,
+
+        choices=[('Online', 'Online'), ('Cash', 'Cash')]
+
+    )    
+
+    utr_no = models.CharField(max_length=50, blank=True, null=True)
+
+    # accountant_signature = models.CharField(max_length=255, blank=True, null=True)
+
+    # Document submission flags
+
+    doc_aadhar = models.BooleanField(default=False)
+
+    doc_marks_card = models.BooleanField(default=False)
+
+    doc_caste_certificate = models.BooleanField(default=False)  # ✅ New field
+
+    doc_income_certificate = models.BooleanField(default=False)  # ✅ New field
+
+    doc_transfer = models.BooleanField(default=False)
+
+    doc_migration = models.BooleanField(default=False)
+
+    doc_study = models.BooleanField(default=False)
+
+    doc_participation_documents  = models.BooleanField(default=False)
+
+        # Scholarship details
+
+    has_scholarship = models.BooleanField(default=False)
+
+    scholarship_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    status = models.CharField(
+
+    max_length=20,
+
+    choices=[('Pending', 'Pending'), ('Confirmed', 'Confirmed'), ('Review', 'Review')],
+
+    default='Pending'
+
+)
+
     sats_number = models.CharField(max_length=50, blank=True, null=True)
+
     wants_transport = models.BooleanField(default=False)
+
     transport_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
     school_name_laststudied = models.CharField(max_length=255, blank=True, null=True)
+
     school_addresslaststudied = models.CharField(max_length=100, blank=True, null=True)
- 
+
     # Photo
+
     photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
- 
- 
+
+
     def __str__(self):
+
         return f"{self.student_name} - {self.admission_no}"
+ 
 
 
 import datetime
 from django.db import models
 from master.models import Transport
-from multiselectfield import MultiSelectField
 class DegreeAdmission(models.Model):
     medium_of_instruction = models.CharField(max_length=100, blank=True, null=True)
     converstion_fee = models.CharField(max_length=10, blank=True, null=True)
@@ -432,15 +601,16 @@ class DegreeAdmission(models.Model):
         ('ST', 'ST'),
         ('GM', 'General Merit'),
     ]
+   
     BOARD_CHOICES = (
-        ('IGCSE', 'IGCSE'),
-        ('CBSE', 'CBSE'),
-        ('ICSE', 'ICSE'),
-        ('STATE', 'State Board'),
-        ('OTHER', 'Other'),
+    ('IGCSE', 'IGCSE'),
+    ('CBSE', 'CBSE'),
+    ('ICSE', 'ICSE'),
+    ('STATE', 'State Board'),
+    ('OTHER', 'Other'),
     )
 
-    education_boards = MultiSelectField(choices=BOARD_CHOICES, blank=True, null=True)
+    education_boards = models.CharField(max_length=20,choices=BOARD_CHOICES,blank=True,null=True)
     # Field names swapped
     caste = models.CharField(max_length=10, choices=CASTE_CHOICES)
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
@@ -448,6 +618,7 @@ class DegreeAdmission(models.Model):
 
     # Primary key 'id' is auto-created by Django unless you specify otherwise
     admission_no = models.CharField(max_length=20, blank=True, null=True)
+
     student_name = models.CharField(max_length=100, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     

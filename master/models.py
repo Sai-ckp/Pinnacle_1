@@ -4,23 +4,38 @@ Definition of models.
 
 from django.db import models
 
+from django.db import models
 class UserCustom(models.Model):
-    
     username = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=128) 
-    can_access_message_form= models.BooleanField(default=False)
-    can_access_enquiry_form_view= models.BooleanField(default=False)
-    can_access_admission_form= models.BooleanField(default=False)
-    can_access_all = models.BooleanField(default=False)
-    can_access_shortlisted_students_view = models.BooleanField(default=False)
-    can_access_shortlist_display = models.BooleanField(default=False)
-    can_access_degree_admission_form = models.BooleanField(default=False)
-    can_access_dashboard2=models.BooleanField(default=False)
-  
+    password = models.CharField(max_length=128)
 
- 
+    passcode = models.CharField(max_length=10, blank=True, null=True)  # Or use max_length you want
+    passcode_set = models.BooleanField(default=False)
+    can_reset_password = models.BooleanField(default=False) 
+
+    wrong_attempts = models.IntegerField(default=0)
+    is_locked = models.BooleanField(default=False)
+
+
     def __str__(self):
         return self.username
+
+class UserPermission(models.Model):
+    user = models.ForeignKey(UserCustom, on_delete=models.CASCADE)
+    form_name = models.CharField(max_length=150)
+
+    can_view = models.BooleanField(default=False)
+    can_add = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+    can_delete = models.BooleanField(default=False)
+    can_access = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'form_name')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.form_name}"
+
 
 
 class Employee(models.Model):
@@ -60,6 +75,7 @@ class Employee(models.Model):
     phone = models.CharField(max_length=15)
     employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE)
     courses_taught = models.PositiveIntegerField(default=0)
+    created_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -304,6 +320,7 @@ class SentMessageContact(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
     phone = models.CharField(max_length=15)
     status = models.CharField(max_length=20, default='Pending')  # Sent / Failed / Pending
+    sent_date = models.DateField(null=True, blank=True)  
 
     def __str__(self):
         return f"{self.phone} - {self.status}"

@@ -106,14 +106,13 @@
                 <div class="text-danger">{{ form.designation.errors }}</div>
                 {% endif %}
             </div>
-            <div class="col-md-6 mb-3" id="role-in-subject-wrapper">
+            <!--<div class="col-md-6 mb-3" id="role-in-subject-wrapper">
                 <label class="form-label" for="{{ form.role_in_subject.id_for_label }}">{{ form.role_in_subject.label }}</label>
                 {{ form.role_in_subject }}
                 {% if form.role_in_subject.errors %}
                 <div class="text-danger">{{ form.role_in_subject.errors }}</div>
                 {% endif %}
-            </div>
-
+            </div>-->
             <!-- Role -->
             <div class="col-md-6 mb-3" id="role-wrapper">
                 <label class="form-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
@@ -143,53 +142,62 @@
 </div>
 
 <script>
+
     document.addEventListener("DOMContentLoaded", function () {
+
         const categoryField = document.getElementById("{{ form.category.id_for_label }}");
 
         const designationWrapper = document.getElementById("designation-wrapper");
+
         const roleWrapper = document.getElementById("role-wrapper");
+
         const roleInSubjectWrapper = document.getElementById("role-in-subject-wrapper");
 
-        // Store original elements for restoration
-        const designationClone = designationWrapper.cloneNode(true);
-        const roleClone = roleWrapper.cloneNode(true);
-        const roleSubjectClone = roleInSubjectWrapper.cloneNode(true);
-
-        function removeElementIfExists(el) {
-            if (el && el.parentNode) {
-                el.parentNode.removeChild(el);
-            }
-        }
-
         function toggleFields() {
-            const value = categoryField.value;
 
-            // Remove all 3 first
-            removeElementIfExists(document.getElementById("designation-wrapper"));
-            removeElementIfExists(document.getElementById("role-wrapper"));
-            removeElementIfExists(document.getElementById("role-in-subject-wrapper"));
+            const isNonTeaching = categoryField.value === "Non-Teaching Staff";
 
-            if (value !== "Non-Teaching Staff") {
-                // Insert them back in order
-                const row = document.querySelector(".container form .row");
+            // Toggle visibility
 
-                // Find where to insert (after Category)
-                const categoryIndex = Array.from(row.children).findIndex(child =>
-                    child.contains(categoryField)
-                );
+            designationWrapper.style.display = isNonTeaching ? "none" : "";
 
-                row.insertBefore(designationClone, row.children[categoryIndex + 1]);
-                row.insertBefore(roleSubjectClone, row.children[categoryIndex + 2]);
-                row.insertBefore(roleClone, row.children[categoryIndex + 3]);
+            roleWrapper.style.display = isNonTeaching ? "none" : "";
+
+            if (roleInSubjectWrapper) {
+
+                roleInSubjectWrapper.style.display = isNonTeaching ? "none" : "";
+
             }
+
+            // Optionally, disable inputs inside the hidden fields
+
+            const toggleInputs = (wrapper, disable) => {
+
+                if (wrapper) {
+
+                    const inputs = wrapper.querySelectorAll("input, select, textarea");
+
+                    inputs.forEach(input => input.disabled = disable);
+
+                }
+
+            };
+
+            toggleInputs(designationWrapper, isNonTeaching);
+
+            toggleInputs(roleWrapper, isNonTeaching);
+
+            toggleInputs(roleInSubjectWrapper, isNonTeaching);
+
         }
 
         categoryField.addEventListener("change", toggleFields);
 
-        // Initial toggle on load
-        toggleFields();
+        toggleFields(); // Call once on load
+
     });
 </script>
+
 
 
 {% endblock %}

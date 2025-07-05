@@ -39,11 +39,11 @@
     }
 
     .form-control, .form-select {
-        font-size: 14px;
-        padding: 6px;
+        font-size: 9px;
+        padding: 2px;
         border-radius: 5px;
         border: 1px solid #ccc;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
         width: 100%;
     }
 
@@ -70,6 +70,11 @@
         display: flex;
         justify-content: flex-end;
         margin-top: 20px;
+    }
+
+    .content {
+        padding: 18px 26px 40px;
+        margin-left: 200px;
     }
 </style>
 
@@ -123,6 +128,21 @@
                 <label for="id_faculty" class="form-label">{{ form.faculty.label }}</label>
                 {{ form.faculty|add_class:"form-select" }}
             </div>
+        </div>
+
+        <!-- ? Active / Inactive radio buttons -->
+        <div class="form-check">
+            <input type="radio" name="is_active" value="1" class="form-check-input"
+                   {% if form.instance.is_active %}checked{% endif %}
+                   {% if is_view %}disabled{% endif %}>
+            <label class="form-check-label">Active</label>
+        </div>
+
+        <div class="form-check">
+            <input type="radio" name="is_active" value="0" class="form-check-input"
+                   {% if not form.instance.is_active %}checked{% endif %}
+                   {% if is_view %}disabled{% endif %}>
+            <label class="form-check-label">Inactive</label>
         </div>
 
         <div class="btn-container">

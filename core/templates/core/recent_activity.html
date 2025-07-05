@@ -1,0 +1,123 @@
+{% extends 'master/layout.html' %}
+
+{% block content %}
+<style>
+    .activities-feed {
+        max-width: 650px;
+        margin: 40px auto 0 auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.09), 0 1.5px 5px rgba(0,0,0,0.03);
+        padding: 32px 26px;
+    }
+
+    .activities-title {
+        font-size: 1.7em;
+        font-weight: 700;
+        margin-bottom: 22px;
+        color: #231f3c;
+        text-align: center;
+        letter-spacing: 0.03em;
+    }
+
+    .activity-feed-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .activity-feed-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px 0;
+        border-bottom: 1px solid #ececf3;
+        font-size: 1.07em;
+    }
+
+        .activity-feed-item:last-child {
+            border-bottom: none;
+        }
+
+    .activity-feed-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #f4f5fa;
+        color: #6a708b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.18em;
+        flex-shrink: 0;
+        text-transform: uppercase;
+    }
+
+    .activity-feed-desc {
+        flex: 1;
+        color: #2d2b47;
+        line-height: 1.4;
+    }
+
+    .activity-feed-time {
+        font-size: 0.98em;
+        color: #a1a1b0;
+        margin-top: 2px;
+        display: block;
+    }
+
+    .activity-feed-action {
+        color: #fff;
+        background: #5c68e2;
+        padding: 1px 10px;
+        border-radius: 10px;
+        font-size: 0.97em;
+        margin: 0 3px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    @media (max-width: 600px) {
+        .activities-feed {
+            padding: 15px 2px;
+        }
+
+        .activities-title {
+            font-size: 1.18em;
+        }
+
+        .activity-feed-item {
+            font-size: 0.97em;
+        }
+    }
+</style>
+
+<div class="activities-feed">
+    <div class="activities-title">Recent Activities</div>
+    {% if activities %}
+    <ul class="activity-feed-list">
+        {% for activity in activities %}
+        <li class="activity-feed-item">
+            <div class="activity-feed-avatar">
+                {{ activity.username|slice:":1" }}
+            </div>
+            <div class="activity-feed-desc">
+                User <b>{{ activity.username }}</b>
+                <span class="activity-feed-action">{{ activity.get_action_display }}</span>
+                {{ activity.model_name|default_if_none:"item" }}
+                {% if activity.object_repr %}<b>{{ activity.object_repr }}</b>{% endif %}
+                <span class="activity-feed-time">
+                    on {{ activity.timestamp|date:"Y-m-d H:i" }}
+                </span>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div style="text-align:center; color:#b5b5c9; font-size:1.04em; padding:32px 0;">
+        No activities yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

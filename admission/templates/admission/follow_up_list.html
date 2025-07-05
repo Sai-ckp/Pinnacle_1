@@ -1,6 +1,6 @@
 {% extends 'master/layout.html' %}
 
-{% block title %}Follow-up List{% endblock %}
+{% block title %}Follow-up history{% endblock %}
 
 {% block content %}
 <style>
@@ -58,6 +58,7 @@
         background-color: #800000;
         color: white;
     }
+
     select.form-select-sm:focus {
         border-color: #0f6bc6;
         box-shadow: 0 0 0 0.2rem rgba(15, 107, 198, 0.25);
@@ -67,6 +68,80 @@
         font-style: italic;
         color: #888;
     }
+
+    popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 1001;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+        display: none;
+        width: 300px;
+        text-align: center;
+    }
+
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: none;
+    }
+
+    #confirm-popup-message {
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #800000;
+    }
+
+    /*   #confirm-yes,
+#confirm-no {
+    margin: 0 5px;
+    padding: 6px 12px;
+    border: none;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#confirm-yes {
+    background-color: #800000;
+    color: white;
+}
+
+#confirm-no {
+    background-color: #e0e0e0;
+}*/
+    #confirm-yes,
+    #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        border: 2px solid #800000;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: transparent;
+        color: #800000;
+        font-weight: 600;
+        transition: all 0.2s ease-in-out;
+    }
+
+        #confirm-yes:hover {
+            background-color: #800000;
+            color: #fff;
+        }
+
+        #confirm-no:hover {
+            background-color: #800000;
+            color: #fff;
+        }
 </style>
 
 <div class="container mt-5">
@@ -83,6 +158,7 @@
                 <th>Notes</th>
                 <th>Next Action</th>
                 <th>Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -110,6 +186,47 @@
                         </select>
                     </form>
                 </td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <!-- View -->
+                        {% if form_permissions.schedule_follow_up_form.view %}
+                        <a href="{% url 'schedule_follow_up_form_view' f.id %}"
+                           class="icon-btn"
+                           title="View"
+                           style="background-color: #800000; padding: 5px 7px; border-radius: 5px;">
+                            <i class="fas fa-eye" style="color: #ffffff;"></i>
+                        </a>
+                        {% endif %}
+
+                        <!-- Edit -->
+                        {% if form_permissions.schedule_follow_up_form.edit %}
+                        <a href="{% url 'schedule_follow_up_form_edit' f.id %}"
+                           class="icon-btn"
+                           title="Edit"
+                           style="background-color: #800000; padding: 5px 7px; border-radius: 5px;">
+                            <i class="fas fa-edit" style="color: #ffffff;"></i>
+                        </a>
+                        {% endif %}
+                        <!-- Hidden Delete Form -->
+                        {% if form_permissions.schedule_follow_up_form.delete %}
+                        <form id="followup-delete-form-{{ f.id }}"
+                              method="post"
+                              action="{% url 'schedule_follow_up_form_delete' f.id %}"
+                              style="display: none;">
+                            {% csrf_token %}
+                        </form>
+
+                        <!-- Delete -->
+                        <a href="#"
+                           class="icon-btn"
+                           title="Delete"
+                           style="background-color: #800000; padding: 5px 7px; border-radius: 5px;"
+                           onclick="confirmFollowUpDelete('{{ f.id }}')">
+                            <i class="fas fa-trash-alt" style="color: #ffffff;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
             </tr>
             {% empty %}
             <tr>
@@ -119,4 +236,38 @@
         </tbody>
     </table>
 </div>
+<div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; opacity:0.5; z-index:1000;"></div>
+
+<div id="confirm-popup" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -50%);
+    background:#fff; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.5); z-index:1001;">
+    <p id="confirm-popup-message"></p>
+    <button id="confirm-yes">Yes</button>
+    <button id="confirm-no">No</button>
+</div>
+
+<script>
+    let currentFollowUpId = null;
+
+    function confirmFollowUpDelete(followupId) {
+        currentFollowUpId = followupId;
+        document.getElementById("confirm-popup-message").textContent =
+            `Are you sure you want to delete Follow Up #${followupId}?`;
+
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("confirm-popup").style.display = "block";
+    }
+
+    document.getElementById("confirm-no").addEventListener("click", function () {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("confirm-popup").style.display = "none";
+        currentFollowUpId = null;
+    });
+
+    document.getElementById("confirm-yes").addEventListener("click", function () {
+        if (currentFollowUpId) {
+            document.getElementById(`followup-delete-form-${currentFollowUpId}`).submit();
+        }
+    });
+
+</script>
 {% endblock %}

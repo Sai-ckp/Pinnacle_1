@@ -1,53 +1,50 @@
-# master/context_processors.py
+from .models import UserPermission, UserCustom
 
-from .models import UserCustom
-
-def permissions_context(request):
+def user_form_permissions(request):
     user_id = request.session.get('user_id')
-    allowed_forms = []
-    can_access_all = False
-    user = None
+    if not user_id:
+        return {
+            'custom_user': None,
+            'form_permissions': {}
+        }
 
-    if user_id:
-        try:
-            user = UserCustom.objects.get(id=user_id)
-            can_access_all = user.can_access_all
+    try:
+        user = UserCustom.objects.get(id=user_id)
+    except UserCustom.DoesNotExist:
+        return {
+            'custom_user': None,
+            'form_permissions': {}
+        }
 
-            if user.can_access_message_form:
-                 allowed_forms.append('message_history_view')
-                 allowed_forms.append('compose_message')
-                 allowed_forms.append('student_data_view')
-            if user.can_access_admission_form:
-                allowed_forms.append('admission_form')
-                allowed_forms.append('admission_list')
-            if user.can_access_enquiry_form_view:
-                allowed_forms.append('enquiry1_create') 
-                allowed_forms.append('master_student_list')
-                allowed_forms.append('enquiry_list')
-                allowed_forms.append('enquiry_print_form')
+    # Check if the user should have full access
+    is_super = user.id == 1 or user.username.lower() == 'naveen'
 
-            if user.can_access_dashboard2:
-                allowed_forms.append('dashboard_view2')
+    form_permissions = {}
 
-                
+    if is_super:
+        # Grant full access to all known forms
+        all_forms = [
+           'employee_attendance_form','pu_admission_form','degree_admission_form','schedule_follow_up_form','enquiry_form','student_attendance_form','semester_form','student_fee_form']
 
-           
-            if user.can_access_shortlisted_students_view:
-                allowed_forms.append('shortlisted_students_view')
-            if user.can_access_shortlist_display:
-                allowed_forms.append('shortlist_display')
-            if user.can_access_degree_admission_form:
-                allowed_forms.append('degree_admission_form')
-                allowed_forms.append('degree_admission_list')
-            
-
-        except UserCustom.DoesNotExist:
-            user = None
+        for form in all_forms:
+            form_permissions[form] = {
+                'view': True,
+                'add': True,
+                'edit': True,
+                'delete': True,
+            }
+    else:
+        # Load permissions from DB
+        permissions = UserPermission.objects.filter(user=user)
+        for perm in permissions:
+            form_permissions[perm.form_name] = {
+                'view': perm.can_view,
+                'add': perm.can_add,
+                'edit': perm.can_edit,
+                'delete': perm.can_delete,
+            }
 
     return {
-        'allowed_forms': allowed_forms,
-        'user': user,
-        'can_access_all': can_access_all,
+        'form_permissions': form_permissions,
+        'custom_user': user
     }
-
-

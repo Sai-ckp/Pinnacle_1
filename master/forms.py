@@ -46,42 +46,11 @@ class EmployeeForm(forms.ModelForm):
 
 
 from django import forms
-from .models import Subject
-from master.models import Course, Employee
+from .models import Subject, Semester, Course, CourseType
+from master.models import Course as MasterCourse, Employee
 
 
-from django import forms
-
-from .models import Subject
- 
-class SubjectForm(forms.ModelForm):
-
-    class Meta:
-
-        model = Subject
-
-        fields = ['name', 'course', 'subject_code', 'credit', 'faculty']
-
- 
-from .models import Semester
-class SemesterForm(forms.ModelForm):
-    class Meta:
-        model =  Semester
-        fields = '__all__'       
-
-# forms.py
-# from django import forms
-# from .models import Subject
-
-# class SubjectForm(forms.ModelForm):
-#     class Meta:
-#         model = Subject
-#         fields = ['name', 'course', 'subject_code', 'credit', 'faculty']
-
-
-from django import forms
-from .models import Subject
-
+# ---------- Subject Form ----------
 class SubjectForm(forms.ModelForm):
     class Meta:
         model = Subject
@@ -107,13 +76,27 @@ class SubjectForm(forms.ModelForm):
             ]),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ✅ Show only active courses
+        self.fields['course'].queryset = MasterCourse.objects.filter(is_active=True)
+        # ✅ Optionally filter only faculty roles
+        self.fields['faculty'].queryset = Employee.objects.filter(role="Faculty")
 
 
+# ---------- Semester Form ----------
+class SemesterForm(forms.ModelForm):
+    class Meta:
+        model = Semester
+        fields = '__all__'
 
-from django import forms
-from .models import Course
-from .models import CourseType
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ✅ Only show active courses
+        self.fields['course'].queryset = MasterCourse.objects.filter(is_active=True)
 
+
+# ---------- Course Form ----------
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course

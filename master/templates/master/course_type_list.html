@@ -38,7 +38,7 @@
         font-weight: bold;
         border-radius: 4px;
         transition: background-color 0.3s;
-        margin-left: 766px;
+        margin-left: 751px;
         text-decoration: none;
     }
 
@@ -98,7 +98,9 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Program Types</h2>
-        <a href="{% url 'course_type_create' %}" class="btn-add">Add Program Type</a>
+        {% if form_permissions.course_type.add %}
+        <a href="{% url 'course_type_add' %}" class="btn-add">Add Program Type</a>
+        {% endif %}
     </div>
 
     {% if types %}
@@ -114,8 +116,15 @@
             <tr>
                 <td>{{ type.name }}</td>
                 <td class="action-links">
-                    <a href="{% url 'course_type_edit' type.pk %}">Edit</a> |
+                    {% if form_permissions.course_type.view %}
+                    <a href="{% url 'course_type_view' type.pk %}">View</a>
+                    {% endif %}
+                    {% if form_permissions.course_type.edit %}
+                    <a href="{% url 'course_type_edit' type.pk %}">Edit</a>
+                    {% endif %}
+                    {% if form_permissions.course_type.delete %}
                     <a href="{% url 'course_type_delete' type.pk %}" class="btn-delete confirm-delete">Delete</a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

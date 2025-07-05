@@ -1,0 +1,293 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\user_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:master\\templates\\master\\user_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\course_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:master\\templates\\master\\course_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\semester_form.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:master\\templates\\master\\semester_form.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\admission_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\templates\\admission\\admission_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\dashboard.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:master\\templates\\master\\dashboard.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_list1.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\templates\\admission\\enquiry_list1.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\templates\\admission\\enquiry_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_dashboard.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\templates\\admission\\enquiry_dashboard.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\core\\models.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:core\\models.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\models.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\models.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\forms.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\forms.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:admission\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\course_type_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:master\\templates\\master\\course_type_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\user_rights.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:master\\templates\\master\\user_rights.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{131FEA6E-FF26-4CDB-940E-8CCBA9B4F30F}|student_alerts_app.pyproj|solutionrelative:master\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 14,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "course_list.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\course_list.html",
+              "RelativeDocumentMoniker": "master\\templates\\master\\course_list.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\course_list.html",
+              "RelativeToolTip": "master\\templates\\master\\course_list.html",
+              "ViewState": "AgIAADoAAAAAAAAAAAAhwEgAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T06:32:40.245Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "admission_list.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\admission_list.html",
+              "RelativeDocumentMoniker": "admission\\templates\\admission\\admission_list.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\admission_list.html",
+              "RelativeToolTip": "admission\\templates\\admission\\admission_list.html",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAhwFIAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T07:41:33.704Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "enquiry_list1.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_list1.html",
+              "RelativeDocumentMoniker": "admission\\templates\\admission\\enquiry_list1.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_list1.html",
+              "RelativeToolTip": "admission\\templates\\admission\\enquiry_list1.html",
+              "ViewState": "AgIAAIEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T07:24:26.203Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "enquiry_list.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_list.html",
+              "RelativeDocumentMoniker": "admission\\templates\\admission\\enquiry_list.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_list.html",
+              "RelativeToolTip": "admission\\templates\\admission\\enquiry_list.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T07:18:42.082Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\core\\models.py",
+              "RelativeDocumentMoniker": "core\\models.py",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\core\\models.py",
+              "RelativeToolTip": "core\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-07-05T07:07:18.38Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\models.py",
+              "RelativeDocumentMoniker": "admission\\models.py",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\models.py",
+              "RelativeToolTip": "admission\\models.py",
+              "ViewState": "AgIAAKUAAAAAAAAAAAAcwLoAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-07-05T07:06:34.288Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "forms.py",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\forms.py",
+              "RelativeDocumentMoniker": "admission\\forms.py",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\forms.py",
+              "RelativeToolTip": "admission\\forms.py",
+              "ViewState": "AgIAAK8BAAAAAAAAAAAcwFEBAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-07-05T07:04:45.469Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\urls.py",
+              "RelativeDocumentMoniker": "admission\\urls.py",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\urls.py",
+              "RelativeToolTip": "admission\\urls.py",
+              "ViewState": "AgIAAF0AAAAAAAAAAAAAAG8AAABRAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-07-05T07:02:10.855Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\views.py",
+              "RelativeDocumentMoniker": "admission\\views.py",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\views.py",
+              "RelativeToolTip": "admission\\views.py",
+              "ViewState": "AgIAAJoDAAAAAAAAAAAmwLQDAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-07-05T07:01:38.361Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "enquiry_dashboard.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_dashboard.html",
+              "RelativeDocumentMoniker": "admission\\templates\\admission\\enquiry_dashboard.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\admission\\templates\\admission\\enquiry_dashboard.html",
+              "RelativeToolTip": "admission\\templates\\admission\\enquiry_dashboard.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T06:58:08.64Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "dashboard.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\dashboard.html",
+              "RelativeDocumentMoniker": "master\\templates\\master\\dashboard.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\dashboard.html",
+              "RelativeToolTip": "master\\templates\\master\\dashboard.html",
+              "ViewState": "AgIAABYBAAAAAAAAAAAhwC0BAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T06:57:16.186Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "course_type_list.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\course_type_list.html",
+              "RelativeDocumentMoniker": "master\\templates\\master\\course_type_list.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\course_type_list.html",
+              "RelativeToolTip": "master\\templates\\master\\course_type_list.html",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAACgAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T06:30:49.233Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "user_rights.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\user_rights.html",
+              "RelativeDocumentMoniker": "master\\templates\\master\\user_rights.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\user_rights.html",
+              "RelativeToolTip": "master\\templates\\master\\user_rights.html",
+              "ViewState": "AgIAAD8AAAAAAAAAAAAAAFAAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T06:29:11.89Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "semester_form.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\semester_form.html",
+              "RelativeDocumentMoniker": "master\\templates\\master\\semester_form.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\semester_form.html",
+              "RelativeToolTip": "master\\templates\\master\\semester_form.html",
+              "ViewState": "AgIAAHAAAAAAAAAAAAAAAJAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T06:28:19.446Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "user_list.html",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\user_list.html",
+              "RelativeDocumentMoniker": "master\\templates\\master\\user_list.html",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\templates\\master\\user_list.html",
+              "RelativeToolTip": "master\\templates\\master\\user_list.html",
+              "ViewState": "AgIAADgAAAAAAAAAAAAAAEQAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-07-05T06:27:28.88Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\views.py",
+              "RelativeDocumentMoniker": "master\\views.py",
+              "ToolTip": "C:\\Users\\Admin\\Downloads\\student_alerts_app (3) (1)\\student_alerts_app\\master\\views.py",
+              "RelativeToolTip": "master\\views.py",
+              "ViewState": "AgIAABEHAAAAAAAAAAAAACQHAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-07-05T05:54:29.903Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -7,30 +7,46 @@
 
     <!-- Master Dashboard Buttons -->
     <div class="d-flex flex-wrap gap-3 mb-4">
-
+        {% if form_permissions.course_type.add %}
         <!-- Course Type -->
         <a href="{% url 'course_type_list' %}" class="btn btn-maroon px-4 py-3">
-            <i class="bi bi-diagram-3 me-2"></i> Program Type
+            <i class="bi bi-diagram-3 me-2"></i> Program Types
             <!-- Alternate FA: <i class="fas fa-stream me-2"></i> -->
         </a>
-
+        {% endif %}
+        {% if form_permissions.course_form.add %}
         <!-- Combination -->
-        <a href="{% url 'course_list' %}" class="btn btn-maroon px-4 py-3">
-            <i class="bi bi-shuffle me-2"></i> Combination
+        <a href="{% url 'course_form_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-shuffle me-2"></i> Combinations
             <!-- Alternate FA: <i class="fas fa-random me-2"></i> -->
         </a>
+        {% endif %}
 
         <!-- Semester -->
-        <a href="{% url 'semester_list' %}" class="btn btn-maroon px-4 py-3">
-            <i class="bi bi-calendar-range me-2"></i> Semester
+        {% if form_permissions.semester_form.add %}
+        <a href="{% url 'semester_form_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-calendar-range me-2"></i> Academic Cycles
             <!-- Alternate FA: <i class="fas fa-calendar-alt me-2"></i> -->
         </a>
+        {% endif %}
+
+        {% if form_permissions.subject_form.add %}
 
         <!-- Subject -->
-        <a href="{% url 'subject_list' %}" class="btn btn-maroon px-4 py-3">
-            <i class="bi bi-journal-bookmark me-2"></i> Subject
+        <a href="{% url 'subject_form_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-journal-bookmark me-2"></i> Subjects
             <!-- Alternate FA: <i class="fas fa-book-open me-2"></i> -->
         </a>
+        {% endif %}
+
+        {% if form_permissions.transport_form.add %}
+
+        <a href="{% url 'transport_form_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-bus-front-fill me-2"></i> Transport
+
+            <!-- Alternate FA: <i class="fas fa-book-open me-2"></i> -->
+        </a>
+        {% endif %}
 
     </div>
 
@@ -140,7 +156,7 @@
     }
 
     .gap-3 {
-        gap: 3rem !important;
+        gap: 1rem !important;
     }
 
     .d-flex.flex-wrap.gap-3.mb-4 .btn {

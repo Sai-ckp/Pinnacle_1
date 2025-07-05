@@ -1,5 +1,5 @@
 {% extends 'master/layout.html' %}
-{% block title %}Assign Substitute{% endblock %}
+{% block title %}{% if readonly %}View Substitute{% else %}Assign Substitute{% endif %}{% endblock %}
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -81,7 +81,7 @@
 </style>
 
 <div class="container form-container">
-    <h3>Assign Substitute</h3>
+    <h3>{% if readonly %}View Substitute{% else %}Assign Substitute{% endif %}</h3>
 
     <div class="info-box">
         <p><strong>Date:</strong> {{ date }}</p>
@@ -92,6 +92,19 @@
         <p><strong>Room:</strong> {{ entry.room }}</p>
     </div>
 
+    {% if readonly %}
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label">Substitute Faculty</label>
+            <p>{{ free_faculties.0.name }}</p>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Subject</label>
+            <p>{{ subjects.0.name }}</p>
+        </div>
+    </div>
+    {% else %}
     <form method="post">
         {% csrf_token %}
         <div class="row">
@@ -122,25 +135,28 @@
 
         <button type="submit" class="btn btn-save">Save</button>
     </form>
+    {% endif %}
 </div>
 
 <script>
     const facultySelect = document.getElementById('faculty');
     const subjectSelect = document.getElementById('subject');
 
-    facultySelect.addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const department = selectedOption.getAttribute('data-department');
+    if (facultySelect && subjectSelect) {
+        facultySelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const department = selectedOption.getAttribute('data-department');
 
-        if (department) {
-            for (let i = 0; i < subjectSelect.options.length; i++) {
-                const subjectText = subjectSelect.options[i].text.trim();
-                if (subjectText.toLowerCase() === department.trim().toLowerCase()) {
-                    subjectSelect.selectedIndex = i;
-                    break;
+            if (department) {
+                for (let i = 0; i < subjectSelect.options.length; i++) {
+                    const subjectText = subjectSelect.options[i].text.trim();
+                    if (subjectText.toLowerCase() === department.trim().toLowerCase()) {
+                        subjectSelect.selectedIndex = i;
+                        break;
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 </script>
 {% endblock %}

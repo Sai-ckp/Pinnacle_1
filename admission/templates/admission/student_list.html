@@ -33,7 +33,7 @@
         border: 1px solid #ccc;
         background-color: #800000;
         border-radius: 5px;
-        padding: 6px 10px;
+        padding: 2px 9px;       
         display: inline-block;
         float: right;
         margin-bottom: 15px;
@@ -52,11 +52,11 @@
     }
 
         .search-bar input[type="text"] {
-            padding: 4px 8px;
-            font-size: 10px;
+            padding: 5px 5px;
+            font-size: 9px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            width: 188px;
+            width: 187px;
         }
 
         .search-bar button {
@@ -108,6 +108,7 @@
         align-items: center;
         margin-top: 15px;
         font-size: 11px;
+        margin-right: 428px;
     }
 
         .pagination span {
@@ -161,10 +162,11 @@
 
 <div class="container">
     <h2>Student Fee Payment List</h2>
-
+    {% if form_permissions.student_fee_form.add %}
     <div class="box-link">
-        <a href="{% url 'student_create' %}">Add New Student</a>
+        <a href="{% url 'student_fee_form_add' %}">Add New Student</a>
     </div>
+    {% endif %}
     <form method="get" class="search-bar" action="">
         <input type="text" name="search" placeholder="Search by Admission No or Name" value="{{ search_query }}">
         <button type="submit">Search</button>
@@ -188,7 +190,15 @@
                 <td>{{ student.name }}</td>
                 <td>{{ student.course }}</td>
                 <td>
-                    <a href="{% url 'student_edit' student.admission_no %}" class="action-btn">Edit</a>
+                    {% if form_permissions.student_fee_form.edit %}
+                    <a href="{% url 'student_fee_form_edit' student.admission_no %}" class="action-btn"><i class="fas fa-edit" style="color: #ffffff;"></i></a>
+                    {% endif %}
+
+                    {% if form_permissions.student_fee_form.delete %}
+                    <a href="{% url 'student_fee_form_delete' student.admission_no %}" class="action-btn" title="delete">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                    {% endif %}
                     <a href="{% url 'generate_fee_receipt_pdf' student.id %}" target="_blank" class="action-btn" title="Print Receipt">
                         <i class="fas fa-print"></i>  Print Receipt
                     </a>

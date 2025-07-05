@@ -1,23 +1,23 @@
 {% extends 'master/layout.html' %}
-{% block title %}Admission Dashboard{% endblock %}
+{% block title %}Enquiry {% endblock %}
 {% block content %}
 <div class="container py-5">
     <h2 class="fw-bold  mb-7">Student Enquiry Management</h2>
 
     <!-- Filter Dropdown -->
-    <div class="mb-4 d-flex justify-content-end">
+    <!--<div class="mb-4 d-flex justify-content-end">
         <div class="dropdown">
-            <button class="btn btn-outline-secondary px-4 py-2 dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-outline-secondary px-4 py-2 dropdown-toggle" style="font-size: 10px; width: 100%; background: #800000;" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-funnel"></i> Filter
             </button>
-            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+            <ul class="dropdown-menu" style=" width: 100%;     font-size: 10px;" aria-labelledby="filterDropdown">
                 <li><a class="dropdown-item {% if active_filter == 'day' %}active{% endif %}" href="?filter=day">Per Day</a></li>
                 <li><a class="dropdown-item {% if active_filter == 'week' %}active{% endif %}" href="?filter=week">Per Week</a></li>
                 <li><a class="dropdown-item {% if active_filter == 'month' %}active{% endif %}" href="?filter=month">Per Month</a></li>
                 <li><a class="dropdown-item {% if active_filter == 'all' %}active{% endif %}" href="?filter=all">All</a></li>
             </ul>
         </div>
-    </div>
+    </div>-->
 
     <!-- Dashboard Cards -->
     <div class="row mb-5">
@@ -85,17 +85,19 @@
     <!-- Action Buttons -->
     <div class="d-flex flex-wrap gap-3 mb-4">
         <div class="d-flex flex-column align-items-start position-relative">
+            {% if form_permissions.enquiry_form.add %}
             <button id="toggle-applications" class="btn btn-maroon px-4 py-3">
                 <i class="bi bi-journal-text me-2"></i> Add Enquiry
             </button>
             <div id="application-buttons" class="d-none flex-column custom-dropdown">
-                <a href="{% url 'enquiry1_create' %}" class="btn btn-maroon px-4 py-3">
+                <a href="{% url 'enquiry_form_add' %}" class="btn btn-maroon px-4 py-3">
                     <i class="bi bi-file-earmark-text me-2"></i> PU Course Enquiry
                 </a>
-                <a href="{% url 'enquiry2_create' %}" class="btn btn-maroon px-4 py-3">
+                <a href="{% url 'degree_enquiry_add' %}" class="btn btn-maroon px-4 py-3">
                     <i class="bi bi-journal-plus me-2"></i> Degree Course Enquiry
                 </a>
             </div>
+            {% endif %}
         </div>
 
         <div>
@@ -105,9 +107,11 @@
         </div>
 
         <div>
-            <a href="{% url 'schedule_follow_up_form' %}" class="btn btn-maroon px-4 py-3">
+            {% if form_permissions.schedule_follow_up_form.add %}
+            <a href="{% url 'schedule_follow_up_form_add' %}" class="btn btn-maroon px-4 py-3">
                 <i class="bi bi-calendar-event me-2"></i> Schedule Follow-Up
             </a>
+            {% endif %}
         </div>
 
         <div>
@@ -161,6 +165,7 @@
         font-family: Arial, sans-serif;
         background: #f7f8f8;
     }
+
 
     .btn {
         min-width: 178px;
@@ -237,7 +242,7 @@
     }
 
     .gap-3 {
-        gap: 1rem !important;
+        gap: 5rem !important;
     }
 
     .mb-4 {
@@ -306,6 +311,12 @@
         animation: fadeIn 0.3s ease-in-out;
     }
 
+    .btn.show {
+        color: var(--bs-btn-active-color);
+        background-color: #800000;
+        border-color: #800000;
+    }
+
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -343,6 +354,12 @@
         padding: .0px .1px;
         background-color: var(--bs-table-bg);
         border-bottom-width: var(--bs-border-width);
+    }
+
+    .dropdown-item.active {
+        color: var(--bs-dropdown-link-active-color);
+        text-decoration: none;
+        background-color: #800000;
     }
 </style>
 {% endblock %}

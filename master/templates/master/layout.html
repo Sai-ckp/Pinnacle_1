@@ -5,15 +5,26 @@
     <title>{% block title %}Pinnacle School of Commerce and Management{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body {
+        /* Reset and base font styles */
+        * {
             margin: 0;
-            font-family: Arial, sans-serif !important;
+            padding: 0;
+            box-sizing: border-box;
         }
 
+        body {
+            font-family: Arial, sans-serif !important;
+            font-size: 14px !important;
+            color: #333;
+        }
+
+        /* Sidebar styles */
         .sidebar {
             width: 200px;
+            min-width: 200px;
+            max-width: 200px;
             height: 100vh;
-            background: linear-gradient(135deg, #8B0000, #800000);
+            background: linear-gradient(135deg, #800000, #800000);
             color: white;
             position: fixed;
             top: 0;
@@ -34,27 +45,6 @@
                 border-radius: 4px;
             }
 
-            .sidebar a,
-            .dropdown-container a,
-            .dropdown-btn {
-                font-size: 14px !important;
-                color: #fff !important;
-                text-decoration: none;
-                padding: 10px 8px !important;
-                display: flex !important;
-                align-items: center;
-                gap: 8px;
-                font-weight: 500 !important;
-                background: #800000;
-            }
-
-                .sidebar a i,
-                .dropdown-btn i,
-                .dropdown-container a i {
-                    font-size: 15px !important;
-                    width: 18px;
-                }
-
         .sidebar-title {
             padding: 14px 12px;
             font-size: 12px;
@@ -72,10 +62,52 @@
                 margin-bottom: -2px;
             }
 
-        .main-area {
-            margin-left: 200px;
+
+        strong {
+            font-weight: 600;
         }
 
+        .sidebar a,
+        .sidebar .dropdown-btn,
+        .sidebar .dropdown-container a {
+            font-size: 13.5px !important;
+            color: #fff !important;
+            text-decoration: none;
+            padding: 10px 12px !important;
+            display: flex !important;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500 !important;
+            background-color: #800000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+            .sidebar a i,
+            .sidebar .dropdown-btn i,
+            .sidebar .dropdown-container a i {
+                font-size: 15px !important;
+                width: 18px;
+            }
+
+            .sidebar a:hover,
+            .sidebar .dropdown-btn:hover,
+            .sidebar .dropdown-container a:hover {
+                background-color: #a50000;
+            }
+
+        /* Dropdown container */
+        .dropdown-container {
+            display: none;
+            padding-left: 0;
+        }
+
+        .show {
+            display: block;
+        }
+
+        /* Topbar */
         .topbar {
             position: fixed;
             top: 0;
@@ -103,29 +135,99 @@
                     text-decoration: underline;
                 }
 
+        /* Content area */
+        .main-area,
         .content {
-            padding: 80px 26px 40px;
             margin-left: 200px;
+            padding: 80px 26px 40px;
+            min-height: 100vh;
         }
 
-        .dropdown-container {
-            display: none;
-            padding-left: 0px;
-        }
-
-        .show {
-            display: block;
-        }
-
+        /* Footer */
         .footer {
-            margin-left: 191px;
+            margin-left: 200px;
             color: #8b0000;
             text-align: center;
             padding: 10px 0;
             font-weight: 500;
-            margin-top: 177px;
+            margin-top: 50px;
+        }
+
+        /* Search suggestions */
+        #suggestions {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            display: none;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+        }
+
+            #suggestions div {
+                padding: 6px 10px;
+                cursor: pointer;
+            }
+
+                #suggestions div:hover,
+                #suggestions .active {
+                    background-color: #800000;
+                    color: white;
+                }
+
+        /* User dropdown */
+        #user-popup {
+            position: absolute;
+            top: 43px;
+            right: 0;
+            background: white;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            width: 220px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 15px;
+            z-index: 1000;
+            text-align: center;
+            display: none;
+        }
+
+            #user-popup i {
+                font-size: 13px;
+                color: #ffffff;
+                margin-bottom: 10px;
+            }
+
+            #user-popup p {
+                margin: 0;
+                font-size: 15px;
+                color: #800000;
+            }
+
+            #user-popup a {
+                background: #800000;
+                color: white;
+                padding: 2px 8px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-size: 14px;
+                display: inline-block;
+                margin-top: 12px;
+            }
+
+        #sidebar-search {
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: none;
+            font-size: 13px;
+            color: #800000;
+            outline: none;
         }
     </style>
+
 </head>
 <body>
     <div class="sidebar">
@@ -134,25 +236,60 @@
         </div>
 
         <a href="{% url 'dashboard_view' %}"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-        {% if 'dashboard_view2' in allowed_forms %}
-        <a href="{% url 'dashboard_view2' %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
-        {% endif %}
-        <a href="{% url 'master_dashboard' %}"><i class="fas fa-sliders-h"></i> Master </a>
-        <a href="{% url 'enquiry_dashboard' %}"><i class="fa-solid fa-question-circle"></i> Enquiry</a>
-        <a href="{% url 'admission_dashboard' %}"><i class="fa-solid fa-user-plus"></i> Admission</a>
 
+        {% if custom_user and custom_user.id == 1 or custom_user.id == 2 %}
+
+        <a href="{% url 'user_list' %}"><i class="fa-solid fa-user"></i> Users</a>
+        {% endif %}
+
+        {% if custom_user and custom_user.id == 1 %}
+        <a href="{% url 'user_rights_view' custom_user.id %}"><i class="fa-solid fa-key"></i> User Rights</a>
+        {% endif %}
+        {% if form_permissions.course_type.add or form_permissions.course_form.add or  form_permissions.semester_form.add or form_permissions.subject_form.add or form_permissions.transport_form.add %}
+        <a href="{% url 'master_dashboard' %}"><i class="fas fa-sliders-h"></i> Master </a>
+        {% endif %}
+        {% if form_permissions.enquiry_form.add %}
+        <a href="{% url 'enquiry_dashboard' %}"><i class="fa-solid fa-question-circle"></i> Enquiry</a>
+        {% endif %}
+        {% if form_permissions.degree_admission_form.add %}
+        <a href="{% url 'admission_dashboard' %}"><i class="fa-solid fa-user-plus"></i> Admission</a>
+        {% endif %}
+        {% if form_permissions.student_fee_form.add %}
         <a href="{% url 'fee_management' %}">
             <i class="fa-solid fa-wallet"></i> Fee
         </a>
-
-        {% if 'communication_dashboard' in allowed_forms or can_access_all %}
-        <a href="{% url 'communication_dashboard' %}"><i class="fa-solid fa-comments"></i> Communication Dashboard</a>
         {% endif %}
+
+        {% if form_permissions.communication_dashboard.access %}
+        <a href="{% url 'communication_dashboard' %}"><i class="fa-solid fa-comments"></i> Communication</a>
+        {% endif %}
+
+
+        {% if form_permissions.employee_form.add %}
         <a href="{% url 'employee_list' %}"><i class="fa-solid fa-users"></i> Employee</a>
-        <a href="{% url 'master_student_list' %}"><i class="fa-solid fa-database"></i> Students Information</a>
+        {% endif %}
+
+
+        {% if form_permissions.student_database.access %}
+        <a href="{% url 'student_database' %}"><i class="fa-solid fa-database"></i> Students Information</a>
+        {% endif %}
+
+        {% if form_permissions.student_attendance_form.add  or form_permissions.employee_attendance_form.add  %}
         <a href="{% url 'attendance_dashboard' %}"><i class="fa-solid fa-clipboard-list"></i> Attendance</a>
+        {% endif %}
+
+        {% if form_permissions.timetable_form.add %}
         <a href="{% url 'timetable_dashboard' %}"><i class="fa-solid fa-calendar-alt"></i> Timetable</a>
-        <a href="{% url 'calendar' %}"><i class="fa-solid fa-calendar-alt"></i> Calendar</a>
+        {% endif %}
+
+        {% if form_permissions.calendar_form.access %}
+        <a href="{% url 'calendar_form' %}"><i class="fa-solid fa-calendar-alt"></i> Calendar</a>
+        {% endif %}
+
+        {% if form_permissions.recent_activity_view.access %}
+        <a href="{% url 'recent_activity_view' %}"><i class="fa-solid fa-calendar-alt"></i>Recent Activities</a>
+        {% endif %}
+
     </div>
 
     <div class="topbar">
@@ -160,15 +297,15 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <div style="position: relative;">
                 <input id="sidebar-search" type="text" placeholder="Search..." style="padding: 2px 4px; border-radius: 4px; border: none; color: #800000;" />
-                <div id="suggestions" style="position: absolute; top: 20px; left: 0; background: #fff; border: 1px solid #ccc; width: 158px; max-height: 200px; overflow-y: auto; display: none; font-size: 10px; color: black;"></div>
+                <div id="suggestions" style="position: absolute; position: absolute; top: 19px; left: 0px; background: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); width: 170px; max-height: 200px; overflow-y: auto; display: none; font-size: 10px; color: black;"></div>
             </div>
             <div style="position: relative;">
                 <i class="fas fa-user-circle" id="user-icon" style="font-size: 24px; cursor: pointer;"></i>
                 <div id="user-popup" style="display: none; position: absolute; top: 43px; right: 0; background: white; color: #333; border: 1px solid #ccc; border-radius: 8px; width: 220px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 15px; z-index: 1000; text-align: center;">
                     <i class="fas fa-user-circle" style="font-size: 60px; color: #800000; display: block; margin: 0 auto 10px;"></i>
-                    <p style="margin: 0;"><strong>Username:</strong> {{user.username }}</p>
-                    <a href="{% url 'logout' %}" style="background: #800000; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; display: inline-block; margin-top: 12px;">
-                        <i class="fas fa-power-off"></i> Logout
+                    <p style="margin: 0; font-size: 15px; color: #800000; font-weight: 600;"><strong>Username:</strong> {{custom_user.username }}</p>
+                    <a href="{% url 'logout' %}" style="background: #800000; color: white; border-radius: 6px; text-decoration: none; font-size: 14px; display: inline-block; margin-top: 7px;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
             </div>
@@ -216,25 +353,41 @@
                 });
             });
 
-            const items = [
-                { label: 'Dashboard', url: '{% url "dashboard_view" %}' },
-                {% if 'dashboard_view2' in allowed_forms %}
-                        { label: 'Dashboard (Pie)', url: '{% url "dashboard_view2" %}' },
-            {% endif %}
-            { label: 'Master ', url: '{% url "master_dashboard" %}' },
-            { label: 'Enquiry', url: '{% url "enquiry_dashboard" %}' },
-            { label: 'Admission', url: '{% url "admission_dashboard" %}' },
-            { label: 'Fee Form', url: '{% url "shortlist_display" %}' },
-            { label: 'Fee Payment', url: '{% url "student_list" %}' },
-            { label: 'Payment History', url: '{% url "payment_history" %}' },
-            { label: 'Fee ', url: '{% url "fee_dashboard" %}' },
-            { label: 'Communication', url: '{% url "upload_excel" %}' },
-            { label: 'Employee', url: '{% url "employee_list" %}' },
-            { label: 'Students Information', url: '{% url "master_student_list" %}' },
-            { label: 'Attendance', url: '{% url "attendance_dashboard" %}' },
-            { label: 'Timetable', url: '{% url "timetable_dashboard" %}' },
-            { label: 'Calendar', url: '{% url "calendar" %}' },
-                    ];
+            //const items = [
+            //    { label: 'Dashboard', url: '{% url "dashboard_view" %}' },
+
+            //    { label: 'Master', url: '{% url "master_dashboard" %}' },
+            //    { label: 'Enquiry', url: '{% url "enquiry_dashboard" %}' },
+            //    { label: 'Admission', url: '{% url "admission_dashboard" %}' },
+            //    { label: 'Fee Form', url: '{% url "shortlist_display" %}' },
+            //    { label: 'Fee Payment', url: '{% url "student_list" %}' },
+            //    { label: 'Fee Dashboard', url: '{% url "fee_dashboard" %}' },
+            //    { label: 'Communication', url: '{% url "upload_excel" %}' },
+            //    { label: 'Employee', url: '{% url "employee_list" %}' },
+            //
+            //    { label: 'Attendance', url: '{% url "attendance_dashboard" %}' },
+            //    { label: 'Timetable', url: '{% url "timetable_dashboard" %}' },
+            //
+            //    { label: 'PU Application Form', url: '{% url "admission_form" %}' },
+            //    { label: 'BCOM Application Form', url: '{% url "degree_admission_form" %}' },
+            //    { label: 'PU Application List', url: '{% url "admission_list" %}' },
+            //    { label: 'BCOM Application List', url: '{% url "degree_admission_list" %}' },
+            //    { label: 'Pending Admissions', url: '{% url "pending_admissions" %}' },
+            //    { label: 'Confirmed Admissions', url: '{% url "confirmed_admissions" %}' },
+            //    { label: 'Reports', url: '{% url "reports" %}' },
+            //    { label: 'Enquiries Repository', url: '{% url "enquiry_list" %}' },
+            //    { label: 'Follow-up History', url: '{% url "follow_up_list" %}' },
+            //    { label: 'Attendance Reports', url: '{% url "attendance_report" %}' },
+            //    { label: 'Attendance Settings', url: '{% url "attendance_settings_view" %}' },
+            //    { label: 'Program Types', url: '{% url "course_type_list" %}' },
+
+
+            //    { label: 'Transport', url: '{% url "transport_form_list" %}' },
+            //    { label: 'Weekly Timetable', url: '{% url "weekly_timetable" course_id=1 semester_number=1 %}' },
+           
+            //    { label: 'Faculty View', url: '{% url "faculty_classes_table" %}' }
+            //]
+
 
         const searchInput = document.getElementById('sidebar-search');
         const suggestionsBox = document.getElementById('suggestions');

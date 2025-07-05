@@ -12,4 +12,6 @@ urlpatterns = [
     # project/urls.py
 path('', include('timetable.urls')),
 path('timetable/', include('timetable.urls')),
+
+path('core/', include('core.urls')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

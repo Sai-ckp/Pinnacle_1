@@ -32,6 +32,7 @@
         width: 100%;
         font-size: 12px;
         border-collapse: collapse;
+        margin-top: 33px;
     }
 
     th, td {
@@ -122,11 +123,85 @@
         background-color: #800000;
         color: #800000;
     }
+
+    popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 1001;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+        display: none;
+        width: 300px;
+        text-align: center;
+    }
+
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: none;
+    }
+
+    #confirm-popup-message {
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #800000;
+    }
+
+    /*   #confirm-yes,
+    #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        border: none;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #confirm-yes {
+        background-color: #800000;
+        color: white;
+    }
+
+    #confirm-no {
+        background-color: #e0e0e0;
+    }*/
+    #confirm-yes,
+    #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        border: 2px solid #800000;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: transparent;
+        color: #800000;
+        font-weight: 600;
+        transition: all 0.2s ease-in-out;
+    }
+
+        #confirm-yes:hover {
+            background-color: #800000;
+            color: #fff;
+        }
+
+        #confirm-no:hover {
+            background-color: #800000;
+            color: #fff;
+        }
 </style>
 
 
 <div class="container mt-4">
-    <h2 class="mb-4" style=" color: #800000; margin-left: 452px; ">Enquiries List</h2>
+    <h2 class="mb-4" style=" color: #800000; margin-left: 452px; margin-top: 10px; ">Enquiries List</h2>
 
     <!-- Success and error messages block -->
     {% if messages %}
@@ -195,7 +270,7 @@
                     <span style="color: orange; font-weight: bold;">{{ enquiry.followup_status }}</span>
 
                     {% elif enquiry.followup_status == 'Follow-up Required' %}
-                    <a href="{% url 'schedule_follow_up_form' %}?enquiry_no={{ enquiry.enquiry_no }}&student_name={{ enquiry.student_name }}"
+                    <a href="{% url 'schedule_follow_up_form_add' %}?enquiry_no={{ enquiry.enquiry_no }}&student_name={{ enquiry.student_name }}"
                        style="color: blue; font-weight: bold;">
 
                         {{ enquiry.followup_status }}
@@ -208,11 +283,33 @@
                 <td>
                     <div style="display: flex; gap: 6px;">
                         <!-- View -->
-                        <a href="{% url 'view_enquiry' enquiry.enquiry_no %}" class="icon-btn" title="View" style="background-color: #800000;">
+                        {% if form_permissions.enquiry_form.view %}
+                        <a href="{% url 'enquiry_form_view' enquiry.enquiry_no %}" class="icon-btn" title="View" style="background-color: #800000;">
                             <i class="fas fa-eye" style="color: #ffffff;"></i>
                         </a>
-
+                        {% endif %}
                         <!-- Call -->
+                        {% if form_permissions.enquiry_form.edit %}
+                        <a href="{% url 'enquiry_form_edit' enquiry.enquiry_no %}" class="icon-btn" title="Edit" style="background-color: #800000;">
+                            <i class="fas fa-edit" style="color: #ffffff;"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if form_permissions.enquiry_form.delete %}
+                        <form id="enquiry-delete-form-{{ enquiry.enquiry_no }}"
+                              method="POST"
+                              action="{% url 'enquiry_form_delete' enquiry.enquiry_no %}"
+                              style="display: none;">
+                            {% csrf_token %}
+                        </form>
+
+
+                        <a href="#" class="icon-btn" title="Delete" style="background-color: #800000;"
+                           onclick="confirmEnquiryDelete('{{ enquiry.enquiry_no }}')">
+                            <i class="fas fa-trash-alt" style="color: #ffffff;"></i>
+                        </a>
+                        {% endif %}
+
                         <a href="tel:{{ enquiry.parent_phone }}" class="icon-btn" title="Call" style="background-color: #800000;">
                             <i class="fas fa-phone-alt" style="color: #ffffff;"></i>
                         </a>
@@ -251,7 +348,14 @@
         </tbody>
     </table>
 </div>
+<div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; opacity:0.5; z-index:1000;"></div>
 
+<div id="confirm-popup" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -50%);
+    background:#fff; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.5); z-index:1001;">
+    <p id="confirm-popup-message"></p>
+    <button id="confirm-yes">Yes</button>
+    <button id="confirm-no">No</button>
+</div>
 <script>
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -292,7 +396,7 @@
 
                             alert("✅ " + data.message + "\nTxn ID: " + (data.transaction_id || 'N/A'));
 
-                            button.textContent = "✅ Sent";
+                            button.textContent = "✅";
 
                             button.style.backgroundColor = "gray";
 
@@ -325,6 +429,29 @@
         });
 
     });
+
+    let deleteEnquiryId = null;
+
+    function confirmEnquiryDelete(enquiryNo) {
+        deleteEnquiryId = enquiryNo;
+        document.getElementById("confirm-popup").style.display = "block";
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("confirm-popup-message").innerHTML =
+            `Are you sure you want to delete enquiry <b>${enquiryNo}</b>?`;
+    }
+
+    document.getElementById("confirm-yes").addEventListener("click", function () {
+        if (deleteEnquiryId) {
+            document.getElementById(`enquiry-delete-form-${deleteEnquiryId}`).submit();
+        }
+    });
+
+    document.getElementById("confirm-no").addEventListener("click", function () {
+        document.getElementById("confirm-popup").style.display = "none";
+        document.getElementById("overlay").style.display = "none";
+        deleteEnquiryId = null;
+    });
+
 </script>
 
 {% endblock %}

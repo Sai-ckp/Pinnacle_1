@@ -1,4 +1,5 @@
 {% extends 'master/layout.html' %}
+{% block title %}Staff Attendance List{% endblock %}
 
 {% block content %}
 <style>
@@ -219,10 +220,11 @@
     <h2>Attendance Records</h2>
 
     <!-- Add Attendance Button -->
+    {% if form_permissions.employee_attendance_form.add %}
     <div class="d-flex justify-content-start mb-3">
-        <a href="{% url 'attendance_entry' %}" class="btn btn-maroon">+ Add Attendance</a>
+        <a href="{% url 'employee_attendance_form_add' %}" class="btn btn-maroon">+ Add Attendance</a>
     </div>
-
+    {% endif %}
     <!-- Filter Form -->
     <form method="get" class="filter-form">
         <input type="date" name="date" value="{{ request.GET.date }}" class="form-control" />
@@ -260,24 +262,32 @@
                 <td>{{ record.check_out }}</td>
                 <td>{{ record.status }}</td>
                 <td>
-                    <a href="{% url 'attendance_view' record.id %}" class="icon-btn" title="View">
+                    {% if form_permissions.employee_attendance_form.view %}
+                    <a href="{% url 'employee_attendance_form_view' record.id %}" class="icon-btn" title="View">
                         <i class="fas fa-eye"></i>
                     </a>
-                    <a href="{% url 'attendance_edit' record.id %}" class="icon-btn" title="Edit">
+                    {% endif %}
+                    {% if form_permissions.employee_attendance_form.edit %}
+                    <a href="{% url 'employee_attendance_form_edit' record.id %}" class="icon-btn" title="Edit">
                         <i class="fas fa-edit"></i>
                     </a>
+                    {% endif %}
+
+                    <!-- Hidden delete form -->
+                    {% if form_permissions.employee_attendance_form.delete %}
+                    <form id="attendance-delete-form-{{ record.id }}"
+                          method="POST"
+                          action="{% url 'employee_attendance_form_delete' record.id %}"
+                          style="display: none;">
+                        {% csrf_token %}
+                    </form>
+
+
                     <a href="#" class="icon-btn" title="Delete"
                        onclick="confirmAttendanceDelete({{ record.id }}, '{{ record.employee.name|escapejs }}')">
                         <i class="fas fa-trash-alt"></i>
                     </a>
-
-                    <!-- Hidden delete form -->
-                    <form id="attendance-delete-form-{{ record.id }}"
-                          method="POST"
-                          action="{% url 'attendance_delete' record.id %}"
-                          style="display: none;">
-                        {% csrf_token %}
-                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}

@@ -77,7 +77,7 @@
 </style>
 
 <div class="container form-container">
-    <h3>{% if form.instance.pk %}Edit{% else %}Add{% endif %}Combinations</h3>
+    <h3>{% if form.instance.pk %}Edit{% else %}Add {% endif %}Combination</h3>
     <form method="post">
         {% csrf_token %}
 
@@ -87,7 +87,7 @@
                 {{ form.name|add_class:"form-control" }}
             </div>
             <div class="col-md-6">
-                <label for="id_course_type" class="form-label">Combination Type</label>
+                <label for="id_course_type" class="form-label">Program Type</label>
                 {{ form.course_type|add_class:"form-select" }}
             </div>
         </div>
@@ -98,21 +98,24 @@
                 {{ form.duration_years|add_class:"form-control" }}
             </div>
             <div class="col-md-6">
-                <label for="id_total_semesters" class="form-label">Total Semesters</label>
+                <label for="id_total_semesters" class="form-label">Academic Cycles (Semesters)</label>
                 {{ form.total_semesters|add_class:"form-control" }}
             </div>
         </div>
         <div class="form-check">
-            <input type="radio" id="active_radio" name="is_active" value="1" class="form-check-input"
-                   {% if course and course.is_active %}checked{% endif %}>
-            <label for="active_radio" class="form-check-label">Active</label>
+            <input type="radio" name="is_active" value="1" class="form-check-input"
+                   {% if form.instance.is_active %}checked{% endif %}
+                   {% if view_mode %}disabled{% endif %}>
+            <label class="form-check-label">Active</label>
         </div>
 
         <div class="form-check">
-            <input type="radio" id="inactive_radio" name="is_active" value="0" class="form-check-input"
-                   {% if course and not course.is_active %}checked{% endif %}>
-            <label for="inactive_radio" class="form-check-label">Inactive</label>
+            <input type="radio" name="is_active" value="0" class="form-check-input"
+                   {% if not form.instance.is_active %}checked{% endif %}
+                   {% if view_mode %}disabled{% endif %}>
+            <label class="form-check-label">Inactive</label>
         </div>
+
 
 
         <div class="btn-container">

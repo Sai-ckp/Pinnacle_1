@@ -3,22 +3,22 @@ from .views import generate_qr_dynamic
 from . import views
 
 urlpatterns = [
-      path('admission/form/', views.admission_form, name='admission_form'),  # for blank form
-      path('admission/form/<str:enquiry_no>/', views.admission_form, name='admission_form'),  # for pre-filled form
+      path('pu-application/form/', views.admission_form, name='admission_form'),  # for blank form
+      path('pu-applicaion/form/<str:enquiry_no>/', views.admission_form, name='admission_form'),  # for pre-filled form
       
 
-     path('admission/list/', views.admission_list, name='admission_list'),
-     path('admission/pu/<int:pk>/view/', views.view_pu_admission, name='view_pu_admission'), 
-     path('admissions/pu/<int:pk>/edit/', views.edit_pu_admission, name='edit_pu_admission'),
-      path('admission/pu/<int:pk>/delete', views.delete_pu_admission,name="delete_pu_admission"),
+     path('pu-application/list/', views.admission_list, name='admission_list'),
+     path('pu-application/form/<int:pk>/view/', views.view_pu_admission, name='view_pu_admission'), 
+     path('pu-application/form/<int:pk>/edit/', views.edit_pu_admission, name='edit_pu_admission'),
+      path('pu-application/form/<int:pk>/delete', views.delete_pu_admission,name="delete_pu_admission"),
      
 
-       path('admission/degree/', views.degree_admission_form, name='degree_admission_form'),  # blank form
-    path('admission/degree/<str:enquiry_no>/', views.degree_admission_form, name='degree_admission_form'),  # prefilled form\
-           path('degree-admission/<int:pk>/view/', views.view_degree_admission, name='view_degree_admission'), # prefilled form\
+       path('bcom-application/form/', views.degree_admission_form, name='degree_admission_form'),  # blank form
+    path('bcom-application/form/<str:enquiry_no>/', views.degree_admission_form, name='degree_admission_form'),  # prefilled form\
+           path('bcom-application/<int:pk>/view/', views.view_degree_admission, name='view_degree_admission'), # prefilled form\
 
-    path('admissions/degree/<int:pk>/edit/', views.edit_degree_admission, name='edit_degree_admission'),    
-    path('admission/degree/<int:pk>/delete/', views.delete_degree_admission, name='delete_degree_admission'),
+    path('bcom-application/form/<int:pk>/edit/', views.edit_degree_admission, name='edit_degree_admission'),    
+    path('bcom-application/form/<int:pk>/delete/', views.delete_degree_admission, name='delete_degree_admission'),
      path('fee-management/', views.fee_management, name='fee_management'),
 
 
@@ -26,17 +26,16 @@ path('enquiry/convert/<str:enquiry_no>/', views.convert_enquiry, name='convert_e
 
 
 
-      path('degree-admission-list/', views.degree_admission_list, name='degree_admission_list'),
+      path('bcom-application-list/', views.degree_admission_list, name='degree_admission_list'),
      path('shortlisted/', views.shortlisted_students_view, name='shortlisted_students_view'),
     path('approve/<str:stream>/<int:student_id>/', views.approve_student, name='approve_student'),
      # path('enquiry/', views.enquiry_form_view, name='enquiry_form'),
-    path('shortlist/', views.shortlist_display, name='shortlist_display'),
+    path('confirmed-applications-fee-entry/', views.shortlist_display, name='shortlist_display'),
 
     path('pu-fee/<int:admission_id>/', views.pu_fee_detail_form, name='pu_fee_detail_form'),
     path('degree-fee/<int:admission_id>/', views.degree_fee_detail_form, name='degree_fee_detail_form'),
 
-    #    path('enquiry1/new/', views.enquiry1_create, name='enquiry1_form'),
-    # path('enquiry1/create/', views.enquiry1_create, name='enquiry1_create'),
+ 
     #   path('enquiries/', views.enquiry_list, name='enquiry_list'),
     path('ajax/load-courses/', views.load_courses, name='ajax_load_courses'),
      path('api/enquiry-lookup/', views.enquiry_lookup, name='enquiry_lookup'),
@@ -60,7 +59,6 @@ path('enquiry/convert/<str:enquiry_no>/', views.convert_enquiry, name='convert_e
 
     path('save-payment/', views.save_payment, name='save_payment'),
 
-    path('payment-history/', views.payment_history, name='payment_history'),
     path('receipt/student/<int:pk>/', views.download_student_receipt, name='download_student_receipt'),
     path('receipt/admin/<int:pk>/', views.download_admin_receipt, name='download_admin_receipt'),
 
@@ -70,17 +68,20 @@ path('enquiry/convert/<str:enquiry_no>/', views.convert_enquiry, name='convert_e
  #export all payments getting total paid and pending fee
    path('export-payments/', views.export_payments_excel, name='export_payments_excel'),
 
-   path('admission/dashboard/', views.admission_dashboard, name='admission_dashboard'),
+   path('admission/', views.admission_dashboard, name='admission_dashboard'),
 
-       path('pending-admissions/', views.pending_admissions, name='pending_admissions'),
-    path('confirmed-admissions/', views.confirmed_admissions, name='confirmed_admissions'),
+       path('pending-applications/', views.pending_admissions, name='pending_admissions'),
+    path('confirmed-applications/', views.confirmed_admissions, name='confirmed_admissions'),
     path('generate-userid/<str:admission_no>/', views.generate_student_userid, name='generate_student_userid'),
     # urls.py
 
             #Fee
-    path('student/create/', views.student_create, name='student_create'),
-    path('student/edit/<str:admission_no>/', views.student_edit, name='student_edit'),
-    path('student/list/', views.student_list, name='student_list'),
+           #Fee
+ path('student-fee-payment-history/', views.student_fee_form_view, name='student_fee_form_view'),
+path('student-fee-form/add/', views.student_fee_form_add, name='student_fee_form_add'),
+path('student-fee-form/edit/<str:admission_no>/', views.student_fee_form_edit, name='student_fee_form_edit'),
+path('student-fee-form/list/', views.student_list, name='student_list'),
+path('student-fee-form/delete/<str:admission_no>/', views.student_fee_form_delete, name='student_fee_form_delete'),
         # fee application admission
     path('degree-admission/<str:admission_no>/receipt-pdf/', views.download_degree_admission_fee_receipt, name='degree_admission_fee_receipt'),
     path('admission/pu-fee-receipt/<str:admission_no>/', views.download_pu_admission_fee_receipt, name='download_pu_fee_receipt'),
@@ -89,14 +90,15 @@ path('enquiry/convert/<str:enquiry_no>/', views.convert_enquiry, name='convert_e
 
 
 
-       path('view-enquiry/<str:enquiry_no>/', views.view_enquiry, name='view_enquiry'),
 
-      # path('enquiry1/new/', views.enquiry1_create, name='enquiry1_form'),
+    path('enquiry-form/delete/<str:enquiry_no>/', views.enquiry_form_delete, name='enquiry_form_delete'),
+path('enquiry-form/edit/<str:enquiry_no>/', views.enquiry_form_edit, name='enquiry_form_edit'),
 
-       # path('enquiry2/new/', views.enquiry2_create, name='enquiry2_form'),
 
-   path('enquiry1/create/', views.enquiry1_create, name='enquiry1_create'),
-    path('enquiry2/create/', views.enquiry2_create, name='enquiry2_create'),
+       path('enquiry-form/view/<str:enquiry_no>/', views.enquiry_form_view, name='enquiry_form_view'),
+    
+ path('pu-enquiry-add/', views.enquiry_form_add, name='enquiry_form_add'),
+  path('degree-enquiry-add/', views.degree_enquiry_add, name='degree_enquiry_add'),
 
 
 
@@ -107,15 +109,22 @@ path('enquiry/convert/<str:enquiry_no>/', views.convert_enquiry, name='convert_e
 
 
 
-      path('schedule_follow_up_form/', views.schedule_follow_up_form, name='schedule_follow_up_form'),
+      path('get-student-name/', views.get_student_name, name='get_student_name'),
+          path('schedule-follow-up-form-add/', views.schedule_follow_up_form_add, name='schedule_follow_up_form_add'),
 path('follow-list/', views.follow_up_list, name='follow_up_list'),
+path('schedule-follow-up-form/view/<int:pk>/', views.schedule_follow_up_form_view, name='schedule_follow_up_form_view'),
+
+ path('schedule-follow-up-form/edit/<int:pk>/', views.schedule_follow_up_form_edit, name='schedule_follow_up_form_edit'),
+    path('schedule-follow-up-form/delete/<int:pk>/', views.schedule_follow_up_form_delete, name='schedule_follow_up_form_delete'),
+
+path('follow-up-history/', views.follow_up_list, name='follow_up_list'),
 
 path('followups-due/', views.followups_due_list, name='followups_due_list'),
    path('pending-followups/', views.pending_followups_list, name='pending_followups_list'),
 path('followup/<int:id>/update-status/', views.update_followup_status, name='update_followup_status'),
  # path('dashboard_view_follow_up/', views.dashboard_view_follow_up, name='dashboard_view_follow_up'),
 
-   path('enquiry/dashboard/', views.enquiry_dashboard, name='enquiry_dashboard'),
+   path('enquiry/', views.enquiry_dashboard, name='enquiry_dashboard'),
    path('ajax/load-courses/', views.load_courses, name='ajax_load_courses'),
    path('ajax/load-courses-degree/', views.load_courses_degree, name='ajax_load_courses_degree'),
     path("admissions/reports/", views.reports, name="reports"),

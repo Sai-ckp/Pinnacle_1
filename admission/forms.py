@@ -1,19 +1,15 @@
-﻿from django import forms
+﻿import re
+from django import forms
 from django.core.exceptions import ValidationError
-import re
-from .models import PUAdmission
-from multiselectfield import MultiSelectFormField
-from master.models import Course, CourseType, Transport
+from .models import PUAdmission, CourseType, Course
+from master.models import Transport
 
 class PUAdmissionForm(forms.ModelForm):
-    education_boards = MultiSelectFormField(
-        choices=PUAdmission.BOARD_CHOICES,
-        widget=forms.CheckboxSelectMultiple
-    )
+    education_boards = forms.ChoiceField(choices=PUAdmission.BOARD_CHOICES,widget=forms.Select,required=False)
+
     class Meta:
         model = PUAdmission
-        exclude = ['admission_no', 'status', 'final_fee_after_advance']
-        fields = '__all__'
+        exclude = [ 'status', 'final_fee_after_advance']
         widgets = {
             'dob': forms.DateInput(attrs={'type': 'date'}),
             'admission_date': forms.DateInput(attrs={'type': 'date'}),
@@ -22,15 +18,100 @@ class PUAdmissionForm(forms.ModelForm):
             'blood_group': forms.Select(choices=PUAdmission.BLOOD_GROUP_CHOICES),
             'permanent_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'current_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'student_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'caste': forms.Select(attrs={'class': 'form-select'}),
             'document_submitted': forms.CheckboxInput(),
             'hostel_required': forms.CheckboxInput(),
-            'course': forms.Select(),
-            'course_type': forms.Select(),
-            'admitted_to': forms.Select(),
-            'transport': forms.Select(),
-            'parent_phone_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'wants_transport': forms.CheckboxInput(),
+            'course': forms.Select(attrs={'class': 'form-select'}),
+            'course_type': forms.Select(attrs={'class': 'form-select'}),
+            'admitted_to': forms.Select(attrs={'class': 'form-select'}),
+            'transport': forms.Select(attrs={'class': 'form-select'}),
+            'parent_mobile_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'mother_phone_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_phone_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'pincode': forms.TextInput(attrs={'class': 'form-control'}),
+            'state': forms.TextInput(attrs={'class': 'form-control'}),
+            'birthplace': forms.TextInput(attrs={'class': 'form-control'}),
+            'district': forms.TextInput(attrs={'class': 'form-control'}),
+            'register_no_course': forms.TextInput(attrs={'class': 'form-control'}),
+            'month_year_passed': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject1': forms.TextInput(attrs={'class': 'form-control'}),
+            'marks_obtained1': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_marks_percentage1': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject2': forms.TextInput(attrs={'class': 'form-control'}),
+            'marks_obtained2': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_marks_percentage2': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject3': forms.TextInput(attrs={'class': 'form-control'}),
+            'marks_obtained3': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_marks_percentage3': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject4': forms.TextInput(attrs={'class': 'form-control'}),
+            'marks_obtained4': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_marks_percentage4': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject5': forms.TextInput(attrs={'class': 'form-control'}),
+            'marks_obtained5': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_marks_percentage5': forms.TextInput(attrs={'class': 'form-control'}),
+            'subject6': forms.TextInput(attrs={'class': 'form-control'}),
+            'marks_obtained6': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_marks_percentage6': forms.TextInput(attrs={'class': 'form-control'}),
+            'max_marks1': forms.TextInput(attrs={'class': 'form-control'}),
+            'max_marks2': forms.TextInput(attrs={'class': 'form-control'}),
+            'max_marks3': forms.TextInput(attrs={'class': 'form-control'}),
+            'max_marks4': forms.TextInput(attrs={'class': 'form-control'}),
+            'max_marks5': forms.TextInput(attrs={'class': 'form-control'}),
+            'max_marks6': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_marks_obtained': forms.NumberInput(attrs={'class': 'form-control'}),
+            'total_max_marks': forms.NumberInput(attrs={'class': 'form-control'}),
+            'overall_percentage': forms.TextInput(attrs={'class': 'form-control'}),
+            'co_curricular_activities': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'application_fee': forms.NumberInput(attrs={'class': 'form-control'}),
+            'tuition_fee': forms.NumberInput(attrs={'class': 'form-control'}),
+            'books_fee': forms.NumberInput(attrs={'class': 'form-control'}),
+            'uniform_fee': forms.NumberInput(attrs={'class': 'form-control'}),
+            'tuition_advance_amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'hostel_amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'transport_amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'scholarship_amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'final_fee_after_advance': forms.NumberInput(attrs={'class': 'form-control'}),
+            'payment_mode': forms.Select(attrs={'class': 'form-select'}),
+            'receipt_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'receipt_date': forms.DateInput(attrs={'type': 'date'}),
+            'utr_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'school_name_laststudied': forms.TextInput(attrs={'class': 'form-control'}),
+            'school_addresslaststudied': forms.TextInput(attrs={'class': 'form-control'}),
+            'sats_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'guardian_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'guardian_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'mother_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'annual_income': forms.NumberInput(attrs={'class': 'form-control'}),
+            'mother_annual_income': forms.NumberInput(attrs={'class': 'form-control'}),
+            'total_annual_income': forms.NumberInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'mother_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'student_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'father_occupation': forms.TextInput(attrs={'class': 'form-control'}),
+            'mother_occupation': forms.TextInput(attrs={'class': 'form-control'}),
+            'aadhar_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'mother_aadhar_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_aadhar_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'sub_caste': forms.TextInput(attrs={'class': 'form-control'}),
+            'nationality': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
+            'religion': forms.TextInput(attrs={'class': 'form-control'}),
+            'medium_of_instruction': forms.TextInput(attrs={'class': 'form-control'}),
+            'converstion_fee': forms.TextInput(attrs={'class': 'form-control'}),
+            'enquiry_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'student_name': forms.TextInput(attrs={'class': 'form-control capitalize-on-input'}),
+            'parent_name': forms.TextInput(attrs={'class': 'form-control capitalize-on-input'}),
+            'medium': forms.TextInput(attrs={'class': 'form-control'}),
+            'second_language': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_language': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -69,34 +150,30 @@ class PUAdmissionForm(forms.ModelForm):
             raise ValidationError("Name must contain only capital letters and spaces. Numbers and lowercase letters are not allowed.")
         return name
 
-    def clean_education_boards(self):
-            data = self.cleaned_data.get('education_boards')
-            if len(data) > 1:
-                raise forms.ValidationError("Please select only one education board.")
-            return data
+   
 
-
-
-from master.models import Course
-from .models import DegreeAdmission
 from django import forms
-from multiselectfield import MultiSelectFormField
+from .models import DegreeAdmission
+from master.models import CourseType, Course
 from django.core.exceptions import ValidationError
 
+
+from django import forms
+from .models import DegreeAdmission  # Make sure this import is corr
+
 class DegreeAdmissionForm(forms.ModelForm):
-    education_boards = MultiSelectFormField(
-        choices=DegreeAdmission.BOARD_CHOICES,
-        widget=forms.CheckboxSelectMultiple
-    )
+    education_boards = forms.ChoiceField(choices=DegreeAdmission.BOARD_CHOICES,widget=forms.Select,required=False)
 
     class Meta:
         model = DegreeAdmission
-        exclude = ['admission_no', 'status', 'final_fee_after_advance']
+        # Remove doc_* fields from exclude, or just use 'fields = "__all__"'
+        exclude = ['status', 'final_fee_after_advance']  # Do NOT list doc_* fields here
         widgets = {
             'dob': forms.DateInput(attrs={'type': 'date'}),
             'admission_date': forms.DateInput(attrs={'type': 'date'}),
             'student_declaration_date': forms.DateInput(attrs={'type': 'date'}),
             'parent_declaration_date': forms.DateInput(attrs={'type': 'date'}),
+            'receipt_date': forms.DateInput(attrs={'type': 'date'}),
             'transport': forms.Select(),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'caste': forms.Select(attrs={'class': 'form-select'}),
@@ -107,20 +184,23 @@ class DegreeAdmissionForm(forms.ModelForm):
             'permanent_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'current_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'co_curricular_activities': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'student_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
         }
-
     def __init__(self, *args, **kwargs):
-        super(DegreeAdmissionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        # Apply 'form-control' to all except FileInputs
+        # Apply 'form-control' to all except FileInputs and Checkbox widgets
         for field_name, field in self.fields.items():
-            if not isinstance(field.widget, forms.FileInput):
+            if not isinstance(
+                field.widget, (forms.FileInput, forms.CheckboxSelectMultiple, forms.CheckboxInput)
+            ):
                 current_class = field.widget.attrs.get('class', '')
                 if 'form-control' not in current_class:
                     field.widget.attrs['class'] = f"{current_class} form-control".strip()
 
         # Dynamic course filtering based on course_type
-        self.fields['course_type'].queryset = CourseType.objects.all()
+        if 'course_type' in self.fields:
+            self.fields['course_type'].queryset = CourseType.objects.all()
 
         if 'course_type' in self.data:
             try:
@@ -128,7 +208,7 @@ class DegreeAdmissionForm(forms.ModelForm):
                 self.fields['course'].queryset = Course.objects.filter(course_type_id=course_type_id).order_by('name')
             except (ValueError, TypeError):
                 self.fields['course'].queryset = Course.objects.none()
-        elif self.instance.pk and self.instance.course_type:
+        elif self.instance.pk and getattr(self.instance, 'course_type', None):
             self.fields['course'].queryset = Course.objects.filter(course_type=self.instance.course_type).order_by('name')
         else:
             self.fields['course'].queryset = Course.objects.none()
@@ -172,11 +252,8 @@ class DegreeAdmissionForm(forms.ModelForm):
             return phone_str
         return phone
 
-    def clean_education_boards(self):
-            data = self.cleaned_data.get('education_boards')
-            if len(data) > 1:
-                raise forms.ValidationError("Please select only one education board.")
-            return data
+
+
 
 from .models import Enquiry1, Course, CourseType
 from django.utils import timezone

@@ -1,6 +1,6 @@
 {% extends 'master/layout.html' %}
 
-{% block title %}Subject List{% endblock %}
+{% block title %}Subjects List{% endblock %}
 
 {% block content %}
 
@@ -39,7 +39,7 @@
         font-weight: bold;
         border-radius: 4px;
         transition: background-color 0.3s;
-        margin-left: 752px;
+        margin-left: 930px;
         text-decoration: none;
     }
 
@@ -98,17 +98,18 @@
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Subject List</h2>
-        <a href="{% url 'add_subject' %}" class="btn-add">Add Subject</a>
+        <h2>Subjects List</h2>
+        {% if form_permissions.subject_form.add %}
+        <a href="{% url 'subject_form_add' %}" class="btn-add">Add Subject</a>
+        {% endif %}
     </div>
 
     <table class="table table-bordered table-striped table-hover mt-3">
         <thead>
             <tr>
-                <th>Subject Names</th>
-
                 <th>Combinations</th>
                 <th>Academic Cycles</th>
+                <th>Subject Names</th>
                 <th>Faculties</th>
                 <th>Roles</th>
                 <th>Actions</th>
@@ -123,8 +124,15 @@
                 <td>{{ subject.faculty.name }}</td>
                 <td>{{ subject.faculty.role }}</td>
                 <td class="action-links">
-                    <a href="{% url 'subject_edit' subject.pk %}">Edit</a> |
-                    <a href="{% url 'subject_delete' subject.pk %}" class="btn-delete confirm-delete">Delete</a>
+                    {% if form_permissions.subject_form.view %}
+                    <a href="{% url 'subject_form_view' subject.pk %}">View</a>
+                    {% endif %}
+                    {% if form_permissions.subject_form.edit %}
+                    <a href="{% url 'subject_form_edit' subject.pk %}">Edit</a>
+                    {% endif %}
+                    {% if form_permissions.subject_form.delete %}
+                    <a href="{% url 'subject_form_delete' subject.pk %}" class="btn-delete confirm-delete">Delete</a>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}

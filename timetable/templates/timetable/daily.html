@@ -1,176 +1,288 @@
 {% extends 'master/layout.html' %}
+{% block title %}Daily Timetable{% endblock %}
 
 {% block content %}
 <style>
-    .icon-btn {
-        border: 1px solid #dee2e6;
-        background-color: #fff;
-        padding: -5px;
-        margin: 2px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
+        .icon-btn {
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            padding: -5px;
+            margin: 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
 
-        .icon-btn i {
+            .icon-btn i {
+                font-size: 10px;
+                color: #800000;
+            }
+
+            .icon-btn:hover {
+                background-color: #e2e6ea;
+            }
+
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-left: 91px;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            margin-top: 10px;
+            margin-left: -64px;
+            margin-right: 27px;
+        }
+
+        h2 {
+            text-align: center;
+            font-weight: 700;
+            color: #800000;
+            margin-bottom: 24px;
+            margin-top: -17px;
+            font-size: 22px;
+        }
+
+        table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            vertical-align: middle !important;
+            text-align: center;
+            padding: 5px;
+            border: 1px solid #dee2e6;
+        }
+
+        td {
             font-size: 10px;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #8B0000, #800000);
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #e9ecef;
+        }
+
+
+
+        .form-label {
+            font-weight: 600;
+        }
+
+        .filter-btn {
+            text-decoration: none;
+            color: black;
+            border: 1px solid black;
+            background-color: transparent;
+            width: 125px;
+            height: 29px;
+            border-radius: 5px;
+        }
+
+        .text-muted {
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        h4.text-secondary {
+            margin-top: 20px;
+            font-weight: 600;
+            color: #4a4a4a !important;
+        }
+
+        /* Uniform dropdown and label spacing */
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+            color: #343a40;
+        }
+
+        .form-select {
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 13px;
+            padding: 6px 10px;
+            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+            .form-select:focus {
+                border-color: #800000;
+                box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
+                outline: none;
+            }
+
+        form .col-md-3 {
+            padding-top: 5px;
+        }
+
+        .content {
+            padding: 40px 26px 40px;
+            margin-left: 200px;
+        }
+
+        .icon-btn {
+            width: 19px;
+            height: 17px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+            .icon-btn i {
+                font-size: 11px;
+            }
+
+        popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 1001;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            display: none;
+            width: 300px;
+            text-align: center;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 100vw;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        #confirm-popup-message {
+            margin-bottom: 15px;
+            font-size: 13px;
             color: #800000;
         }
 
-        .icon-btn:hover {
-            background-color: #e2e6ea;
-        }
-
-    body {
-        background-color: #f0f2f5;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin-left: 91px;
-    }
-
-    .container {
-        background: #fff;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-        margin-top: 10px;
-        margin-left: -64px;
-        margin-right: 27px;
-    }
-
-    h2 {
-        text-align: center;
-        font-weight: 700;
-        color: #800000;
-        margin-bottom: 24px;
-        margin-top: -17px;
-        font-size: 22px;
-    }
-
-    table {
-        width: 100%;
+        /*   #confirm-yes,
+    #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        border: none;
         font-size: 12px;
-        border-collapse: collapse;
+        border-radius: 4px;
+        cursor: pointer;
     }
 
-    th, td {
-        vertical-align: middle !important;
-        text-align: center;
-        padding: 5px;
-        border: 1px solid #dee2e6;
-    }
-
-    td {
-        font-size: 10px;
-    }
-
-    thead {
-        background: linear-gradient(135deg, #8B0000, #800000);
+    #confirm-yes {
+        background-color: #800000;
         color: white;
     }
 
-    tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
-
-    tr:hover {
-        background-color: #e9ecef;
-    }
-
- 
-
-    .form-label {
-        font-weight: 600;
-    }
-
-    .filter-btn {
-        text-decoration: none;
-        color: black;
-        border: 1px solid black;
-        background-color: transparent;
-        width: 125px;
-        height: 29px;
-        border-radius: 5px;
-    }
-
-    .text-muted {
-        font-size: 14px;
-        font-style: italic;
-    }
-
-    h4.text-secondary {
-        margin-top: 20px;
-        font-weight: 600;
-        color: #4a4a4a !important;
-    }
-
-    /* Uniform dropdown and label spacing */
-    .form-label {
-        font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 4px;
-        display: block;
-        color: #343a40;
-    }
-
-    .form-select {
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        font-size: 13px;
-        padding: 6px 10px;
-        transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-
-        .form-select:focus {
-            border-color: #800000;
-            box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
-            outline: none;
+    #confirm-no {
+        background-color: #e0e0e0;
+    }*/
+        #confirm-yes,
+        #confirm-no {
+            margin: 0 5px;
+            padding: 6px 12px;
+            border: 2px solid #800000;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: transparent;
+            color: #800000;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
         }
 
-    form .col-md-3 {
-        padding-top: 5px;
-    }
+            #confirm-yes:hover {
+                background-color: #800000;
+                color: #fff;
+            }
 
-    .content {
-        padding: 40px 26px 40px;
-        margin-left: 200px;
-    }
+            #confirm-no:hover {
+                background-color: #800000;
+                color: #fff;
+            }
+
+        .action-btn {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border: none;
+            background-color: #800000;
+            color: white;
+            border-radius: 4px;
+            margin: 0 2px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+            .action-btn:hover {
+                background-color: #a52a2a;
+                color: white;
+            }
 </style>
 
 <div class="container mt-4">
     <h2 class="mb-4 text-primary">Daily Timetable</h2>
 
-   <!-- Horizontal Filter Form -->
-<form method="GET" class="mb-4 text-center">
-    <select name="course_type" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
-        <option value="">Select Course Type</option>
-        {% for ct in course_types %}
-        <option value="{{ ct.name }}" {% if selected_course_type == ct.name %}selected{% endif %}>{{ ct.name }}</option>
-        {% endfor %}
-    </select>
+    <!-- Horizontal Filter Form -->
+    <form method="GET" class="mb-4 text-center">
+        <select name="course_type" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
+            <option value="">Select Course Type</option>
+            {% for ct in course_types %}
+            <option value="{{ ct.name }}" {% if selected_course_type == ct.name %}selected{% endif %}>{{ ct.name }}</option>
+            {% endfor %}
+        </select>
 
-    <select name="course" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
-        <option value="">Select Course</option>
-        {% for course in courses %}
-        <option value="{{ course.id }}" {% if course.id|stringformat:"s" == selected_course_id %}selected{% endif %}>{{ course.name }}</option>
-        {% endfor %}
-    </select>
+        <select name="course" class="form-select d-inline w-auto me-2" onchange="this.form.submit()">
+            <option value="">Select Course</option>
+            {% for course in courses %}
+            <option value="{{ course.id }}" {% if course.id|stringformat:"s" == selected_course_id %}selected{% endif %}>{{ course.name }}</option>
+            {% endfor %}
+        </select>
 
-    <select name="semester" class="form-select d-inline w-auto me-2">
-        <option value="">Select Semester</option>
-        {% for sem in semesters %}
-        <option value="{{ sem.id }}" {% if sem.id|stringformat:"s" == selected_semester_id %}selected{% endif %}>{{ sem.number }}</option>
-        {% endfor %}
-    </select>
+        <select name="semester" class="form-select d-inline w-auto me-2">
+            <option value="">Select Semester</option>
+            {% for sem in semesters %}
+            <option value="{{ sem.id }}" {% if sem.id|stringformat:"s" == selected_semester_id %}selected{% endif %}>{{ sem.number }}</option>
+            {% endfor %}
+        </select>
 
-    <select name="day" class="form-select d-inline w-auto me-2">
-        <option value="">Select Day</option>
-        {% for d in week_days %}
-        <option value="{{ d }}" {% if selected_day == d %}selected{% endif %}>{{ d }}</option>
-        {% endfor %}
-    </select>
+        <select name="day" class="form-select d-inline w-auto me-2">
+            <option value="">Select Day</option>
+            {% for d in week_days %}
+            <option value="{{ d }}" {% if selected_day == d %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+        </select>
 
-    <button type="submit" class="btn filter-btn">Filter</button>
-</form>
+        <button type="submit" class="btn filter-btn">Filter</button>
+    </form>
 
 
     {% if entries %}
@@ -212,9 +324,27 @@
                 </td>
                 <td>{{ entry.room }}</td>
                 <td>
-                    <a href="{% url 'assign_substitute' entry.id %}" class="icon-btn" title="Assign Substitute">
-                        <i class="fa fa-edit"></i>
+                    {% if form_permissions.timetable_form.edit %}
+                    <a href="{% url 'timetable_form_edit' entry.id %}" class="icon-btn" title="Assign Substitute" style="background-color: #800000;">
+                        <i class="fa fa-edit" style="color: white;"></i>
                     </a>
+                    {% endif %}
+
+                    {% if entry.is_substituted and form_permissions.timetable_form.view %}
+                    <a href="{% url 'timetable_form_view' entry.id %}" class="icon-btn" title="View Substitute" style="background-color: #800000; margin-left: 5px;">
+                        <i class="fa fa-eye" style="color: white;"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if entry.is_substituted and form_permissions.timetable_form.delete %}
+                    <form id="sub-delete-form-{{ entry.substitution_id }}" method="POST" action="{% url 'timetable_form_delete' entry.substitution_id %}" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                    <a href="#" class="icon-btn" title="Delete Substitute" style="background-color: #800000;"
+                       onclick="confirmSubDelete('{{ entry.substitution_id }}', '{{ entry.subject.name }}')">
+                        <i class="fas fa-trash-alt" style="color: white;"></i>
+                    </a>
+                    {% endif %}
                 </td>
 
 
@@ -226,4 +356,36 @@
     <p class="text-muted">No timetable entries found. Please apply filters.</p>
     {% endif %}
 </div>
+<div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; opacity:0.5; z-index:1000;"></div>
+
+<div id="confirm-popup" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -50%);
+    background:#fff; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.5); z-index:1001;">
+    <p id="confirm-popup-message"></p>
+    <button id="confirm-yes">Yes</button>
+    <button id="confirm-no">No</button>
+</div>
+<script>
+    let deleteSubId = null;
+
+    function confirmSubDelete(subId, subjectName) {
+        deleteSubId = subId;
+        document.getElementById("confirm-popup").style.display = "block";
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("confirm-popup-message").innerHTML =
+            `Are you sure you want to delete substitute for <b>${subjectName}</b>?`;
+    }
+
+    document.getElementById("confirm-yes").addEventListener("click", function () {
+        if (deleteSubId) {
+            document.getElementById(`sub-delete-form-${deleteSubId}`).submit();
+        }
+    });
+
+    document.getElementById("confirm-no").addEventListener("click", function () {
+        document.getElementById("confirm-popup").style.display = "none";
+        document.getElementById("overlay").style.display = "none";
+        deleteSubId = null;
+    });
+</script>
+
 {% endblock %}

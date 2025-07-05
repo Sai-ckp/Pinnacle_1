@@ -1,11 +1,8 @@
 ﻿{% extends 'master/layout.html' %}
-
-{% block title %}Student List{% endblock %}
+{% block title %}Students List{% endblock %}
 
 {% block content %}
-
 <style>
-
     .icon-btn {
         border: 1px solid #dee2e6;
         background-color: #fff;
@@ -140,7 +137,6 @@
             </tr>
         </thead>
         <tbody>
-
             {% for student in students %}
             <tr>
                 <td>{{ forloop.counter }}</td>
@@ -162,16 +158,12 @@
                     </a>
                 </td>
             </tr>
-
             {% empty %}
             <tr>
                 <td colspan="11" class="text-center alert">No students found.</td>
             </tr>
-
             {% endfor %}
         </tbody>
     </table>
 </div>
-
 {% endblock %}
-

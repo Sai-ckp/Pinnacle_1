@@ -1,32 +1,46 @@
 {% extends 'master/layout.html' %}
 
+{% block title %}Combinations List{% endblock %}
+
 {% block content %}
 <style>
     body {
         background-color: #f0f2f5;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin-left: 91px;
+        margin: 0;
+        padding: 0;
     }
 
     .container {
-        background: #fff;
+        margin-left: 200px; /* sidebar offset */
         padding: 30px;
+        max-width: calc(100% - 200px);
+        background: #fff;
         border-radius: 12px;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-        margin-top: -15px;
-        margin-left: -64px;
-        margin-right: 27px;
+        margin-top: 20px;
+        box-sizing: border-box;
     }
 
-    h2 {
-        text-align: center;
-        font-weight: 700;
-        color: #800000;
-        margin-bottom: 24px;
-        margin-top: -17px;
-        font-size: 22px;
+    .header-flex {
+        display: flex;
+        justify-content: center; /* center horizontally */
+        align-items: center;
+        margin-bottom: 20px;
+        position: relative; /* for absolute positioning btn-add */
     }
 
+        /* Center the h2 in header-flex */
+        .header-flex h2 {
+            font-weight: 700;
+            color: #800000;
+            font-size: 22px;
+            margin: 0;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+    /* Position the Add button to the right */
     .btn-add {
         background-color: #800000;
         color: #fff;
@@ -36,8 +50,10 @@
         font-weight: bold;
         border-radius: 4px;
         transition: background-color 0.3s;
-        margin-left: 758px;
         text-decoration: none;
+        cursor: pointer;
+        position: absolute;
+        right: 0;
     }
 
         .btn-add:hover {
@@ -54,7 +70,7 @@
     th, td {
         vertical-align: middle !important;
         text-align: center;
-        padding: 5px;
+        padding: 1px;
         border: 1px solid #dee2e6;
     }
 
@@ -87,16 +103,41 @@
             text-decoration: underline;
         }
 
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: 3px 5px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: inline-block;
+        text-decoration: none;
+    }
+
+        .icon-btn i {
+            font-size: 11px;
+            color: #800000;
+        }
+
+        .icon-btn.text-danger i {
+            color: #b30000;
+        }
+
+
     .content {
-        padding: 65px 26px 40px;
-        margin-left: 200px;
+        margin-left: 0px;
+        padding: 27px 24px 40px;
+        min-height: 100vh;
     }
 </style>
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Combination</h2>
-        <a href="{% url 'course_create' %}" class="btn-add">Add Combination</a>
+    <div class="header-flex">
+        <h2>Combinations</h2>
+        {% if form_permissions.course_form.add %}
+        <a href="{% url 'course_form_add' %}" class="btn-add">Add Combination</a>
+        {% endif %}
     </div>
 
     <table class="table table-bordered table-striped table-hover mt-3">
@@ -116,9 +157,23 @@
                 <td>{{ course.course_type.name }}</td>
                 <td>{{ course.duration_years }}</td>
                 <td>{{ course.total_semesters }}</td>
-                <td class="action-links">
-                    <a href="{% url 'course_edit' course.pk %}">Edit</a> |
-                    <a href="{% url 'course_delete' course.pk %}" onclick="return confirm('Are you sure you want to delete this course?');">Delete</a>
+                <td>
+                    {% if form_permissions.course_form.view %}
+                    <a href="{% url 'course_form_view' course.pk %}" class="icon-btn" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    {% endif %}
+                    {% if form_permissions.course_form.edit %}
+                    <a href="{% url 'course_form_edit' course.pk %}" class="icon-btn" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                    {% if form_permissions.course_form.delete %}
+                    <a href="{% url 'course_form_delete' course.pk %}" class="icon-btn text-danger" title="Delete"
+                       onclick="return confirm('Are you sure you want to delete this course?');">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                    {% endif %}
                 </td>
 
             </tr>
@@ -130,6 +185,5 @@
         </tbody>
     </table>
 </div>
-
 
 {% endblock %}

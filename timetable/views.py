@@ -8,13 +8,7 @@ from .forms import TimeSlotForm,TimetableEntryForm
 
 
 
-# def daily_timetable_view(request, course_id, semester_number, day):
-#     semester = get_object_or_404(Semester, course__id=course_id, number=semester_number)
-#     entries = TimetableEntry.objects.filter(semester=semester, day=day).order_by('time_slot')
-#     return render(request, 'timetable/daily.html', {
-#         'day': day, 'entries': entries, 'semester': semester
-#     })
-# views.py
+
 
 from django.shortcuts import render, get_object_or_404
 from master.models import Semester, Employee, Subject, Course, CourseType
@@ -107,7 +101,7 @@ def get_date_for_weekday(base_date, target_weekday):
     delta = target_weekday_index - current_weekday
     return base_date + timedelta(days=delta)
 
-def daily_timetable_view(request):
+def daily_timetable(request):
     week_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
     # Get today's weekday name; fallback to Friday if weekend
@@ -163,8 +157,10 @@ def daily_timetable_view(request):
             entry.faculty = substitution.substitute_faculty
             entry.subject = substitution.updated_subject or entry.subject
             entry.is_substituted = True
+            entry.substitution_id = substitution.id
         else:
             entry.is_substituted = False
+            entry.substitution_id = None
 
         # Fetch attendance
         if entry.faculty:
@@ -201,8 +197,9 @@ from master.models import Subject
 from django.utils.dateparse import parse_date
 from datetime import datetime
 from attendence.models import attendance  
+from core.utils import get_logged_in_user,log_activity
 
-def assign_substitute(request, entry_id):
+def timetable_form_edit(request, entry_id):
     entry = get_object_or_404(TimetableEntry, id=entry_id)
     
     # Get the date (ensure it's in correct format)
@@ -245,15 +242,20 @@ def assign_substitute(request, entry_id):
         faculty = get_object_or_404(Employee, id=faculty_id)
         subject = get_object_or_404(Subject, id=subject_id)
 
-        DailySubstitution.objects.update_or_create(
-            timetable_entry=entry,
-            date=date,
-            defaults={
-                'substitute_faculty': faculty,
-                'updated_subject': subject
-            }
-        )
-        return redirect('daily_timetable_view')
+        substitution_obj, created = DailySubstitution.objects.update_or_create(
+        timetable_entry=entry,
+        date=date,
+        defaults={
+        'substitute_faculty': faculty,
+        'updated_subject': subject
+    }
+)
+
+        user = get_logged_in_user(request)
+        log_activity(user, 'assigned', substitution_obj)
+
+
+        return redirect('daily_timetable')
 
     context = {
         'entry': entry,
@@ -262,6 +264,42 @@ def assign_substitute(request, entry_id):
         'date': date,
     }
     return render(request, 'timetable/substitute_timetable_entry.html', context)
+from django.shortcuts import get_object_or_404, redirect, render
+from .models import DailySubstitution
+
+def timetable_form_delete(request, substitution_id):
+    substitution = get_object_or_404(DailySubstitution, id=substitution_id)
+    substitution.delete()
+
+    # Redirect to the timetable page (you can add ?date=... later if needed)
+    return redirect('daily_timetable')
+
+from django.shortcuts import get_object_or_404, render
+from django.utils.dateparse import parse_date
+from datetime import datetime
+
+def timetable_form_view(request, entry_id):
+    entry = get_object_or_404(TimetableEntry, id=entry_id)
+
+    raw_date = request.GET.get('date')
+    date = parse_date(raw_date) if raw_date else datetime.today().date()
+
+    substitution = DailySubstitution.objects.filter(timetable_entry=entry, date=date).first()
+
+    free_faculties = [substitution.substitute_faculty] if substitution else []
+    subjects = [substitution.updated_subject or entry.subject] if substitution else []
+
+    context = {
+        'entry': entry,
+        'free_faculties': free_faculties,
+        'subjects': subjects,
+        'date': date,
+        'readonly': True,
+        'substitution': substitution,
+    }
+    return render(request, 'timetable/substitute_timetable_entry.html', context)
+
+
 
 
 
@@ -385,23 +423,8 @@ from .forms import TimetableEntryForm
 
 from django.shortcuts import get_object_or_404
 
-def edit_timetable_entry(request, entry_id):
-    entry = get_object_or_404(TimetableEntry, id=entry_id)
 
-    if request.method == 'POST':
-        form = TimetableEntryForm(request.POST, instance=entry)
-        if form.is_valid():
-            saved_entry = form.save()
-            return redirect('weekly_timetable', course_id=saved_entry.semester.course.id, semester_number=saved_entry.semester.number)
-        else:
-            print("Form errors:", form.errors)
-    else:
-        form = TimetableEntryForm(instance=entry)
-
-    return render(request, 'timetable/add_entry.html', {'form': form})
-
-
-def add_timetable_entry(request):
+def timetable_form_add(request):
     if request.method == 'POST':
         form = TimetableEntryForm(request.POST)
         if form.is_valid():
@@ -415,12 +438,14 @@ def add_timetable_entry(request):
                 day=day,
                 time_slot=time_slot
             ).first()
-
+            user = get_logged_in_user(request)
             if existing_entry:
                 form = TimetableEntryForm(request.POST, instance=existing_entry)
-                form.save()
+                saved_entry = form.save()
+                log_activity(user, 'edited', saved_entry)
             else:
-                form.save()
+                saved_entry = form.save()
+                log_activity(user, 'created', saved_entry)
 
             return redirect('weekly_timetable', course_id=semester.course.id, semester_number=semester.number)
         else:

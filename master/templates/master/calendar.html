@@ -13,15 +13,15 @@
 
     .calendar-container {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap; /* make boxes stay side by side */
         gap: 2rem;
         padding: 7px;
         margin-top: 25px;
+        justify-content: center; /* center the row */
     }
 
     .calendar-box {
-        flex: 1 1 47%;
-        /*background: linear-gradient(to right, #f3e5f5, #e8eaf6);*/
+        flex: 0 0 60%; /* takes 60% width */
         padding: 10px;
         border-radius: 15px;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
@@ -33,23 +33,22 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 10px;
-
     }
 
         .calendar-header h2 {
             color: #8b0000;
             font-weight: 700;
-            font-size: 22px;
+            font-size: 25px;
             margin: 0;
-            margin-left: 392px;
-            margin-top: -37px;
+            margin-left: 387px;
+            margin-top: -25px;
         }
 
     .month-year {
         color: #8b0000;
         font-weight: 700;
         font-size: 16px;
-        margin-bottom: 19px;
+        margin-bottom: 1px;
     }
 
     .btn-add {
@@ -61,7 +60,7 @@
         text-decoration: none;
         font-size: 13px;
         transition: background-color 0.3s ease;
-        margin-right: 11px;
+        margin-right: 41px;
         margin-top: 4px;
     }
 
@@ -76,7 +75,7 @@
         border-color: #fff !important;
     }
 
-       /* .btn-add:hover {
+    /* .btn-add:hover {
             background-color: #5e35b1;
         }*/
 
@@ -130,13 +129,18 @@
         padding: 6px;
     }
 
+    .btn:hover {
+        color: var(--bs-btn-hover-color);
+        background-color: #8b0000;
+        border-color: #8b0000;
+    }
+
     .event-box {
-        flex: 1 1 35%;
-        /* background: linear-gradient(135deg, #fff3e0, #fffde7); */
+        flex: 0 0 35%; /* takes 35% width */
         padding: 30px;
         border-radius: 16px;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-        max-height: 300px; /* Adjust as needed to fit roughly 2 events */
+        max-height: 470px;
         overflow-y: auto;
     }
 
@@ -177,20 +181,20 @@
         font-size: 18px;
     }
 
-        .event-item:hover {
-            transform: scale(1.02);
-        }
+    .event-item:hover {
+        transform: scale(1.02);
+    }
 
-        .event-item h4 {
-            margin: 0;
-            font-size: 16px;
-            color: #8b0000;
-        }
+    .event-item h4 {
+        margin: 0;
+        font-size: 16px;
+        color: #8b0000;
+    }
 
-        .event-item small {
-            color: #8b0000;
-            font-size: 13px;
-        }
+    .event-item small {
+        color: #8b0000;
+        font-size: 13px;
+    }
 
     .badge {
         margin-top: 6px;
@@ -216,7 +220,7 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        width: 40%;
+        width: 52%;
         color: var(--bs-modal-color);
         pointer-events: auto;
         background-color: var(--bs-modal-bg);
@@ -241,22 +245,31 @@
 
     .px-4 {
         /*padding-right: 6.5rem !important;*/
-        padding-left: 0.5rem  !important;
+        padding-left: 0.5rem !important;
+    }
+
+    .custom-modal-size {
+        max-width: 700px; /* Adjust as needed */
+        width: 100%;
     }
 </style>
 
 <div class="calendar-header">
     <h2>Academic Calendar</h2>
-    <a href="{% url 'add_event' %}" class="btn-add"> Add Event</a>
+    <a href="{% url 'add_event' %}" class="btn-add">Add Event</a>
 </div>
+
+
 
 <div class="container calendar-container">
     <!-- Calendar Grid Panel -->
     <div class="calendar-box">
-
-
-        <div class="month-year">
-            {{ month_name }} {{ year }}
+        <div class="calendar-header" style="justify-content: center; gap: 10px; margin-bottom: 15px;">
+            <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-sm btn-outline-secondary">< </a>
+            <div class="month-year" style="font-weight: 700; font-size: 18px; color: #8b0000;">
+                {{ month_name }} {{ year }}
+            </div>
+            <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-sm btn-outline-secondary"> ></a>
         </div>
 
         <div class="calendar-grid">
@@ -269,14 +282,15 @@
             {% if day == 0 %}
             <div class="calendar-day"></div>
             {% else %}
-            <div class="calendar-day {% if day == today.day %}today{% endif %}"
-                 onclick="showEventsForDate('{{ year }}-{{ month|stringformat:"02d" }}-{{ day|stringformat:"02d" }}')">
+            <div class="calendar-day {% if today.day == day and today.month == month and today.year == year %}today{% endif %}"
+                 onclick="showEventsForDate('{{ year }}-{{ month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}')">
                 {{ day }}
             </div>
             {% endif %}
             {% endfor %}
             {% endfor %}
         </div>
+
     </div>
 
     <!-- Upcoming Events Panel -->
@@ -287,24 +301,40 @@
             <h4>{{ event.title }}</h4>
             <small>{{ event.date }} | {{ event.time }}</small><br>
             <span class="badge bg-warning text-dark">{{ event.get_event_type_display|title }}</span><br>
+            <button class="btn btn-sm btn-outline-secondary mt-2" data-bs-toggle="modal" data-bs-target="#eventModal{{ event.id }}" style="color: #8b0000; background: bottom;">View</button>
+        </div>
 
-            <!-- Updated "View" Button to use shared modal -->
-            <button class="btn btn-sm btn-outline-secondary mt-2"
-                    onclick="showEventsForDate('{{ event.date }}')"
-                    style="color: #8b0000;">
-                View
-            </button>
+        <!-- Individual Event Modal (optional use) -->
+        <div class="modal fade" id="eventModal{{ event.id }}" tabindex="-1" aria-labelledby="eventModalLabel{{ event.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered custom-modal-size">
+
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="eventModalLabel{{ event.id }}">{{ event.title }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="padding: 18px; font-size: 11px;"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Date:</strong> {{ event.date }}</p>
+                        <p><strong>Time:</strong> {{ event.time }}</p>
+                        <p><strong>Type:</strong> {{ event.get_event_type_display }}</p>
+                        <p><strong>Description:</strong> {{ event.description|default:"No additional details provided." }}</p>
+                    </div>
+                    <!--<div class="modal-footer">
+                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal" style=" padding: 2px; background: #800;">Close</button>
+                    </div>-->
+                </div>
+            </div>
         </div>
         {% empty %}
         <p class="text-muted">No upcoming events.</p>
         {% endfor %}
     </div>
-
 </div>
 
 <!-- Global Modal for Day Clicks -->
 <div class="modal fade" id="dayEventModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered custom-modal-size">
+
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">Events on <span id="selectedDate"></span></h5>

@@ -9,11 +9,28 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from .models import UserCustom
 from license.models import License
+from core.utils import log_activity
 
 def blank_view(request):
     return render(request, 'master/blank.html')
  
+from django.shortcuts import render, redirect
+from .models import UserCustom
+from license.models import License
+from core.utils import log_activity
+
+
+
+
 def custom_login_view(request):
+    # If user already logged in, redirect to dashboard
+    if request.session.get('user_id'):
+        user_id = request.session['user_id']
+        if user_id == 2:
+            return redirect('dashboard_view')
+        else:
+            return redirect('dashboard_view')
+ 
     error = None
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -24,24 +41,12 @@ def custom_login_view(request):
             if user.password == password:  # plain password check (consider hashing!)
                 # Set logged-in user session
                 request.session['user_id'] = user.id
-                # Check license validity here (simple example)
-                try:
-                    license = License.objects.get(client_name=user.username, activated=True)
-                except License.DoesNotExist:
-                    license = None
-                if license and license.is_valid():
-                    request.session['license_valid'] = True
-                    request.session['license_end_date'] = license.end_date.isoformat()
-                    # Redirect to user dashboard
-                    if user.id == 2:
-                        return redirect('dashboard')
-                    else:
-                        return redirect('dashboard2')
-                else:
-                    # License invalid or not found - clear session and redirect to license check page
-                    request.session['license_valid'] = False
-                    return redirect('license_check_view')
  
+                # Redirect after login
+                if user.id == 2:
+                    return redirect('dashboard_view')
+                else:
+                    return redirect('dashboard_view')
             else:
                 error = 'Invalid password'
         except UserCustom.DoesNotExist:
@@ -50,12 +55,395 @@ def custom_login_view(request):
     users = UserCustom.objects.all()  # For user dropdown on login page
     return render(request, 'master/login.html', {'error': error, 'users': users})
 
+ 
+from django.shortcuts import render, redirect
+from .models import UserCustom
+from license.models import License
+from core.utils import log_activity
+import json
+from django.http import JsonResponse
+import re
+
+def handle_license_and_redirect(user, request):
+    """Handles license logic and redirects to dashboard or license page."""
+    try:
+        license = License.objects.get(client_name=user.username, activated=True)
+    except License.DoesNotExist:
+        license = None
+
+    if license and license.is_valid():
+        request.session['license_valid'] = True
+        request.session['license_end_date'] = license.end_date.isoformat()
+        return redirect('dashboard')
+    else:
+        request.session['license_valid'] = False
+        return redirect('license_check_view')
+
+
+def custom_login_view(request):
+    # If user already logged in, redirect to dashboard
+    if request.session.get('user_id'):
+        user_id = request.session['user_id']
+        if user_id == 2:
+            return redirect('dashboard_view2')
+        else:
+            return redirect('dashboard_view')
+ 
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+ 
+        try:
+            user = UserCustom.objects.get(username=username)
+            if user.password == password:  # plain password check (consider hashing!)
+                # Set logged-in user session
+                request.session['user_id'] = user.id
+ 
+                # Redirect after login
+                if user.id == 2:
+                    return redirect('dashboard_view')
+                else:
+                    return redirect('dashboard_view')
+            else:
+                error = 'Invalid password'
+        except UserCustom.DoesNotExist:
+            error = 'User does not exist'
+ 
+    users = UserCustom.objects.all()  # For user dropdown on login page
+    return render(request, 'master/login.html', {'error': error, 'users': users})
+
+# def custom_login_view(request):
+#     error = None
+#     if request.method == 'POST':
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
+#         try:
+#             user = UserCustom.objects.get(username=username)
+#             if user.is_locked:
+#                 error = "User account is locked due to multiple wrong attempts. Please contact admin."
+#             elif user.password == password:
+#                 user.wrong_attempts = 0
+#                 user.save()
+#                 request.session['user_id'] = user.id
+#                 log_activity(user, 'login', user)
+#                 if not user.passcode_set:
+#                     return redirect('choose_passcode_view')
+#                 # Passcode is set, proceed to license logic
+#                 return handle_license_and_redirect(user, request)
+#             else:
+#                 user.wrong_attempts += 1
+#                 if user.wrong_attempts >= 3:
+#                     user.is_locked = True
+#                 user.save()
+#                 if user.is_locked:
+#                     error = "Invalid password. Account locked after 3 wrong attempts. Please contact admin."
+#                 else:
+#                     error = "Invalid password."
+#         except UserCustom.DoesNotExist:
+#             error = 'User does not exist'
+#     users = UserCustom.objects.all()
+#     return render(request, 'master/login.html', {'error': error, 'users': users})
+
+def choose_passcode_view(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('custom_login_view')
+    try:
+        user = UserCustom.objects.get(id=user_id)
+    except UserCustom.DoesNotExist:
+        return redirect('custom_login_view')
+
+    if user.passcode_set:
+        # Already set, proceed to license logic
+        return handle_license_and_redirect(user, request)
+
+    error = None
+    if request.method == 'POST':
+        passcode = request.POST.get('passcode', '')
+        if len(passcode) < 4 or not passcode.isdigit():
+            error = "Passcode must be at least 4 digits and contain only numbers."
+        else:
+            user.passcode = passcode
+            user.passcode_set = True
+            user.save()
+            # After setting passcode, proceed to license logic
+            return handle_license_and_redirect(user, request)
+
+    return render(request, 'master/choose_passcode.html', {
+        'user': user,
+        'error': error
+    })
+
+def password_reset_view(request):
+    error = None
+    success_message = None
+    stage = None
+    username = request.POST.get('username') or request.GET.get('username')
+    if request.method == 'POST':
+        user = UserCustom.objects.filter(username=username).first()
+        if not user:
+            error = "User does not exist."
+        elif 'new_password' not in request.POST:
+            passcode = request.POST.get('passcode')
+            if not user.passcode_set or user.passcode != passcode:
+                error = "Passcode is incorrect. Please contact admin."
+            else:
+                stage = 'set_new_password'
+        else:
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+            pattern = r'^[A-Z][a-z]*[!@#$%^&*(),.?":{}|<>][a-zA-Z0-9]*[0-9]+$'
+            if new_password != confirm_password:
+                error = "Passwords do not match."
+                stage = 'set_new_password'
+            elif not re.match(pattern, new_password) or not (8 <= len(new_password) <= 16):
+                error = "Invalid password format."
+                stage = 'set_new_password'
+            else:
+                user.password = new_password
+                user.save()
+                success_message = "Password has been reset successfully."
+    return render(request, 'master/password_reset.html', {
+        'users': UserCustom.objects.all(),
+        'username': username,
+        'error': error,
+        'success_message': success_message,
+        'stage': stage,
+    })
+
+def verify_passcode_view(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        username = data.get("username")
+        passcode = data.get("passcode")
+        user = UserCustom.objects.filter(username=username).first()
+        if user and user.passcode == passcode:
+            return JsonResponse({'valid': True})
+        return JsonResponse({'valid': False})
+
+
+
+
+
+
+
+
+
+# views.py
+from core.utils import get_logged_in_user, log_activity
+
+from django.contrib import messages
+
+from django.shortcuts import render, redirect
+
+from master.models import UserCustom
+ 
+def add_user(request):
+
+    if request.method == 'POST':
+
+        username = request.POST.get('username')
+
+        password = request.POST.get('password')
+ 
+        if not username or not password:
+
+            messages.error(request, "Username and password are required.")
+
+        else:
+
+            user_instance = UserCustom.objects.create(username=username, password=password)
+
+            # ✅ Log activity here
+
+            user = get_logged_in_user(request)
+
+            log_activity(user, 'created', user_instance)
+ 
+            messages.success(request, "User added successfully.")
+
+            return redirect('user_list')
+ 
+    return render(request, 'master/add_user.html')
+ 
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import UserCustom
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import UserCustom
+
+def edit_user(request, user_id):
+    user_instance = get_object_or_404(UserCustom, id=user_id)
+
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        is_locked_str = request.POST.get('is_locked')
+
+        if not username or not password:
+            messages.error(request, "Username and password are required.")
+        else:
+            user_instance.username = username
+            user_instance.password = password
+
+            # Convert 'True'/'False' to boolean
+            is_locked_new = True if is_locked_str == 'True' else False
+
+            # If it was locked and now changed to unlocked, reset wrong_attempts
+            if user_instance.is_locked and not is_locked_new:
+                user_instance.wrong_attempts = 0
+
+            user_instance.is_locked = is_locked_new
+
+            user_instance.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'updated', user_instance)
+
+
+            messages.success(request, "User updated successfully.")
+            return redirect('user_list')
+
+    return render(request, 'master/add_user.html', {
+        'user_instance': user_instance,
+        'action': 'edit'
+    })
+
+from django.shortcuts import render, get_object_or_404
+from .models import UserCustom
+
+def view_user(request, user_id):
+    user_instance = get_object_or_404(UserCustom, id=user_id)
+    
+    return render(request, 'master/add_user.html', {
+        'user_instance': user_instance,
+        'action': 'view'
+    })
+
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def delete_user(request, user_id):
+    user1 = get_object_or_404(UserCustom, id=user_id)
+    user1.delete()
+    user = get_logged_in_user(request)
+    log_activity(user, 'deleted', user1)
+    messages.success(request, "User deleted successfully.")
+    return redirect('user_list')
+
+
+
+
+
+from django.shortcuts import render, redirect
+from .models import UserCustom
+
+def user_list(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if username and password:
+            UserCustom.objects.create(username=username, password=password)
+            return redirect('add_user')
+
+    users = UserCustom.objects.all()
+    return render(request, 'master/user_list.html', {'users': users})
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import UserCustom, UserPermission
+
+
+
+
+
+def user_rights_view(request, user_id=None):
+    # If no user selected, just show the user list
+    all_users = UserCustom.objects.exclude(id=1)
+   
+    user = get_object_or_404(UserCustom, id=user_id)
+
+    all_forms = [
+        'course_type','course_form','semester_form','subject_form','transport_form','enquiry_form','schedule_follow_up_form','pu_admission_form','degree_admission_form','student_fee_form','communication_dashboard','student_database','employee_form','employee_attendance_form','student_attendance_form','timetable_form','calendar_form','recent_activity_view']
+    form_display_names = {
+    
+    'employee_attendance_form':'Employee Attendance',
+     'pu_admission_form': 'PU Application Form',
+    'degree_admission_form': 'BCOM Application Form',
+    'schedule_follow_up_form':'Schedule Enquiry Follow-Up ',
+    'enquiry_form':'Enquiry Form',
+    'student_attendance_form':'Student Attendance',
+    'communication_dashboard':'Communication Dashboard',
+    'semester_form':'Academic Cycle',
+    'student_fee_form':'Fee Form',
+    'timetable_form':'Timetable',
+    'calendar_form':'Calendar',
+    'student_database':'Student Information',
+    'employee_form':'Employee',
+    'course_type':'Program Types',
+    'course_form':'Combinations',
+    'subject_form':'Subjects',
+    'transport_form':'Transport',
+     'recent_activity_view':'Recent Activities'
+}
+
+
+    if request.method == 'POST':
+        # Update or create permissions for each form
+        for form in all_forms:
+            perm, created = UserPermission.objects.get_or_create(user=user, form_name=form)
+            if form in ['communication_dashboard', 'calendar_form','student_database','recent_activity_view']:
+                perm.can_access = f"{form}_access" in request.POST
+                # Optional: Clear other CRUD permissions
+                perm.can_view = False
+                perm.can_add = False
+                perm.can_edit = False
+                perm.can_delete = False
+            else:
+                perm.can_view = f"{form}_view" in request.POST
+                perm.can_add = f"{form}_add" in request.POST
+                perm.can_edit = f"{form}_edit" in request.POST
+                perm.can_delete = f"{form}_delete" in request.POST
+                perm.can_access = False
+            
+            perm.save()
+
+        messages.success(request, f"Permissions updated for {user.username}.")
+        return redirect('user_rights_view', user_id=user.id)
+
+
+    # Build dict of permissions for template usage
+    user_perms = UserPermission.objects.filter(user=user)
+    perms = {}
+    for perm in user_perms:
+        perms[perm.form_name] = {
+            'view': perm.can_view,
+            'add': perm.can_add,
+            'edit': perm.can_edit,
+            'delete': perm.can_delete,
+             'access': perm.can_access,
+        }
+
+    return render(request, 'master/user_rights.html', {
+        'all_users': all_users,
+        'selected_user': user,
+        'all_forms': all_forms,
+        'perms': perms,
+        'form_display_names': form_display_names,  
+    })
+
 
 from django.shortcuts import render, redirect
 from .models import Course, Subject , Semester
 from .forms import SubjectForm
  
-def subject_list(request):
+def subject_form_list(request):
     subjects = Subject.objects.select_related('course', 'faculty').all()
     return render(request, 'master/subject_list.html', {'subjects': subjects})
  
@@ -64,42 +452,33 @@ def subject_list(request):
 from django.shortcuts import render, redirect
 from .forms import SubjectForm
 from .models import Semester, Subject
+from master.models import Course  # Make sure to import Course
 
-def add_subject(request):
-    # Bind the form on POST, empty otherwise
+def subject_form_add(request):
     form = SubjectForm(request.POST or None)
 
     # Determine which course is selected (for loading semesters)
-    if request.method == 'POST':
-        selected_course_id = request.POST.get('course')
-    else:
-        selected_course_id = request.GET.get('course')
+    selected_course_id = request.POST.get('course') if request.method == 'POST' else request.GET.get('course')
 
-    # Load semesters for the dropdown if we have a course
-    semesters = (
-        Semester.objects
-        .filter(course_id=selected_course_id)
-        .order_by('number')
-        if selected_course_id else []
-    )
+    # Load semesters for the selected course only if one is selected
+    semesters = Semester.objects.filter(course_id=selected_course_id).order_by('number') if selected_course_id else []
 
-    # If the user submitted and the form fields (name, code, credit, etc.) are valid:
     if request.method == 'POST' and form.is_valid():
         semester_number = request.POST.get('semester_number')
         is_active_flag = request.POST.get('is_active', '1')
 
-        # Make sure they actually picked a semester
         if not semester_number:
             form.add_error(None, "Please select a semester.")
         else:
-            # Build the Subject instance, assign the manual fields, save, then redirect
             subject = form.save(commit=False)
             subject.semester_number = int(semester_number)
             subject.is_active = (is_active_flag == '1')
             subject.save()
-            return redirect('subject_list')
+            user = get_logged_in_user(request)
+            log_activity(request.user, 'added', subject)
 
-    # Render the “Add Subject” page
+            return redirect('subject_form_list')
+
     return render(request, 'master/add_subject.html', {
         'form': form,
         'semesters': semesters,
@@ -109,22 +488,83 @@ def add_subject(request):
 
 
 
-def subject_edit(request, pk):
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Subject, Semester
+from .forms import SubjectForm
+from django.shortcuts import render, get_object_or_404
+from .models import Subject, Semester
+from .forms import SubjectForm
+
+# ✅ Subject View (Read-only)
+def subject_form_view(request, pk):
     subject = get_object_or_404(Subject, pk=pk)
+    form = SubjectForm(instance=subject)
+
+    # Disable all form fields, including 'is_active' radio inputs
+    for name, field in form.fields.items():
+        field.disabled = True
+        if name == 'is_active':
+            field.widget.attrs['disabled'] = True  # Extra layer for radios
+
+    semesters = Semester.objects.filter(course_id=subject.course.id).order_by('number')
+
+    return render(request, 'master/add_subject.html', {
+        'form': form,
+        'semesters': semesters,
+        'selected_course_id': subject.course.id,
+        'selected_semester_number': subject.semester_number,
+        'is_view': True  # Use this flag in template to hide Save button
+    })
+
+
+ 
+
+
+# ✅ Subject Edit (Update)
+def subject_form_edit(request, pk):
+    subject = get_object_or_404(Subject, pk=pk)
+
     if request.method == 'POST':
         form = SubjectForm(request.POST, instance=subject)
+        selected_course_id = request.POST.get('course')
+        selected_semester_number = request.POST.get('semester_number')
+        is_active_flag = request.POST.get('is_active', '1')
+
         if form.is_valid():
-            form.save()
-            return redirect('subject_list')
+            if not selected_semester_number:
+                form.add_error(None, "Please select a semester.")
+            else:
+                updated_subject = form.save(commit=False)
+                updated_subject.semester_number = int(selected_semester_number)
+                updated_subject.is_active = (is_active_flag == '1')
+                updated_subject.save()
+                user = get_logged_in_user(request)
+                log_activity(request.user, 'updated', updated_subject)
+
+                return redirect('subject_form_list')
     else:
         form = SubjectForm(instance=subject)
-    return render(request, 'master/subject_form.html', {'form': form})
+        selected_course_id = subject.course.id
+        selected_semester_number = subject.semester_number
 
-# Subject Delete
-def subject_delete(request, pk):
+    semesters = Semester.objects.filter(course_id=selected_course_id).order_by('number')
+
+    return render(request, 'master/add_subject.html', {
+        'form': form,
+        'semesters': semesters,
+        'selected_course_id': selected_course_id,
+        'selected_semester_number': selected_semester_number,
+        'is_view': False  # Allow editing
+    })
+
+
+# ✅ Subject Delete
+def subject_form_delete(request, pk):
     subject = get_object_or_404(Subject, pk=pk)
     subject.delete()
-    return redirect('master/subject_list')
+    user = get_logged_in_user(request)
+    log_activity(request.user, 'deleted', subject)
+    return redirect('subject_form_list')
 
 from django.http import JsonResponse
 from .models import Employee
@@ -138,25 +578,65 @@ def get_faculties_by_subject(request):
 
 
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q
+import calendar
 from .models import Employee
-from .forms import EmployeeForm
-from django.db.models import Count
-
 
 def employee_list(request):
+    today = timezone.localdate()
+    filter_type = request.GET.get('filter', 'all')
     query = request.GET.get('q', '')
-    employees = Employee.objects.filter(name__icontains=query) if query else Employee.objects.all()
+
+    employees = Employee.objects.all()
+
+    # Per Day: Exact date match
+    if filter_type == 'day':
+        employees = employees.filter(created_at=today)
+
+    # Per Week: From this Monday to coming Sunday
+    elif filter_type == 'week':
+        start_of_week = today - timedelta(days=today.weekday())  # Monday
+        end_of_week = start_of_week + timedelta(days=6)          # Sunday
+        employees = employees.filter(created_at__range=(start_of_week, end_of_week))
+
+    # Per Month: From 1st to last day of this month
+    elif filter_type == 'month':
+        start_of_month = today.replace(day=1)
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        end_of_month = today.replace(day=last_day)
+        employees = employees.filter(created_at__range=(start_of_month, end_of_month))
+
+    # Search filtering
+    if query:
+        employees = employees.filter(
+            Q(name__icontains=query) |
+            Q(department__icontains=query)
+        )
+
+    # Count from the filtered queryset only
+    total = employees.count()
+    professors = employees.filter(designation='Professor').count()
+    associate_professors = employees.filter(designation='Associate Professor').count()
+    assistant_professors = employees.filter(designation='Assistant Professor').count()
 
     context = {
         'employees': employees,
-        'total': employees.count(),
-        'professors': employees.filter(designation="Professor").count(),
-        'associate_professors': employees.filter(designation="Associate Professor").count(),
-        'assistant_professors': employees.filter(designation="Assistant").count(),
+        'total': total,
+        'professors': professors,
+        'associate_professors': associate_professors,
+        'assistant_professors': assistant_professors,
+        'active_filter': filter_type,
+        'query': query,
     }
+
     return render(request, 'master/employee_list.html', context)
 
+
+
+
 from django.shortcuts import render, redirect
 from .models import Employee
 from .forms import EmployeeForm
@@ -168,8 +648,9 @@ from .models import Employee
 from django.shortcuts import render, redirect
 from .forms import EmployeeForm
 from .models import Employee
+from core.utils import get_logged_in_user,log_activity
 
-def add_employee(request):
+def employee_form_add(request):
     # Auto-generate next employee code
 
     excluded_fields= ['emp_code', 'category', 'designation', 'role']
@@ -187,6 +668,11 @@ def add_employee(request):
             if not employee.emp_code:
                 employee.emp_code = next_emp_code
             employee.save()
+
+
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', employee)
             return redirect('employee_list')  # Change to your list view URL name
     else:
         form = EmployeeForm(initial={'emp_code': next_emp_code})
@@ -198,6 +684,51 @@ def add_employee(request):
     })
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Employee
+from .forms import EmployeeForm
+
+def employee_form_edit(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    excluded_fields = ['emp_code', 'category', 'designation', 'role']
+
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, instance=employee)
+        if form.is_valid():
+            form.save()
+            user = get_logged_in_user(request)
+            log_activity(user, 'edited', employee)
+            return redirect('employee_list')  # Change to your list view name
+    else:
+        form = EmployeeForm(instance=employee)
+
+    return render(request, 'master/employee_form.html', {
+        'form': form,
+        'excluded_fields': excluded_fields,
+        'title': 'Edit Employee',
+        'button_label': 'Update',
+    })
+
+def employee_form_view(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    return render(request, 'master/employee_form_view.html', {'employee': employee})
+
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from .models import Employee
+
+
+def employee_form_delete(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    
+    if request.method == 'POST':
+        employee.delete()
+        user = get_logged_in_user(request)
+        log_activity(user, 'deleted', employee)
+        messages.success(request, 'Employee deleted successfully.')
+        return redirect('employee_list')  # ✅ Make sure this URL name exists
+
+    return redirect('employee_list')  # Fallback redirect for safety
 
 @login_required
 def dashboard_view(request):
@@ -208,22 +739,7 @@ def logout_view(request):
     return redirect('login')
 
 
-# def dashboard_router_view(request):
-#     user_id = request.session.get('user_id')
 
-#     if not user_id:
-#         return redirect('login')
-
-#     try:
-#         user = UserCustom.objects.get(id=user_id)
-
-#         if user.can_access_all:
-#             return dashboard_view(request)
-#         else:
-#             return dashboard_view2(request)
-
-#     except UserCustom.DoesNotExist:
-#         return redirect('login')
 
 from django.shortcuts import render, redirect
 from .forms import ExcelUploadForm
@@ -402,90 +918,164 @@ def student_data_view(request):
 #         'department_filter': department,
 #         'departments': departments,
 #     })
-
 import datetime
 from django.shortcuts import render
+from django.utils import timezone
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import Coalesce
+from core.models import RecentActivity
+
 from admission.models import (
     Enquiry1, Enquiry2, PUAdmission, DegreeAdmission,
     Student as AdmissionStudent, Student
-    
 )
-from attendence.models import StudentAttendance,attendance 
+from attendence.models import StudentAttendance, attendance
 from .models import SentMessageContact, Employee
 
+
 def dashboard_view(request):
-    # Total Students
-    total_pu_students = PUAdmission.objects.filter(status="confirmed").count()
-    total_degree_students = DegreeAdmission.objects.filter(status="confirmed").count()
+    filter_type = request.GET.get('filter', 'all')
+    section = request.GET.get('sections', 'all')
+    now = timezone.now()
+    today = now.date()
+
+    if filter_type == 'day':
+        start_date = today
+    elif filter_type == 'week':
+        start_date = today - datetime.timedelta(days=today.weekday())
+    elif filter_type == 'month':
+        start_date = today.replace(day=1)
+    else:
+        start_date = None
+
+    # ================= BASE QUERYSETS =================
+    pu_admission_qs = PUAdmission.objects.filter(status="confirmed")
+    degree_admission_qs = DegreeAdmission.objects.filter(status="confirmed")
+    enquiry1_qs = Enquiry1.objects.all()
+    enquiry2_qs = Enquiry2.objects.all()
+    student_qs = Student.objects.all()
+    employee_qs = Employee.objects.all()
+
+    # ============ FILTER BY SECTION AND DATE ============
+    if start_date:
+        if section in ['students', 'all']:
+            pu_admission_qs = pu_admission_qs.filter(admission_date__gte=start_date)
+            degree_admission_qs = degree_admission_qs.filter(admission_date__gte=start_date)
+            student_qs = student_qs.filter(receipt_date__gte=start_date)
+
+        if section in ['fees']:
+            student_qs = student_qs.filter(receipt_date__gte=start_date)
+
+        if section in ['enquiries', 'all']:
+            enquiry1_qs = enquiry1_qs.filter(enquiry_date__gte=start_date)
+            enquiry2_qs = enquiry2_qs.filter(enquiry_date__gte=start_date)
+
+        if section in ['messages', 'all']:
+            enquiry1_whatsapp_qs = Enquiry1.objects.filter(whatsapp_status='sent', whatsapp_sent_date__gte=start_date)
+            enquiry2_whatsapp_qs = Enquiry2.objects.filter(whatsapp_status='sent', whatsapp_sent_date__gte=start_date)
+            sentmessage_qs = SentMessageContact.objects.filter(status="Sent", sent_date__gte=start_date)
+        else:
+            enquiry1_whatsapp_qs = Enquiry1.objects.filter(whatsapp_status='sent')
+            enquiry2_whatsapp_qs = Enquiry2.objects.filter(whatsapp_status='sent')
+            sentmessage_qs = SentMessageContact.objects.filter(status="Sent")
+
+        if section in ['faculties', 'all']:
+            employee_qs = employee_qs.filter(created_at__gte=start_date)
+    else:
+        enquiry1_whatsapp_qs = Enquiry1.objects.filter(whatsapp_status='sent')
+        enquiry2_whatsapp_qs = Enquiry2.objects.filter(whatsapp_status='sent')
+        sentmessage_qs = SentMessageContact.objects.filter(status="Sent")
+
+    # ===================== COUNTS ==========================
+    total_pu_students = pu_admission_qs.count()
+    total_degree_students = degree_admission_qs.count()
     total_students = total_pu_students + total_degree_students
 
-    # Enquiries
-    total_pu_enquiries = Enquiry1.objects.count()
-    total_degree_enquiries = Enquiry2.objects.count()
+    total_pu_enquiries = enquiry1_qs.count()
+    total_degree_enquiries = enquiry2_qs.count()
     total_enquiries = total_pu_enquiries + total_degree_enquiries
 
-    # Employees & Faculties
-    total_employees = Employee.objects.count()
-    faculty_designations = ['Professor', 'Associate Professor', 'Assistant']
-    total_faculties = Employee.objects.filter(designation__in=faculty_designations).count()
-
-    # WhatsApp & Admission messages
-    enquiry1_sent = Enquiry1.objects.filter(whatsapp_status='sent').count()
-    enquiry2_sent = Enquiry2.objects.filter(whatsapp_status='sent').count()
+    enquiry1_sent = enquiry1_whatsapp_qs.count()
+    enquiry2_sent = enquiry2_whatsapp_qs.count()
     enquiries_whatsapp_sent = enquiry1_sent + enquiry2_sent
 
-    admission_messages_sent = SentMessageContact.objects.filter(status="Sent").count()
-    pending_messages = SentMessageContact.objects.filter(status="Pending").count()
+    admission_messages_sent = sentmessage_qs.count()
     total_messages_sent = enquiries_whatsapp_sent + admission_messages_sent
 
-    # Total Collected Fee
-  # --- Additional Fee Stats (Total Collected Fee from Student model only) ---
+    pending_messages = (
+        Enquiry1.objects.filter(whatsapp_status='pending').count() +
+        Enquiry2.objects.filter(whatsapp_status='pending').count() +
+        SentMessageContact.objects.filter(status='Pending').count()
+    )
+
+    # ===================== FEES ==========================
     decimal_type = DecimalField(max_digits=12, decimal_places=2)
-    total_collected_fee = Student.objects.aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                Coalesce(F('tuition_fee_paid'), 0) +
-                Coalesce(F('transport_fee_paid'), 0) +
-                Coalesce(F('hostel_fee_paid'), 0) +
-                Coalesce(F('books_fee_paid'), 0) +
-                Coalesce(F('uniform_fee_paid'), 0) +
-                Coalesce(F('other_amount'), 0),
-                output_field=decimal_type
-            )
-        )
+
+    total_declared_fee = student_qs.aggregate(
+        total=Sum(ExpressionWrapper(
+            Coalesce(F('tuition_fee'), 0) +
+            Coalesce(F('transport_fee'), 0) +
+            Coalesce(F('hostel_fee'), 0) +
+            Coalesce(F('books_fee'), 0) +
+            Coalesce(F('uniform_fee'), 0) +
+            Coalesce(F('other_fee'), 0),
+            output_field=decimal_type
+        ))
     )['total'] or 0
- 
-    # Total Application Fee Collected from PUAdmission
-    total_pu_application_fee = PUAdmission.objects.aggregate(
-        total=Sum('application_fee')
+
+    total_collected_fee = student_qs.aggregate(
+        total=Sum(ExpressionWrapper(
+            Coalesce(F('tuition_fee_paid'), 0) +
+            Coalesce(F('transport_fee_paid'), 0) +
+            Coalesce(F('hostel_fee_paid'), 0) +
+            Coalesce(F('books_fee_paid'), 0) +
+            Coalesce(F('uniform_fee_paid'), 0) +
+            Coalesce(F('other_amount'), 0),
+            output_field=decimal_type
+        ))
     )['total'] or 0
- 
-    # Total Application Fee Collected from DegreeAdmission
-    total_degree_application_fee = DegreeAdmission.objects.aggregate(
-        total=Sum('application_fee')
+
+    total_pending_fees = student_qs.aggregate(
+        total=Sum(ExpressionWrapper(
+            Coalesce(F('tuition_pending_fee'), 0) +
+            Coalesce(F('transport_pending_fee'), 0) +
+            Coalesce(F('hostel_pending_fee'), 0) +
+            Coalesce(F('books_pending_fee'), 0) +
+            Coalesce(F('uniform_pending_fee'), 0),
+            output_field=decimal_type
+        ))
     )['total'] or 0
- 
-    # Combined Total Application Fee Collected
+
+    total_pu_application_fee = PUAdmission.objects.aggregate(total=Sum('application_fee'))['total'] or 0
+    total_degree_application_fee = DegreeAdmission.objects.aggregate(total=Sum('application_fee'))['total'] or 0
     total_application_fee = total_pu_application_fee + total_degree_application_fee
 
-    # Faculty Attendance Rate (ALL TIME)
-    total_faculty_attendance = attendance.objects.count()
-    if total_faculty_attendance > 0:
-        present_faculty_attendance = attendance.objects.filter(status__in=["Present", "Late"]).count()
+          # ===================== ATTENDANCE ==========================
+    faculty_attendance_qs = attendance.objects.all()
+    student_attendance_qs = StudentAttendance.objects.all()
+ 
+    if start_date:
+        faculty_attendance_qs = faculty_attendance_qs.filter(date__gte=start_date)  # Correct field: `date`
+        student_attendance_qs = student_attendance_qs.filter(attendance_date__gte=start_date)  # Correct field: `attendance_date`
+ 
+    total_faculty_attendance = faculty_attendance_qs.count()
+    faculty_attendance_rate = 0
+    if total_faculty_attendance:
+        present_faculty_attendance = faculty_attendance_qs.filter(status__in=['Present', 'Late']).count()
         faculty_attendance_rate = round((present_faculty_attendance / total_faculty_attendance) * 100, 2)
-    else:
-        faculty_attendance_rate = 0
-
-    # Student Attendance Rate (ALL TIME)
-    total_student_attendance = StudentAttendance.objects.count()
-    if total_student_attendance > 0:
-        present_student_attendance = StudentAttendance.objects.filter(status__in=['present', 'late']).count()
+ 
+    total_student_attendance = student_attendance_qs.count()
+    student_attendance_rate = 0
+    if total_student_attendance:
+        present_student_attendance = student_attendance_qs.filter(status__in=['present', 'late']).count()
         student_attendance_rate = round((present_student_attendance / total_student_attendance) * 100, 2)
-    else:
-        student_attendance_rate = 0
-
+ 
+    # ===================== EMPLOYEES ==========================
+    total_employees = employee_qs.count()
+    faculty_designations = ['Professor', 'Associate Professor', 'Assistant Professor']
+    total_faculties = employee_qs.filter(designation__in=faculty_designations).count()
+    recent_activities = RecentActivity.objects.select_related('user').order_by('-timestamp')[:5]
+    # ===================== CONTEXT ==========================
     context = {
         'total_students': total_students,
         'total_messages_sent': total_messages_sent,
@@ -502,9 +1092,17 @@ def dashboard_view(request):
         'pending_messages': pending_messages,
         'faculty_attendance_rate': faculty_attendance_rate,
         'student_attendance_rate': student_attendance_rate,
+        'total_pending_fees': total_pending_fees,
+        'total_declared_fee': total_declared_fee,
+        'filter_type': filter_type,
+        'section': section,
+         'recent_activities': recent_activities,
     }
 
     return render(request, 'master/dashboard.html', context)
+
+
+
 
 
 
@@ -864,7 +1462,7 @@ from .models import StudentDatabase
 from .forms import StudentDatabaseForm
 
 
-def student_list(request):
+def student_database(request):
     """
     Display all students in the database.
     """
@@ -875,100 +1473,38 @@ def student_list(request):
 
 def master_student_edit(request, pk):
     student = get_object_or_404(StudentDatabase, pk=pk)
-    selected_type = request.GET.get('course_type', getattr(student, 'course_type', 'PU'))  # Add this line
-
+    selected_type = request.GET.get('course_type', getattr(student, 'course_type', 'PU'))
+ 
     if request.method == 'POST':
         form = StudentDatabaseForm(request.POST, instance=student)
         if form.is_valid():
             form.save()
-            return redirect('master_student_list')
+            user = get_logged_in_user(request)
+            log_activity(user, 'edited', student)
+            return redirect('student_database')
     else:
         form = StudentDatabaseForm(instance=student)
+ 
     return render(request, 'master/student_database_form.html', {
         'form': form,
         'student': student,
         'edit_mode': True,
-        'back_to_list_url': 'master_student_list',
-        'selected_type': selected_type,  # Add this to context
+        'back_to_list_url': 'student_database',
+        'selected_type': selected_type,
     })
-
+ 
+ 
 def master_student_view(request, pk):
     student = get_object_or_404(StudentDatabase, pk=pk)
-    selected_type = request.GET.get('course_type', getattr(student, 'course_type', 'PU'))  # Add this line
-
+    selected_type = request.GET.get('course_type', getattr(student, 'course_type', 'PU'))
+ 
     return render(request, 'master/student_database_form.html', {
-        'form': StudentDatabaseForm(instance=student),
         'student': student,
         'edit_mode': False,
-        'back_to_list_url': 'master_student_list',
-        'selected_type': selected_type,  # Add this to context
+        'back_to_list_url': 'student_database',
+        'selected_type': selected_type,
     })
 
-
-
-
-# from django.shortcuts import render, redirect
-# from .models import Employee
-# from .forms import EmployeeForm
-
-# def employee_list_view(request):
-#     Employees = Employee.objects.all()
-#     return render(request, 'master/employee_list.html', {'Faculties': Employees})
-
-# def employee_add_view(request):
-#     if request.method == 'POST':
-#         form = EmployeeForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('master/employee_list')   
-#     else:
-#         form = EmployeeForm()
-#     return render(request, 'master/employee_form.html', {'form': form})
-
-
-
-
-# views.py
-
-# from django.shortcuts import render, redirect
-# from .models import Course, Subject
-# from .forms import SubjectForm
-
-# def subject_list(request):
-#     subjects = Subject.objects.select_related('course', 'faculty').all()
-#     return render(request, 'master/subject_list.html', {'subjects': subjects})
-
-# from django.shortcuts import render, redirect
-# from .forms import SubjectForm
-# from .models import Semester
-
-# def add_subject(request):
-#     semesters = []
-#     selected_course_id = request.POST.get('course') if request.method == 'POST' else None
-
-#     # Fetch semesters only if course is selected (to populate semester dropdown)
-#     if selected_course_id:
-#         semesters = Semester.objects.filter(course_id=selected_course_id).order_by('number')
-
-#     if request.method == 'POST':
-#         form = SubjectForm(request.POST)
-#         semester_number = request.POST.get('semester')  # This is the selected semester number from form
-
-#         if form.is_valid() and semester_number:
-#             subject = form.save(commit=False)
-#             subject.semester_number = int(semester_number)  # Save semester number as integer
-#             subject.save()
-#             return redirect('subject_list')  # Redirect after save
-#     else:
-#         form = SubjectForm()
-
-#     return render(request, 'master/add_subject.html', {
-#         'form': form,
-#         'semesters': semesters,
-#         'selected_course_id': selected_course_id
-#     })
-
-# views.py
 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Course, CourseType
@@ -979,93 +1515,169 @@ def course_type_list(request):
     types = CourseType.objects.all()
     return render(request, 'master/course_type_list.html', {'types': types})
 
-def course_type_create(request):
+from core.utils import log_activity, get_logged_in_user  # Make sure these are imported
+
+def course_type_add(request):
     if request.method == 'POST':
         form = CourseTypeForm(request.POST)
         if form.is_valid():
-            form.save()
+            course_type = form.save()
+ 
+# ✅ Log activity here
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', course_type)
+
             return redirect('course_type_list')
     else:
         form = CourseTypeForm()
     return render(request, 'master/course_type_form.html', {'form': form})
 
+
+
+def course_type_view(request, pk):
+    course_type = get_object_or_404(CourseType, pk=pk)
+    form = CourseTypeForm(instance=course_type)
+ 
+    # Disable all fields to make the form read-only
+    for field in form.fields.values():
+        field.disabled = True
+ 
+    return render(request, 'master/course_type_form.html', {
+        'form': form,
+        'is_view': True  # Use this in your template to hide Save button
+    })
 def course_type_edit(request, pk):
     course_type = get_object_or_404(CourseType, pk=pk)
     if request.method == 'POST':
         form = CourseTypeForm(request.POST, instance=course_type)
         if form.is_valid():
-            form.save()
+            course_type = form.save()
+ 
+# ✅ Log activity here
+            user = get_logged_in_user(request)
+            log_activity(user, 'updated', course_type)
+
             return redirect('course_type_list')
     else:
         form = CourseTypeForm(instance=course_type)
     return render(request, 'master/course_type_form.html', {'form': form})
 
+def course_type_detail(request, pk):
+    course_type = get_object_or_404(CourseType, pk=pk)
+    return render(request, 'master/course_type_form.html', {'course_type': course_type})
+
+from django.db.models import ProtectedError
+from django.contrib import messages
+
 def course_type_delete(request, pk):
     course_type = get_object_or_404(CourseType, pk=pk)
-    course_type.delete()
-    return redirect('master/course_type_list')
+    try:
+        course_type.delete()
+        
+        messages.success(request, "Course type deleted successfully.")
+    except ProtectedError:
+        messages.error(request, "Cannot delete this Course Type. It is being used in Courses or Enquiries.")
+        user = get_logged_in_user(request)
+        log_activity(user, 'deleted', course_type)
+    return redirect('course_type_list')
 
 # Course Views
-def course_list(request):
+def course_form_list(request):
     courses = Course.objects.select_related('course_type').all()
     return render(request, 'master/course_list.html', {'courses': courses})
 
 from .models import Course
 from .forms import CourseForm
 from django.shortcuts import render, redirect
-def course_create(request):
+
+def course_form_add(request):
     if request.method == 'POST':
         form = CourseForm(request.POST)
         if form.is_valid():
             course = form.save(commit=False)
 
-            # Handle is_active manually based on radio input
-            is_active_value = request.POST.get('is_active')
-            course.is_active = True if is_active_value == '1' else False
+            # Get the 'is_active' value from the form (radio button)
+            is_active_value = request.POST.get('is_active', '1')
+            course.is_active = is_active_value == '1'
 
             course.save()
-            return redirect('course_list')  # Change to your list view name
+            user = get_logged_in_user(request)
+            log_activity(request.user, 'added', course)
+
+
+            return redirect('course_form_list')
     else:
         form = CourseForm()
-
+    
     return render(request, 'master/course_form.html', {'form': form})
 
-def course_edit(request, pk):
+from django.shortcuts import render, get_object_or_404
+from .models import Course
+from .forms import CourseForm
+
+def course_form_view(request, pk):
     course = get_object_or_404(Course, pk=pk)
+
+    # Make all fields disabled for read-only view, including radio buttons
+    form = CourseForm(instance=course)
+    for field in form.fields.values():
+        field.widget.attrs['readonly'] = True
+        field.widget.attrs['disabled'] = True
+
+    return render(request, 'master/course_form.html', {'form': form, 'view_mode': True})
+
+
+# Course Edit View
+def course_form_edit(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+
     if request.method == 'POST':
         form = CourseForm(request.POST, instance=course)
         if form.is_valid():
-            form.save()
-            return redirect('course_list')
+            course = form.save(commit=False)
+
+            # Handle is_active from radio button
+            is_active_value = request.POST.get('is_active', '1')
+            course.is_active = is_active_value == '1'
+
+            course.save()
+            user = get_logged_in_user(request)
+            log_activity(request.user, 'updated', course)
+            messages.success(request, "Course updated successfully.")
+            return redirect('course_form_list')
     else:
         form = CourseForm(instance=course)
+
     return render(request, 'master/course_form.html', {'form': form})
 
-from django.db.models import ProtectedError
 
-def course_delete(request, pk):
-    course = Course.objects.get(pk=pk)
+# Course Delete View
+def course_form_delete(request, pk):
+    course = get_object_or_404(Course, pk=pk)
     try:
         course.delete()
+        user = get_logged_in_user(request)
+        log_activity(request.user, 'deleted', course)
         messages.success(request, "Course deleted successfully.")
     except ProtectedError:
-        messages.error(request, "Cannot delete course because it is referenced by other data (e.g., Enquiries).")
-    return redirect('course_list')  # or wherever you list coursesx
+        messages.error(request, "Cannot delete course because it is referenced by other data.")
+    return redirect('course_form_list')
 
 
 
 from .models import Semester
 from .forms import SemesterForm
 
-def semester_list(request):
+def semester_form_list(request):
     semesters = Semester.objects.select_related('course').all()
     return render(request, 'master/semester_list.html', {'semesters': semesters})
+
 
 from .models import Semester
 from .forms import SemesterForm
 from django.shortcuts import render, redirect
 
-def semester_add(request):
+def semester_form_add(request):
     if request.method == 'POST':
         form = SemesterForm(request.POST)
         if form.is_valid():
@@ -1076,13 +1688,48 @@ def semester_add(request):
             semester.is_active = True if is_active_value == '1' else False
 
             semester.save()
-            return redirect('semester_list')
+            user = get_logged_in_user(request)
+            log_activity(request.user, 'added', semester)
+
+            
+            return redirect('semester_form_list')
     else:
         form = SemesterForm()
-
+        
     return render(request, 'master/semester_form.html', {
         'form': form
     })
+
+def semester_form_edit(request, pk):
+    semester = get_object_or_404(Semester, pk=pk)
+    if request.method == 'POST':
+        form = SemesterForm(request.POST, instance=semester)
+        if form.is_valid():
+            semester=form.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'updated', semester)
+
+            return redirect('semester_form_list')
+    else:
+        form = SemesterForm(instance=semester)
+    return render(request, 'master/semester_form.html', {'form': form, 'mode': 'edit'})
+ 
+def semester_form_view(request, pk):
+    semester = get_object_or_404(Semester, pk=pk)
+    form = SemesterForm(instance=semester)
+    for field in form.fields.values():
+        field.widget.attrs['readonly'] = True
+        field.widget.attrs['disabled'] = True
+    return render(request, 'master/semester_form.html', {'form': form, 'mode': 'view'})
+ 
+def semester_form_delete(request, pk):
+    semester = get_object_or_404(Semester, pk=pk)
+    if request.method == 'POST':
+        semester.delete()
+        user = get_logged_in_user(request)
+        log_activity(request.user, 'deleted', semester)
+    return redirect('semester_form_list')
 
 
 # views.py
@@ -1103,109 +1750,85 @@ def get_semester_numbers(request):
 
 
 
-from django.shortcuts import render
-from django.db.models import Sum
-from admission.models import Enquiry1, PUAdmission, DegreeAdmission, Student as AdmissionStudent,DegreeAdmissionshortlist,PUAdmissionshortlist
-from .models import StudentRecord, SentMessage
-
-def dashboard_view2(request):
-    # SMS Dashboard Stats
-    total_students = StudentRecord.objects.count()
-    messages_sent = SentMessage.objects.count()
-    active_departments = SentMessage.objects.values('department').distinct().count()
-
-    # Delivery Status Counts
-    delivered_count = 0
-    failed_count = 0
-
-    all_messages = SentMessage.objects.all()
-    for msg in all_messages:
-        try:
-            status_parts = dict(part.split(":") for part in msg.status.split() if ":" in part)
-        except ValueError:
-            status_parts = {}
-
-        sms_status = status_parts.get("sms", "0")
-        whatsapp_status = status_parts.get("whatsapp", "0")
-
-        if sms_status == "1" or whatsapp_status == "1":
-            delivered_count += 1
-        else:
-            failed_count += 1
-
-    not_sent_count = SentMessage.objects.filter(status__isnull=False).exclude(status__icontains='sms:1').exclude(status__icontains='whatsapp:1').count()
-
-
-    # Recent 5 Messages
-    recent_messages_qs = SentMessage.objects.order_by('-sent_at')[:5]
-    recent_messages = []
-
-    for msg in recent_messages_qs:
-        try:
-            status_parts = dict(part.split(":") for part in msg.status.split() if ":" in part)
-        except ValueError:
-            status_parts = {}
-
-        sms_status = status_parts.get("sms", "0")
-        whatsapp_status = status_parts.get("whatsapp", "0")
-
-        if sms_status == "1" and whatsapp_status == "1":
-            msg.status_display = "Delivered via SMS and WhatsApp"
-        elif sms_status == "1":
-            msg.status_display = "Delivered via SMS"
-        elif whatsapp_status == "1":
-            msg.status_display = "Delivered via WhatsApp"
-        else:
-            msg.status_display = "Not Delivered"
-
-        recent_messages.append(msg)
-
-    # Enquiry & Admission Stats
-    total_enquiries = Enquiry1.objects.count()
-    total_pu_admissions = PUAdmissionshortlist.objects.count()
-    total_degree_admissions = DegreeAdmissionshortlist.objects.count()
-
-    pu_converted_enquiries = PUAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').count()
-    degree_converted_enquiries = DegreeAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').count()
-
-    # Fee Stats (from admission Student model)
-   
-
-    context = {
-        # SMS
-        'total_students': total_students,
-        'messages_sent': messages_sent,
-        'active_departments': active_departments,
-        'not_sent_count': not_sent_count,
-        'recent_messages': recent_messages,
-
-        # Enquiry/Admission
-        'total_enquiries': total_enquiries,
-        'total_pu_admissions': total_pu_admissions,
-        'total_degree_admissions': total_degree_admissions,
-        'pu_converted_enquiries': pu_converted_enquiries,
-        'degree_converted_enquiries': degree_converted_enquiries,
-
-    }
-    return render(request, 'master/dashboard2.html', context)
-
 from .models import Transport
 from .forms import TransportForm
 
-def transport_list(request):
+def transport_form_list(request):
     transports = Transport.objects.all()
     return render(request, 'master/transport_list.html', {'transports': transports})
 
-def transport_create(request):
+from core.utils import get_logged_in_user, log_activity  # ✅ Ensure this is imported
+
+def transport_form_add(request):
     if request.method == 'POST':
         form = TransportForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('transport_list')
+            transport = form.save()
+
+            # ✅ Log creation activity
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', transport)
+
+            return redirect('transport_form_list')
     else:
         form = TransportForm()
     return render(request, 'master/transport_form.html', {'form': form})
 
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Transport
+from .forms import TransportForm
+
+# ✅ View Transport (Read-only)
+def transport_form_view(request, pk):
+    transport = get_object_or_404(Transport, pk=pk)
+
+    if request.method == 'POST':
+        # Just in case someone manually sends a POST request, prevent saving
+        return redirect('transport_form_list')
+    else:
+        form = TransportForm(instance=transport)
+        for field in form.fields.values():
+            field.disabled = True  # Disable fields for read-only view
+
+    return render(request, 'master/transport_form.html', {
+        'form': form,
+        'is_view': True  # Template uses this to hide Save button
+    })
+
+# ✅ Edit Transport
+from core.utils import get_logged_in_user, log_activity  # ✅ Ensure these are imported
+
+def transport_form_edit(request, pk):
+    transport = get_object_or_404(Transport, pk=pk)
+    if request.method == 'POST':
+        form = TransportForm(request.POST, instance=transport)
+        if form.is_valid():
+            form.save()
+
+            # ✅ Log update activity
+            user = get_logged_in_user(request)
+            log_activity(user, 'updated', transport)
+
+            return redirect('transport_form_list')
+    else:
+        form = TransportForm(instance=transport)
+
+    return render(request, 'master/transport_form.html', {
+        'form': form,
+        'is_view': False  # Allow saving
+    })
+
+
+# Delete View
+def transport_form_delete(request, pk):
+    transport = get_object_or_404(Transport, pk=pk)
+    transport.delete()
+    user = get_logged_in_user(request)
+    log_activity(user, 'deleted', transport)
+
+    return redirect('transport_form_list')
 
 
 # views.py
@@ -1213,24 +1836,33 @@ from django.shortcuts import render
 from django.utils import timezone
 from .models import AcademicEvent
 import calendar
+from datetime import date
 
-def calendar_view(request):
+def calendar_form(request):
     today = timezone.localdate()
-    year = today.year
-    month = today.month
 
-    # Get the calendar for the current month, week starts on Sunday (6)
+    # Get month/year from query params or default to current
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
+
     cal = calendar.Calendar(firstweekday=6)
     month_days = list(cal.monthdayscalendar(year, month))
     weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-    # Filter future events only (date >= today)
+    # All future events
     future_events_qs = AcademicEvent.objects.filter(date__gte=today).order_by('date', 'time')
+    future_events = list(future_events_qs.values('id', 'title', 'date', 'time', 'description', 'event_type'))
 
-    # Convert QuerySet to list of dicts for safe JSON serialization if needed
-    future_events = list(future_events_qs.values(
-        'id', 'title', 'date', 'time', 'description', 'event_type'
-    ))
+    # Calculate previous/next month/year
+    if month == 1:
+        prev_month, prev_year = 12, year - 1
+    else:
+        prev_month, prev_year = month - 1, year
+
+    if month == 12:
+        next_month, next_year = 1, year + 1
+    else:
+        next_month, next_year = month + 1, year
 
     context = {
         'today': today,
@@ -1239,11 +1871,17 @@ def calendar_view(request):
         'month_name': calendar.month_name[month],
         'month_days': month_days,
         'weekdays': weekdays,
-        'events': future_events_qs,  # Use this for Django template iteration
-        'events_json': future_events, # Use this for passing to JavaScript safely
+        'events': future_events_qs,
+        'events_json': future_events,
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
     }
 
     return render(request, 'master/calendar.html', context)
+
+
 
 
 
@@ -1254,13 +1892,16 @@ def add_event_view(request):
     if request.method == 'POST':
         form = AcademicEventForm(request.POST)
         if form.is_valid():
-            form.save()
+            saved_event = form.save()
+            
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', saved_event)
             return redirect('calendar')
     else:
         form = AcademicEventForm()
 
     return render(request, 'master/add_event.html', {'form': form})
-
 
 
 
@@ -1320,6 +1961,7 @@ def upload_excel(request):
         }
 
     return render(request, 'master/whatsapp_bulk.html', context)
+
 
 
 
@@ -1399,3 +2041,4 @@ def master_dashboard(request):
         "can_access_all": request.session.get("can_access_all", False),
     }
     return render(request, "master/master_dashboard.html", context)
+

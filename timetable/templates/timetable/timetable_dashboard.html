@@ -1,15 +1,16 @@
 {% extends 'master/layout.html' %}
-{% block title %}Campus Attendance{% endblock %}
+{% block title %}Class Timetable{% endblock %}
 {% block content %}
 <div class="container py-5">
     <h2 class="fw-bold  mb-7"> Class Timetable</h2>
     <!-- Dashboard Summary Cards -->
-
+    {% if form_permissions.timetable_form.add %}
     <div class="d-flex justify-content-end mb-4">
-        <a href="{% url 'add_timetable_entry' %}" class="btn btn-maroon">
+        <a href="{% url 'timetable_form_add' %}" class="btn btn-maroon">
             <i class="fas fa-plus-circle"></i> Add entry
         </a>
     </div>
+    {% endif %}
 
     <div class="row mb-5">
         <div class="col-md-3 mb-3">
@@ -62,7 +63,7 @@
             </a>
         </div>
         <div>
-            <a href="{% url 'daily_timetable_view' %}" class="btn btn-maroon px-4 py-3">
+            <a href="{% url 'daily_timetable' %}" class="btn btn-maroon px-4 py-3">
                 <i class="bi bi-card-list me-2"></i> Daily Timetable
             </a>
         </div>
@@ -159,7 +160,7 @@
     }
 
     .gap-3 {
-        gap: 1rem !important;
+        gap: 15rem !important;
     }
 
     .mb-4 {
