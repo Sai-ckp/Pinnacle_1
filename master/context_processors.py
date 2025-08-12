@@ -17,14 +17,14 @@ def user_form_permissions(request):
         }
 
     # Check if the user should have full access
-    is_super = user.id == 1 or user.username.lower() == 'naveen'
+    is_super = user.id == 1 or user.username.lower() == 'dean'
 
     form_permissions = {}
 
     if is_super:
         # Grant full access to all known forms
         all_forms = [
-           'employee_attendance_form','pu_admission_form','degree_admission_form','schedule_follow_up_form','enquiry_form','student_attendance_form','semester_form','student_fee_form','timetable_form','communication_dashboard','calendar_form','student_database','employee_form','course_type','course_form','subject_form','transport_form','recent_activity_view']
+           'employee_attendance_form','pu_admission_form','degree_admission_form','schedule_follow_up_form','enquiry_form','student_attendance_form','academic_year','fee_type','fee_declaration','timetable_form','communication_dashboard','calendar_form','student_database','employee_form','course_type','course_form','subject_form','transport_form','recent_activity_view','promotion_history']
 
         for form in all_forms:
             form_permissions[form] = {

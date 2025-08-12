@@ -1,4 +1,4 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 
 {% block title %}Attendance Settings{% endblock %}
 
@@ -68,7 +68,8 @@
         font-size: 22px;
         font-weight: 700;
         color: #800000;
-        margin-bottom: 30px;
+        margin-bottom: 32px;
+        margin-top: -1px;
     }
 
     .form-grid {
@@ -103,16 +104,16 @@
     }
 
     .btn {
-        font-size: 14px;
+        font-size: 10px;
         font-weight: 600;
-        padding: 10px 20px;
+        padding: 5px 10px;
         border-radius: 6px;
         border: none;
         cursor: pointer;
         background-color: #800000;
         color: white;
-        margin-top: -9px;
-        margin-bottom: 10px;
+        margin-top: -8px;
+        margin-bottom: 9px;
     }
 
     .alert {
@@ -123,6 +124,79 @@
         border: 1px solid #f5c6cb;
         font-size: 14px;
         margin-bottom: 20px;
+    }
+
+    .content {
+        margin-left: 200px;
+        padding: 77px 107px 40px;
+        min-height: 100vh;
+    }
+</style>
+
+<div id="snackbar"></div>
+
+<script>
+    function showSnackbar(message) {
+        const snackbar = document.getElementById("snackbar");
+        snackbar.textContent = message;
+        snackbar.className = "show";
+        setTimeout(() => {
+            snackbar.className = snackbar.className.replace("show", "");
+        }, 3000);
+    }
+
+    // Django message support
+    {% if messages %}
+        {% for message in messages %}
+            showSnackbar("{{ message|escapejs }}");
+        {% endfor %}
+    {% endif %}
+</script>
+
+<style>
+    #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #800000;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 14px 24px;
+        position: fixed;
+        z-index: 9999;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        font-size: 14px;
+    }
+
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.4s, fadeout 0.4s 2.6s;
+        }
+
+    @keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
     }
 </style>
 {% endblock %}

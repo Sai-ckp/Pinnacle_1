@@ -30,7 +30,7 @@ DEBUG = True
 
 
 
-ALLOWED_HOSTS = ['192.168.10.182', 'localhost', '127.0.0.1', '106.51.140.161']
+ALLOWED_HOSTS = ['192.168.10.221', 'localhost', '127.0.0.1', '122.166.213.68']
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -48,7 +48,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'student_alerts_app',
-    'core'
+    'core',
+     'fees',
+     'transport',
+     'lms',
+
    
 
 ]
@@ -78,7 +82,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'master', 'admission','templates')], 
+        'DIRS': [os.path.join(BASE_DIR, 'student_alerts_app','templates')], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,6 +91,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'master.context_processors.user_form_permissions',
+                 'lms.context_processors.student_context',
             ],
         },
     },
@@ -141,8 +146,11 @@ LOGOUT_REDIRECT_URL = 'login'
 
 
 
+
+
 import os
 
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Static files (CSS, JavaScript, Images)

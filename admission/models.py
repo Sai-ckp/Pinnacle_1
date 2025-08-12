@@ -1,12 +1,12 @@
 ﻿from django.db import models
-from master.models import CourseType, Course  # adjust if your app name is different
+from master.models import CourseType, Course, AcademicYear # adjust if your app name is different
 import datetime
 from django.utils.timezone import now
 from core.utils import get_logged_in_user,log_activity
+
 class Enquiry1(models.Model):
     enquiry_no = models.CharField(max_length=10, unique=True, blank=True)
     student_name = models.CharField(max_length=100)
-
     GENDER_CHOICES = [
         ('Male', 'Male'),
         ('Female', 'Female'),
@@ -24,16 +24,16 @@ class Enquiry1(models.Model):
     guardian_relation = models.CharField(max_length=100, blank=True, null=True)  # new field
     parent_name = models.CharField(max_length=100)
     parent_phone = models.CharField(max_length=15)
-   
 
-    course_type = models.ForeignKey('master.CourseType', on_delete=models.PROTECT, default=1)
+    course_type = models.ForeignKey('master.CourseType', on_delete=models.PROTECT, default=13)
     course = models.ForeignKey('master.Course', on_delete=models.PROTECT)
 
     percentage_10th = models.FloatField()
     percentage_12th = models.FloatField(null=True, blank=True)
     
     email = models.EmailField(max_length=254)
-    created_by = models.IntegerField(null=True, blank=True)
+    created_by = models.CharField(max_length=150, null=True, blank=True)
+
     permanent_address = models.TextField(blank=True, null=True)
     current_address = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
@@ -82,10 +82,15 @@ class Enquiry1(models.Model):
         return f"{self.enquiry_no} - {self.student_name}"
 
 
+from django.db import models
+from django.utils.timezone import now
 
 class Enquiry2(models.Model):
     enquiry_no = models.CharField(max_length=10, unique=True, blank=True)
     student_name = models.CharField(max_length=100)
+    
+    # ✅ Added academic year field
+
     GENDER_CHOICES = [
         ('Male', 'Male'),
         ('Female', 'Female'),
@@ -101,62 +106,63 @@ class Enquiry2(models.Model):
     parent_relation = models.CharField(max_length=10, choices=PARENT_CHOICES)
     enquiry_date = models.DateField(default=now)
 
-    
-    guardian_relation = models.CharField(max_length=100, blank=True, null=True)  # new field
+    guardian_relation = models.CharField(max_length=100, blank=True, null=True)
     parent_name = models.CharField(max_length=100)
     parent_phone = models.CharField(max_length=15)
 
-    course_type = models.ForeignKey('master.CourseType', on_delete=models.PROTECT, default=1)
+    course_type = models.ForeignKey('master.CourseType', on_delete=models.PROTECT, default=17)
     course = models.ForeignKey('master.Course', on_delete=models.PROTECT)
 
     percentage_10th = models.FloatField()
     percentage_12th = models.FloatField(null=True, blank=True)
     
     email = models.EmailField(max_length=254)
-    created_by = models.IntegerField(null=True, blank=True)
+    created_by = models.CharField(max_length=150, null=True, blank=True)
+
     permanent_address = models.TextField(blank=True, null=True)
     current_address = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
     pincode = models.CharField(max_length=6, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
     is_converted = models.BooleanField(default=False)
-    SOURCE_CHOICES = [
-    ('Messages/Calls', 'Messages/Calls'),
-    ('Social Media', 'Social Media'),
-    ('Friends', 'Friends'),
-    ('Other', 'Other'),
-]
 
+    SOURCE_CHOICES = [
+        ('Messages/Calls', 'Messages/Calls'),
+        ('Social Media', 'Social Media'),
+        ('Friends', 'Friends'),
+        ('Other', 'Other'),
+    ]
     source = models.CharField(max_length=50, choices=SOURCE_CHOICES)
     other_source = models.CharField(max_length=100, blank=True, null=True)
+    
     whatsapp_sent_date = models.DateField(null=True, blank=True)
     whatsapp_status = models.CharField(
-    max_length=15,
-    choices=[
-        ('pending', 'Pending'),
-        ('sent', 'Sent'),
-        ('failed', 'Failed')
-    ],
-    blank=True,
-    null=True
-)
-
+        max_length=15,
+        choices=[
+            ('pending', 'Pending'),
+            ('sent', 'Sent'),
+            ('failed', 'Failed')
+        ],
+        blank=True,
+        null=True
+    )
 
     def save(self, *args, **kwargs):
         if not self.enquiry_no:
             last_enquiry = Enquiry2.objects.order_by('-id').first()
             if last_enquiry and last_enquiry.enquiry_no and last_enquiry.enquiry_no.startswith('DEG-ENQ-'):
                 try:
-                    last_number = int(last_enquiry.enquiry_no.split('-')[-1])
+                    last_number = int(last_enquiry.enquiry_no.split('-')[2])
                 except (IndexError, ValueError):
                     last_number = 0
             else:
                 last_number = 0
-            self.enquiry_no = f"DEG-ENQ-{last_number+1:02d}"
-        super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.enquiry_no} - {self.student_name}"
+            self.enquiry_no = f"DEG-ENQ-{last_number + 1:02d}"
+
+        # ✅ Removed course_type auto-selection logic
+
+        super().save(*args, **kwargs)
 
 
 
@@ -167,32 +173,31 @@ class FollowUp(models.Model):
         ('Pending', 'Pending'),
         ('Completed', 'Completed'),
     ]
+
     pu_enquiry = models.ForeignKey(Enquiry1, null=True, blank=True, on_delete=models.CASCADE)
     degree_enquiry = models.ForeignKey(Enquiry2, null=True, blank=True, on_delete=models.CASCADE)
-    follow_up_type = models.CharField(max_length=100)
-    follow_up_date = models.DateTimeField()
-    priority = models.CharField(max_length=100, blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
-    next_action_required = models.CharField(max_length=255, blank=True, null=True)
-    
+
+    follow_up_type = models.CharField(max_length=100, blank=False, null=False)
+    follow_up_date = models.DateTimeField(blank=False, null=False)
+    priority = models.CharField(max_length=100, blank=False, null=False)
+    notes = models.TextField(blank=False, null=False)
+    next_action_required = models.CharField(max_length=255, blank=False, null=False)
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='Pending',
         verbose_name="Follow-up Status"
     )
+
     def __str__(self):
         enquiry = self.pu_enquiry or self.degree_enquiry
         return f"{enquiry} - {self.follow_up_type} - {self.status}"
+
        
 
- 
 
-
-
-from master.models import CourseType, Course  # adjust import as per your app structure
-
-from master.models import CourseType, Course  # adjust import as per your app structure
+from master.models import CourseType, Course , AcademicYear # adjust import as per your app structure
 
  
 class PUAdmission(models.Model):
@@ -207,7 +212,8 @@ class PUAdmission(models.Model):
 
     student_name = models.CharField(max_length=100)
 
-    dob = models.DateField()
+    dob = models.DateField(null=True, blank=True)
+
 
     gender = models.CharField(
 
@@ -217,7 +223,7 @@ class PUAdmission(models.Model):
 
     )
 
-    parent_name = models.CharField(max_length=100)
+    father_name = models.CharField(max_length=100)
 
     guardian_name = models.CharField(max_length=30, blank=True, null=True)
 
@@ -231,11 +237,11 @@ class PUAdmission(models.Model):
 
     total_annual_income = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
 
-    parent_mobile_no = models.CharField(max_length=15, blank=True, null=True)  # Updated to match HTML
+    father_mobile_no = models.CharField(max_length=15, blank=True, null=True)  # Updated to match HTML
 
     mother_phone_no = models.CharField(max_length=15)
 
-    email = models.EmailField(max_length=100, blank=True, null=True)
+    father_email = models.EmailField(max_length=100, blank=True, null=True)
 
     mother_email = models.EmailField(max_length=100, blank=True, null=True)
 
@@ -343,7 +349,7 @@ class PUAdmission(models.Model):
 
     emergency_contact_relation = models.CharField(max_length=15, blank=True, null=True)
 
-    document_submitted = models.BooleanField(default=False)
+    # document_submitted = models.BooleanField(default=False)
 
     hostel_required = models.BooleanField(default=False)
 
@@ -368,6 +374,7 @@ class PUAdmission(models.Model):
     course_type = models.ForeignKey('master.CourseType', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admissions')
 
     course = models.ForeignKey('master.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='pu_admissions')
+
 
     # Quota type
 
@@ -548,11 +555,28 @@ class PUAdmission(models.Model):
     # Photo
 
     photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
+    admission_source = models.CharField(
+    max_length=20,
+    choices=[('enquiry', 'Enquiry'), ('direct', 'Direct'), ('bulk_import', 'Bulk Import')],
+    default=None,
+    null=True,
+    blank=True
+)
+    @property
+    def document_submitted(self):
+        return (
+            self.doc_aadhar and
+            self.doc_marks_card and
+            self.doc_caste_certificate and
+            self.doc_income_certificate and
+            self.doc_transfer
+        )
 
 
     def __str__(self):
+        return f"{self.admission_no} - {self.student_name}"
 
-        return f"{self.student_name} - {self.admission_no}"
+
  
 
 
@@ -623,7 +647,7 @@ class DegreeAdmission(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     
     student_phone_no = models.CharField(max_length=15, blank=True, null=True)
-    parent_phone_no = models.CharField(max_length=15, blank=True, null=True)
+    father_mobile_no = models.CharField(max_length=15, blank=True, null=True)
     annual_income = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     total_annual_income = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     mother_annual_income = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
@@ -665,18 +689,18 @@ class DegreeAdmission(models.Model):
     emergency_contact = models.CharField(max_length=15, blank=True, null=True)
     emergency_contact_name = models.CharField(max_length=15, blank=True, null=True)
     emergency_contact_relation = models.CharField(max_length=15, blank=True, null=True)
-    document_submitted = models.BooleanField(default=False)
+    # document_submitted = models.BooleanField(default=False)
     hostel_required = models.BooleanField(default=False)
     hostel_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # ✅ New field
     transport = models.ForeignKey(Transport, on_delete=models.SET_NULL, null=True, blank=True)
 
     pincode = models.CharField(max_length=6, blank=True, null=True)
-    parent_name = models.CharField(max_length=100, blank=True, null=True)
+    father_name = models.CharField(max_length=100, blank=True, null=True)
     aadhar_no = models.CharField(max_length=12, blank=True, null=True)
     student_aadhar_no = models.CharField(max_length=12, blank=True, null=True)
     admission_taken_by = models.IntegerField(blank=True, null=True)
     mother_email = models.EmailField(max_length=100, blank=True, null=True)
-    email = models.EmailField(max_length=100, blank=True, null=True)
+    father_email = models.EmailField(max_length=100, blank=True, null=True)
     student_email = models.EmailField(max_length=100, blank=True, null=True)
     sslc_reg_no = models.CharField(max_length=30, blank=True, null=True)
     sslc_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
@@ -769,9 +793,27 @@ class DegreeAdmission(models.Model):
     admitted_to = models.ForeignKey(
         'master.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='admitted_students'
     )
+    admission_source = models.CharField(
+    max_length=20,
+    choices=[('enquiry', 'Enquiry'), ('direct', 'Direct'), ('bulk_import', 'Bulk Import')],
+    default=None,
+    null=True,
+    blank=True
+)
+    @property
+    def document_submitted(self):
+        return (
+            self.doc_aadhar and
+            self.doc_marks_card and
+            self.doc_caste_certificate and
+            self.doc_income_certificate and
+            self.doc_transfer
+        )
+
 
     def __str__(self):
         return f"{self.admission_no} - {self.student_name}"
+
 
 
     # For PUAdmission
@@ -827,6 +869,8 @@ class DegreeAdmissionshortlist(models.Model):
         default='Pending'
     )
     admin_approved = models.BooleanField(default=False)
+
+
 
     def __str__(self):
         return self.student_name
@@ -947,6 +991,7 @@ class Student(models.Model):
     ]
 
     # ─────────── Core Fields ───────────
+    academic_year = models.CharField(max_length=9)
     admission_no = models.CharField(max_length=20, unique=True)
     name         = models.CharField(max_length=100)
     course       = models.CharField(max_length=100)
@@ -1098,17 +1143,105 @@ class StudentPaymentHistory(models.Model):
 
 
 from master.models import CourseType
+from admission.models import PUAdmission, DegreeAdmission  # Make sure you import these
+
 class ConfirmedAdmission(models.Model):
-    admission_no = models.CharField(max_length=20)
+    # ForeignKeys to either PUAdmission or DegreeAdmission
+    pu_admission = models.ForeignKey( PUAdmission, on_delete=models.CASCADE,null=True, blank=True,related_name='confirmed_pu_admissions')
+    degree_admission = models.ForeignKey(DegreeAdmission, on_delete=models.CASCADE,null=True, blank=True,related_name='confirmed_degree_admissions')
+
+    # Common fields
     student_name = models.CharField(max_length=100)
     course = models.CharField(max_length=100)
     admission_date = models.DateField()
     documents_complete = models.BooleanField(default=False)
-    admission_type = models.CharField(max_length=10)  # 'PU' or 'Degree'
     status = models.CharField(max_length=20, default='confirmed')
     student_userid = models.CharField(max_length=50, blank=True, null=True)
     student_password = models.CharField(max_length=128, blank=True, null=True)
-    tuition_advance_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # <-- Add this line
- 
+    tuition_advance_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, null=True, blank=True)
+    current_year = models.IntegerField(default=1, null=True, blank=True)  # For PU
+    semester = models.IntegerField(default=1, null=True, blank=True)     # For Degree
+    # In ConfirmedAdmission model
+    password_changed = models.BooleanField(default=False)
+    passcode = models.CharField(max_length=10, blank=True, null=True)
+    passcode_set = models.BooleanField(default=False)
+    wrong_attempts = models.IntegerField(default=0)
+    is_locked = models.BooleanField(default=False)
+
+
+
     def __str__(self):
-        return f"{self.admission_no} ({self.admission_type})"
+        if self.pu_admission:
+            return f"{self.pu_admission.admission_no} (PU)"
+        elif self.degree_admission:
+            return f"{self.degree_admission.admission_no} (Degree)"
+        return "Unlinked Admission"
+
+
+    from django.db import models
+
+class FeeCollection(models.Model):
+    admission_no = models.CharField(max_length=50)
+    fee_name = models.CharField(max_length=100)
+    payment_id = models.CharField(max_length=100, null=True, blank=True)
+    payment_mode = models.CharField(max_length=50, null=True, blank=True)
+    payment_date = models.DateField(null=True, blank=True)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    fine = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.admission_no} - {self.fee_name} - {self.paid_amount}"
+
+
+
+
+
+
+
+
+
+
+from django.db import models
+
+class StudentFeeCollection(models.Model):
+    admission_no = models.CharField(max_length=30)
+    student_userid = models.CharField(max_length=50, blank=True, null=True)
+    academic_year = models.CharField(max_length=9)
+    semester = models.IntegerField(null=True, blank=True)
+    fee_type = models.ForeignKey('master.FeeMaster', on_delete=models.CASCADE)
+    installment_number = models.IntegerField(null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_reference = models.CharField(max_length=100, null=True, blank=True)
+    payment_mode = models.CharField(
+        max_length=30,
+        choices=[
+            ('Cash', 'Cash'),
+            
+            ('Online', 'Online'),
+           
+            ('Bank Transfer', 'Bank Transfer')
+        ],
+        null=True,
+        blank=True
+    )
+    payment_id = models.CharField(max_length=100, null=True, blank=True)
+    payment_date = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('Pending', 'Pending'),
+            ('Partial', 'Partial'),
+            ('Paid', 'Paid')
+        ],
+        default='Pending'
+    )
+
+    def __str__(self):
+        return f"{self.admission_no} - {self.fee_type.fee_name} - Inst {self.installment_number} - {self.status}"
+
+
+

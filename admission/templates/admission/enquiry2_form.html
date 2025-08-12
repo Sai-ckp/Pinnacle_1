@@ -1,137 +1,18 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
+{% load form_tags %}
 
-{% block title %}Degree Enquiry Form{% endblock %}
+
+{% block title %}B.com Enquiry Form{% endblock %}
 
 {% block content %}
-<div style="width: 100vw; padding: 2rem;">
-    <div class="form-card mx-auto" style="width: 67%; max-width: 100%; margin-left: 2px; margin-top: -52px; ">
 
-        <!-- ✅ LOGO AND HEADING -->
-        <div class="logo-container">
-            <img src="https://i.postimg.cc/4xSpKtqg/college-logo-with-name-white-page-0001.jpg" alt="College Logo">
-            <h2>Degree Enquiry Form</h2>
-        </div>
-
-        {# Show success message if present #}
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
-             style="color: green; font-weight: bold; margin-bottom: 10px;">
-            {{ message }}
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <form method="post">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Enquiry No:</label>
-                    <input type="text" value="{{ next_enquiry_no }}" readonly style="background:#eee;">
-                </div>
-                <div class="form-group">
-                    <label for="id_student_name">Student Name <span style="color:red">*</span></label>
-                    {{ form.student_name }} 
-                </div>
-
-
-
-                <div class="form-group">
-                    {{ form.enquiry_date.label_tag }} {{ form.enquiry_date }}
-                </div>
-                <div class="form-group">
-                    {{ form.gender.label_tag }} {{ form.gender }}
-                </div>
-                <div class="form-group">
-
-                    {{ form.parent_relation.label_tag }} {{ form.parent_relation }}
-                </div>
-
-                <div class="form-group">
-                    <label for="id_parent_name" id="label_parent_name">Parent Name</label>
-
-                    {{ form.parent_name }}
-                </div>
-
-                <div class="form-group">
-                    <label for="id_parent_phone" id="label_parent_phone">Parent Phone</label>
-
-                    {{ form.parent_phone }}
-                </div>
-                <div class="form-group" id="guardian_relation_group" style="display:none;">
-                    <label for="id_guardian_relation">Guardian Relation</label>
-                    {{ form.guardian_relation }}
-                </div>
-
-
-                <div class="form-group">
-                    <label for="{{ form.course_type.id_for_label }}">Stream/Specialization</label>
-                    {{ form.course_type }}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.course.id_for_label }}">Combination</label>
-                    {{ form.course }}
-                </div>
-                <div class="form-group" id="percentage_10th_field">
-                    <label for="{{ form.percentage_10th.id_for_label }}">10th Marks/Percentage</label>
-                    {{ form.percentage_10th }}
-                </div>
-
-                <div class="form-group" id="percentage_12th_field">
-                    <label for="{{ form.percentage_12th.id_for_label }}">12th Marks/Percentage</label>
-                    {{ form.percentage_12th }}
-                </div>
-
-
-                <div class="form-group">
-                    <label for="{{ form.email.id_for_label }}">Email ID</label>
-                    {{ form.email }}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.source.id_for_label }}">How did you hear about us?</label>
-                    {{ form.source }}
-                </div>
-                <div class="form-group" id="other_source_group" style="display:none;">
-                    <label for="id_other_source">Other</label>
-                    {{ form.other_source }}
-                </div>
-
-
-                <div class="form-group">
-                    <label for="{{ form.permanent_address.id_for_label }}">Parent Address </label>
-                    {{ form.permanent_address }}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.current_address.id_for_label }}">Local Address</label>
-                    {{ form.current_address }}
-                </div>
-                <div class="form-group">
-                    {{ form.city.label_tag }} {{ form.city }}
-                </div>
-                <div class="form-group">
-                    {{ form.pincode.label_tag }} {{ form.pincode }}
-                </div>
-                <div class="form-group">
-                    {{ form.state.label_tag }} {{ form.state }}
-                </div>
-            </div>
-        </form>
-    </div>
-    <div class="fixed-footer no-print">
-        <div class="left-button">
-            <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print</button>
-        </div>
-        <div class="right-button" style=" margin-left: 757px; margin-top: -27px;">
-            <button type="submit" class="btn btn-primary btn-lg">Submit</button>
-        </div>
-    </div>
-
-
-</div>
 <style>
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 2px;
+        display: none;
+    }
 
     body {
         background-color: #f0f2f5;
@@ -160,17 +41,6 @@
         text-align: left;
     }
 
-    /* .right-button {
-        flex: 1;
-        text-align: right;
-    }*/
-    /* .form-card {
-        background: #fff;
-        padding: 40px 50px;
-        border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    }*/
-
     .form-title {
         text-align: center;
         font-size: 22px;
@@ -180,12 +50,7 @@
         text-transform: uppercase;
     }
 
-    /*.form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 16px 32px;
-        margin-top: 10px;
-    }*/
+
     .form-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr)); /* ensures safe shrinking */
@@ -198,10 +63,10 @@
 
 
     /*
-    .form-group {
-        display: flex;
-        flex-direction: column;
-    }*/
+      .form-group {
+          display: flex;
+          flex-direction: column;
+      }*/
     .form-group {
         display: flex;
         flex-direction: column;
@@ -231,9 +96,15 @@
         }
 
 
-        .form-group select,
+        .form-group select {
+            padding: 2px 7px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
         .form-group textarea {
-            padding: 6px 10px;
+            padding: 3px 7px;
             border: 1px solid #ced4da;
             border-radius: 4px;
             font-size: 11px;
@@ -247,6 +118,7 @@
         transition: background-color 0.3s ease;
         border: none;
         cursor: pointer;
+        margin-top: 76px;
     }
 
     .btn-primary {
@@ -365,112 +237,362 @@
         font-size: 13px; /* Adjust for consistency */
     }
 
+
     .content {
         padding: 69px 112px 40px;
         margin-left: 200px;
     }
+
+
+    #id_parent_phone {
+        border: 1px solid #ced4da;
+        padding: 6px;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 100%;
+        height: 20px;
+    }
+
+        #id_parent_phone.error {
+            border-color: red;
+        }
+
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    input.error {
+        border-color: red;
+    }
+</style>
+
+<div style="width: 100vw; padding: 2rem;">
+    <div class="form-card mx-auto" style="width: 67%; max-width: 100%; margin-left: 2px; margin-top: -52px; ">
+
+        <!-- ✅ LOGO AND HEADING -->
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/4xSpKtqg/college-logo-with-name-white-page-0001.jpg" alt="College Logo">
+            <h2>B.com Enquiry Form</h2>
+        </div>
+
+        <!--{# Show success message if present #}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
+             style="color: green; font-weight: bold; margin-bottom: 10px;">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}-->
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Enquiry No:</label>
+                    <input type="text" value="{{ next_enquiry_no }}" readonly style="background:#eee;">
+                </div>
+                <div class="form-group">
+                    {{ form.enquiry_date.label_tag }} {{ form.enquiry_date }}
+                </div>
+                <div class="form-group">
+                    <label for="id_student_name">Student Name <span style="color:red">*</span></label>
+                    {{ form.student_name }}
+                </div>
+
+                <!--<div class="form-group">
+                    <label for="{{ form.academic_year.id_for_label }}">Academic Year</label>
+                    {{ form.academic_year }}
+                    <small id="academic-year-error" style="color: red; display: none;">Please enter a valid academic year (e.g., 2025-2026)</small>
+                </div>-->
+
+
+
+
+                <div class="form-group">
+                    {{ form.gender.label_tag }} {{ form.gender }}
+                </div>
+                <div class="form-group">
+
+                    {{ form.parent_relation.label_tag }} {{ form.parent_relation }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_parent_name" id="label_parent_name">Parent Name</label>
+
+                    {{ form.parent_name }}
+                </div>
+
+                <!--<div class="form-group">
+                    <label for="id_parent_phone" id="label_parent_phone">Parent Phone</label>
+
+                    {{ form.parent_phone }}
+                </div>-->
+
+                <div class="form-group">
+                    <label for="id_parent_phone" id="label_parent_phone">Parent Phone</label>
+                    {{ form.parent_phone }}
+                    <div id="error_id_parent_phone" class="error-message"></div>
+                </div>
+
+
+                <div class="form-group" id="guardian_relation_group" style="display:none;">
+                    <label for="id_guardian_relation">Guardian Relation</label>
+                    {{ form.guardian_relation }}
+                </div>
+
+
+                <div class="form-group">
+                    <label for="{{ form.course_type.id_for_label }}">Program Type</label>
+                    {{ form.course_type }}
+                </div>
+
+                <!-- Course Dropdown -->
+                <div class="form-group">
+                    <label for="{{ form.course.id_for_label }}">Combination</label>
+                    {{ form.course }}
+                </div>
+
+                <div class="form-group" id="percentage_10th_field">
+                    <label for="{{ form.percentage_10th.id_for_label }}">10th Marks/Percentage</label>
+                    {{ form.percentage_10th }}
+                </div>
+
+                <div class="form-group" id="percentage_12th_field">
+                    <label for="{{ form.percentage_12th.id_for_label }}">12th Marks/Percentage</label>
+                    {{ form.percentage_12th }}
+                </div>
+
+
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email ID</label>
+                    {{ form.email }}
+                    <div id="error_id_email" class="error-message"></div>  <!-- 🔴 Error placeholder -->
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.source.id_for_label }}">How did you hear about us?</label>
+                    {{ form.source }}
+                </div>
+                <div class="form-group" id="other_source_group" style="display:none;">
+                    <label for="id_other_source">Other</label>
+                    {{ form.other_source }}
+                </div>
+
+
+                <div class="form-group">
+                    <label for="{{ form.permanent_address.id_for_label }}">Parent Address </label>
+                    {{ form.permanent_address }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.current_address.id_for_label }}">Local Address</label>
+                    {{ form.current_address }}
+                </div>
+                <div class="form-group">
+                    {{ form.city.label_tag }} {{ form.city }}
+                </div>
+                <div class="form-group">
+                    {{ form.pincode.label_tag }} {{ form.pincode }}
+                </div>
+                <div class="form-group">
+                    {{ form.state.label_tag }} {{ form.state }}
+                </div>
+            </div>
+
+
+            <div class="mt-4" style="margin-top: -42px; display: flex; justify-content: space-between; width: 100%;">
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="fa fa-print"></i> Print
+                </button>
+
+                {% if view_mode %}
+                <a href="{% url 'enquiry_list' %}" class="btn btn-primary btn-lg">Back</a>
+                {% elif edit_mode %}
+                <button type="submit" class="btn btn-primary btn-lg">Update</button>
+                {% else %}
+                <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+                {% endif %}
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+        display: block;
+    }
+
+    #id_parent_phone {
+        border: 1px solid #ced4da;
+        padding: 6px;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 100%;
+        height: 20px;
+    }
+
+        #id_parent_phone.error {
+            border-color: red;
+        }
 </style>
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 
-    //document.addEventListener("DOMContentLoaded", function () {
-    //    const form = document.querySelector("form");
+    document.addEventListener('DOMContentLoaded', function () {
 
-    //    const requiredFields = [
-    //        "id_student_name",
-    //        //"id_parent_name",
-    //        //"id_parent_phone",
-    //        "id_percentage_10th",
-    //        "id_percentage_12th"
-    //    ];
+        const form = document.querySelector('form');
 
-    //    form.addEventListener("submit", function (event) {
-    //        let isValid = true;
+        const parentPhoneInput = document.getElementById('id_parent_phone');
 
-    //        requiredFields.forEach(function (id) {
-    //            const input = document.getElementById(id);
-    //            if (input) {
-    //                const value = input.value.trim();
-    //                const errorId = id + "_error";
-    //                let errorSpan = document.getElementById(errorId);
+        const parentPhoneError = document.getElementById('error_id_parent_phone');
 
-    //                // Create error message span if not exists
-    //                if (!errorSpan) {
-    //                    errorSpan = document.createElement("span");
-    //                    errorSpan.id = errorId;
-    //                    errorSpan.style.color = "red";
-    //                    errorSpan.style.fontSize = "12px";
-    //                    input.parentNode.appendChild(errorSpan);
-    //                }
+        // Enforce digits only, max length 10
 
-    //                if (value === "") {
-    //                    input.style.border = "2px solid red";
-    //                    errorSpan.textContent = "This field is required.";
-    //                    isValid = false;
-    //                } else {
-    //                    input.style.border = "1px solid #ced4da";
-    //                    errorSpan.textContent = "";
-    //                }
-    //            }
-    //        });
+        parentPhoneInput.addEventListener('keypress', function (e) {
+
+            const char = e.key;
+
+            const isDigit = /^[0-9]$/.test(char);
+
+            if (!isDigit || this.value.length >= 10) {
+
+                e.preventDefault();
+
+            }
+
+        });
+
+        // On input (typing or paste), remove non-digits and trim to 10
+
+        parentPhoneInput.addEventListener('input', function () {
+
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+
+            validatePhoneLive();
+
+        });
+
+        // Validate on blur or during typing
+
+        function validatePhoneLive() {
+
+            const value = parentPhoneInput.value.trim();
+
+            if (value.length === 0) {
+
+                parentPhoneError.textContent = '';
+
+                parentPhoneInput.classList.remove('error');
+
+                return;
+
+            }
+
+            if (value.length === 1 && !/^[6-9]$/.test(value)) {
+
+                parentPhoneError.textContent = 'Enter valid 10-digit phone number starting with 6-9';
+
+                parentPhoneInput.classList.add('error');
+
+                return;
+
+            }
+
+            if (value.length === 10 && /^[6-9]\d{9}$/.test(value)) {
+
+                parentPhoneError.textContent = '';
+
+                parentPhoneInput.classList.remove('error');
+
+            } else if (value.length === 10) {
+
+                parentPhoneError.textContent = 'Enter valid 10-digit phone number starting with 6-9';
+
+                parentPhoneInput.classList.add('error');
+
+            } else {
+
+                parentPhoneError.textContent = '';
+
+                parentPhoneInput.classList.remove('error');
+
+            }
+
+        }
+
+        // Final check on submit
+
+        form.addEventListener('submit', function (e) {
+
+            const finalValue = parentPhoneInput.value.trim();
+
+            if (!/^[6-9]\d{9}$/.test(finalValue)) {
+
+                parentPhoneError.textContent = 'Enter valid 10-digit phone number starting with 6-9';
+
+                parentPhoneInput.classList.add('error');
+
+                e.preventDefault();  // stop form submission
+
+            }
+
+        });
+
+    });
+</script>
 
 
+<script>
+    $(document).ready(function () {
+        const courseTypeSelect = $('#id_course_type');
+        const courseSelect = $('#id_course');
 
-    // AJAX for dependent course dropdown
-    $(function () {
-        var defaultCourseType = '2';  // your default course type
-
-        function loadCombinations(courseTypeId) {
-            var url = "{% url 'ajax_load_courses_degree' %}";
+        function loadCourses(courseTypeId, selectedCourseId = null) {
+            if (!courseTypeId) return;
 
             $.ajax({
-                url: url,
+                url: "{% url 'ajax_load_courses_degree' %}",
                 data: {
                     'course_type': courseTypeId
                 },
                 success: function (data) {
-                    var courseSelect = $('#id_course');
                     courseSelect.html('<option value="">---------</option>');
                     $.each(data, function (index, course) {
-                        courseSelect.append('<option value="' + course.id + '">' + course.name + '</option>');
+                        const selected = (selectedCourseId == course.id) ? ' selected' : '';
+                        courseSelect.append('<option value="' + course.id + '" ' + selected + '>' + course.name + '</option>');
                     });
                 }
             });
         }
 
-        // Set default course_type and load combinations on page load
-        $('#id_course_type').val(defaultCourseType);
-        loadCombinations(defaultCourseType);
-
-        // Also bind change event to reload combinations
-        $('#id_course_type').change(function () {
-            var selectedCourseTypeId = $(this).val();
-            loadCombinations(selectedCourseTypeId);
+        // Only load if the user selects something
+        courseTypeSelect.change(function () {
+            const selectedId = $(this).val();
+            loadCourses(selectedId);
         });
     });
 
 
-    //// Show/hide percentage fields based on course_type selection
-    //function updatePercentageFields() {
-    //    var courseTypeSelect = document.getElementById('id_course_type');
-    //    var perc10Field = document.getElementById('percentage_10th_field');
-    //    var perc12Field = document.getElementById('percentage_12th_field');
-    //    if (!courseTypeSelect) return;
-    //    // Get selected option text (case-insensitive)
-    //    var selectedText = courseTypeSelect.options[courseTypeSelect.selectedIndex]?.text.toLowerCase() || "";
-    //    if (selectedText.includes('puc')) {
-    //        perc10Field.style.display = 'block';
-    //        perc12Field.style.display = 'none';
-    //    } else if (selectedText.includes('degree')) {
-    //        perc10Field.style.display = 'block';
-    //        perc12Field.style.display = 'block';
-    //    } else {
-    //        perc10Field.style.display = 'block';
-    //        perc12Field.style.display = 'block';
-    //    }
-    //}
+
+
 
     document.addEventListener('DOMContentLoaded', function () {
         const pincodeInput = document.getElementById('id_pincode');
@@ -588,5 +710,52 @@
     }
 
     toggleOtherSource();
-    sourceSelect.addEventListener("change", toggleOtherSource);</script>
-{% endblock %}
+    sourceSelect.addEventListener("change", toggleOtherSource);
+</script>
+
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailInput = document.getElementById('id_email');
+        const errorDiv = document.getElementById('error_id_email');
+        const form = document.querySelector('form');
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function validateEmailField() {
+            const value = emailInput.value.trim();
+
+            if (value.length === 0) {
+                errorDiv.textContent = '';
+                emailInput.classList.remove('error');
+                return true;  // Allow empty (if not required)
+            }
+
+            if (!emailPattern.test(value)) {
+                errorDiv.textContent = 'Enter a valid email (e.g., example@gmail.com).';
+                emailInput.classList.add('error');
+                return false;
+            } else {
+                errorDiv.textContent = '';
+                emailInput.classList.remove('error');
+                return true;
+            }
+        }
+
+        // Validate on input
+        emailInput.addEventListener('input', validateEmailField);
+
+        // Validate on form submit
+        form.addEventListener('submit', function (e) {
+            const valid = validateEmailField();
+            if (!valid) {
+                e.preventDefault(); // Stop form if invalid
+            }
+        });
+    });
+</script>
+
+
+    {% endblock %}

@@ -1,5 +1,5 @@
-{% extends 'master/layout.html' %}
-{% block title %}Enquiry {% endblock %}
+{% extends 'layout.html' %}
+{% block title %}Student Enquiry Management {% endblock %}
 {% block content %}
 <div class="container py-5">
     <h2 class="fw-bold  mb-7">Student Enquiry Management</h2>
@@ -18,7 +18,6 @@
             </ul>
         </div>
     </div>-->
-
     <!-- Dashboard Cards -->
     <div class="row mb-5">
         <div class="col-md-3 mb-3">
@@ -28,7 +27,7 @@
                         <h6 class="text-muted">Total Enquiries <i class="bi bi-telephone icon-font"></i></h6>
                         <h3 class="fw-bold">{{ total_enquiries }}</h3>
                         <h6 class="text-mute">
-                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                            This Month
                         </h6>
                     </div>
                 </div>
@@ -53,15 +52,9 @@
                     <div class="card-body text-center">
                         <h6 class="text-muted">Follow-ups Due <i class="bi bi-calendar-event icon-font"></i></h6>
                         <h3 class="fw-bold">{{ followups_due }}</h3>
-                        {% if active_filter == 'day' %}
-                        <h6 class="text-mute">Today</h6>
-                        {% elif active_filter == 'week' %}
+
                         <h6 class="text-mute">This week</h6>
-                        {% elif active_filter == 'month' %}
-                        <h6 class="text-mute">This month</h6>
-                        {% else %}
-                        <h6 class="text-mute">All time</h6>
-                        {% endif %}
+
 
 
                     </div>

@@ -1,4 +1,4 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 {% load permission_tags %}
 {% load custom_tags %}
 
@@ -65,9 +65,9 @@
         background-color: #f8f9fa;
     }
 
-    tr:hover {
+   /* tr:hover {
         background-color: #e9ecef;
-    }
+    }*/
 
     .submit-btn {
         padding: 6px 3px;
@@ -136,7 +136,7 @@
                 {% for form in all_forms %}
                 <tr>
                     <td>{{ form_display_names|get_item:form }}</td>
-                    {% if form == 'communication_dashboard' or form == 'calendar_form' or form == 'student_database' or form == 'recent_activity_view'  %}
+                    {% if form == 'communication_dashboard' or form == 'calendar_form' or form == 'promotion_history' or form == 'student_database' or form == 'recent_activity_view'  %}
                     <td colspan="4">
                         {% with perms|get_item:form as form_perm %}
                         <input type="checkbox" name="{{ form }}_access"
@@ -201,6 +201,73 @@
     });
 </script>
 
+
+<div id="snackbar"></div>
+
+<script>
+    function showSnackbar(message) {
+        const snackbar = document.getElementById("snackbar");
+        snackbar.textContent = message;
+        snackbar.className = "show";
+        setTimeout(() => {
+            snackbar.className = snackbar.className.replace("show", "");
+        }, 3000);
+    }
+
+    // Django message support
+    {% if messages %}
+        {% for message in messages %}
+            showSnackbar("{{ message|escapejs }}");
+        {% endfor %}
+    {% endif %}
+</script>
+
+<style>
+    #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #800000;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 14px 24px;
+        position: fixed;
+        z-index: 9999;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        font-size: 14px;
+    }
+
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.4s, fadeout 0.4s 2.6s;
+        }
+
+    @keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
+    }
+</style>
 
 
 {% endblock %}

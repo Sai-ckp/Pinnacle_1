@@ -1,18 +1,34 @@
-{% extends 'master/layout.html' %}
-{% block title %}Admission Dashboard{% endblock %}
+{% extends 'layout.html' %}
+{% block title %}Enquiry {% endblock %}
 {% block content %}
 <div class="container py-5">
     <h2 class="fw-bold  mb-7">Student Enquiry Management</h2>
 
-    <!-- Dashboard Summary Cards -->
-    <!-- Dashboard Summary Cards -->
+    <!-- Filter Dropdown -->
+    <!--<div class="mb-4 d-flex justify-content-end">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary px-4 py-2 dropdown-toggle" style="font-size: 10px; width: 100%; background: #800000;" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+            <ul class="dropdown-menu" style=" width: 100%;     font-size: 10px;" aria-labelledby="filterDropdown">
+                <li><a class="dropdown-item {% if active_filter == 'day' %}active{% endif %}" href="?filter=day">Per Day</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'week' %}active{% endif %}" href="?filter=week">Per Week</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'month' %}active{% endif %}" href="?filter=month">Per Month</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'all' %}active{% endif %}" href="?filter=all">All</a></li>
+            </ul>
+        </div>
+    </div>-->
+    <!-- Dashboard Cards -->
     <div class="row mb-5">
         <div class="col-md-3 mb-3">
             <a href="{% url 'enquiry_list1' %}" style="text-decoration: none; color: inherit;">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body text-center">
-                        <h6 class="text-muted">Total Enquiries</h6>
+                        <h6 class="text-muted">Total Enquiries <i class="bi bi-telephone icon-font"></i></h6>
                         <h3 class="fw-bold">{{ total_enquiries }}</h3>
+                        <h6 class="text-mute">
+                            This Month
+                        </h6>
                     </div>
                 </div>
             </a>
@@ -22,90 +38,93 @@
             <a href="{% url 'converted_enquiry_list' %}" style="text-decoration: none; color: inherit;">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body text-center">
-                        <h6 class="text-muted">Converted</h6>
-                        <h3 class="fw-bold">{{total_converted_enquiries}}</h3>
+                        <h6 class="text-muted">Converted <i class="bi bi-file-earmark-text icon-font"></i></h6>
+                        <h3 class="fw-bold">{{ total_converted_enquiries }}</h3>
+                        <h6 class="text-mute">{{ conversion_rate }}% conversion rate</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <a href="{% url 'followups_due_list' %}" style="text-decoration: none; color: inherit;">
+                <div class="card shadow-sm border-0  h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Follow-ups Due <i class="bi bi-calendar-event icon-font"></i></h6>
+                        <h3 class="fw-bold">{{ followups_due }}</h3>
+
+                        <h6 class="text-mute">This week</h6>
+
+
 
                     </div>
                 </div>
             </a>
         </div>
+
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-0  h-100">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Follow-ups Due <i class="bi bi-calendar"></i></h6>
-                    <h3 class="fw-bold">{{ followups_due }}</h3>
+            <a href="{% url 'pending_followups_list' %}" style="text-decoration: none; color: inherit;">
+                <div class="card shadow-sm border-0  h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Pending Follow-up <i class="bi bi-envelope icon-font"></i></h6>
+                        <h3 class="fw-bold">{{ pending_followups }}</h3>
+                        <h6 class="text-mute">Requires attention</h6>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-0  h-100">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Pending Follow-up <i class="bi bi-envelope"></i></h6>
-                    <h3 class="fw-bold">{{ pending_followups }}</h3>
-                </div>
-            </div>
+            </a>
         </div>
     </div>
-    
 
-    <!-- Action Buttons -->
     <!-- Action Buttons -->
     <div class="d-flex flex-wrap gap-3 mb-4">
-        <!-- New Enquiry Dropdown Button -->
         <div class="d-flex flex-column align-items-start position-relative">
+            {% if form_permissions.enquiry_form.add %}
             <button id="toggle-applications" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-journal-text me-2"></i> New Enquiry
+                <i class="bi bi-journal-text me-2"></i> Add Enquiry
             </button>
             <div id="application-buttons" class="d-none flex-column custom-dropdown">
-                <a href="{% url 'enquiry1_create' %}"  class="btn btn-maroon px-4 py-3">
-                    <i class="bi bi-file-earmark-text me-2"></i> PU Enquiry
+                <a href="{% url 'enquiry_form_add' %}" class="btn btn-maroon px-4 py-3">
+                    <i class="bi bi-file-earmark-text me-2"></i> PU Course Enquiry
                 </a>
-                <a href="{% url 'enquiry2_create' %}"  class="btn btn-maroon px-4 py-3">
-                    <i class="bi bi-journal-plus me-2"></i> Degree Enquiry
+                <a href="{% url 'degree_enquiry_add' %}" class="btn btn-maroon px-4 py-3">
+                    <i class="bi bi-journal-plus me-2"></i> Degree Course Enquiry
                 </a>
             </div>
+            {% endif %}
         </div>
 
-        <!-- All Enquiries -->
         <div>
             <a href="{% url 'enquiry_list' %}" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-card-list me-2"></i> All Enquiries
+                <i class="bi bi-card-list me-2"></i> Enquiries Repository
             </a>
-            <!--<button class="btn btn-outline-secondary px-4 py-3 load-form" data-url="{% url 'enquiry_list' %}">
-                <i class="bi bi-card-list me-2"></i> All Enquiries
-            </button>-->
         </div>
 
-        <!-- Schedule Follow-Up -->
         <div>
-            <a href="{% url 'schedule_follow_up_form' %}" class="btn btn-maroon px-4 py-3">
+            {% if form_permissions.schedule_follow_up_form.add %}
+            <a href="{% url 'schedule_follow_up_form_add' %}" class="btn btn-maroon px-4 py-3">
                 <i class="bi bi-calendar-event me-2"></i> Schedule Follow-Up
             </a>
+            {% endif %}
         </div>
 
-        <!-- Follow-up History -->
         <div>
             <a href="{% url 'follow_up_list' %}" class="btn btn-maroon px-4 py-3">
                 <i class="fas fa-history me-2"></i> Follow-up History
             </a>
-            <!--<button class="btn btn-outline-warning px-4 py-3 load-form" data-url="{% url 'follow_up_list' %}">
-                <i class="fas fa-history me-2"></i> Follow-up History
-            </button>-->
         </div>
     </div>
 
-    <!-- Loaded content will appear here -->
+    <!-- Loaded content -->
     <div id="form-container"></div>
 </div>
 
-<!-- Bootstrap CSS & Icons -->
+<!-- JS & CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- JavaScript -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Load dynamic forms via AJAX
         document.querySelectorAll(".load-form").forEach(function (btn) {
             btn.addEventListener("click", function () {
                 const url = this.dataset.url;
@@ -123,7 +142,6 @@
             });
         });
 
-        // Toggle dropdown
         const appBtn = document.getElementById("toggle-applications");
         const appSection = document.getElementById("application-buttons");
 
@@ -134,25 +152,27 @@
     });
 </script>
 
-<!-- Styles -->
+<!-- STYLES -->
 <style>
     body {
         font-family: Arial, sans-serif;
         background: #f7f8f8;
-        padding: 0;
     }
+
 
     .btn {
         min-width: 178px;
         font-weight: 600;
-        transition: all 0.2s ease-in-out;
         padding: 12px;
         font-size: 9px;
+        transition: all 0.2s ease-in-out;
     }
-    .fw-bold{
-        color:#800000;
-        font-size:28px;
+
+    .fw-bold {
+        color: #800000;
+        font-size: 28px;
     }
+
     .btn-maroon {
         color: #800000;
         border: 2px solid #800000;
@@ -165,26 +185,30 @@
         }
 
     .text-muted {
-        --bs-text-opacity: 1;
         color: #8b0000 !important;
-        text-align:center;
+        text-align: center;
     }
+
+    .text-mute {
+        color: #373b3e !important;
+        text-align: center;
+        font-size: 12px;
+    }
+
     .mb-7 {
         margin-bottom: 21px !important;
-        font-size: 27px;
+        font-size: 20px;
         text-align: center;
-        /* margin-left: -90px; */
     }
-    
+
     h2 {
         font-size: 22px;
         text-align: center;
     }
 
-    /*.card h3 {
-        font-size: 28px;
-        color: #800000;
-    }*/
+    .icon-font {
+        margin-left: 10px;
+    }
 
     .btn:hover {
         transform: translateY(-2px);
@@ -211,18 +235,13 @@
     }
 
     .gap-3 {
-        gap: 1rem !important;
+        gap: 5rem !important;
     }
 
     .mb-4 {
         margin-bottom: 21px !important;
         font-size: 14px;
         text-align: center;
-        /* margin-left: -90px; */
-    }
-
-    .flex-wrap {
-        flex-wrap: wrap !important;
     }
 
     .py-5 {
@@ -234,7 +253,6 @@
         margin-top: 0rem !important;
         margin-left: -111px;
         text-align: center;
-        /* font-size: 12px; */
     }
 
     .mt-4 {
@@ -243,39 +261,24 @@
     }
 
     caption {
-        padding-top: .5rem;
-        padding-bottom: .5rem;
+        font-size: 16px;
         color: #6c757d;
         text-align: center;
-        font-size: 16px;
     }
 
     th {
         background-color: #6c7ae0;
         color: #fff;
         border: 1px solid #dee2e6;
-        padding: 1px;
         font-size: 12px;
         text-align: center;
     }
-    .card h3 {
-        font-size: 20px;
-        color: #8b0000;
-    }
+
     td {
         padding: 1px 7px;
         border: 1px solid #ddd;
         text-align: center;
         font-size: 9px;
-    }
-
-    #form-container {
-        margin-top: -25px;
-        background-color: #f8f9fa;
-        border-radius: 9px;
-        box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
-        animation: fadeIn 0.3s ease-in-out;
-        margin-left: 0;
     }
 
     .card {
@@ -288,10 +291,24 @@
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
         }
 
-       /* .card h3 {
-            font-size: 28px;
-            color: #343a40;
-        }*/
+        .card h3 {
+            font-size: 20px;
+            color: #8b0000;
+        }
+
+    #form-container {
+        margin-top: -25px;
+        background-color: #f8f9fa;
+        border-radius: 9px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .btn.show {
+        color: var(--bs-btn-active-color);
+        background-color: #800000;
+        border-color: #800000;
+    }
 
     @keyframes fadeIn {
         from {
@@ -320,13 +337,6 @@
         width: 100%;
     }
 
-    .form-card {
-        background: #fff;
-        padding: 0px 6px;
-        border-radius: 10px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    }
-
     #form-container form button[type="submit"] {
         margin-top: 10px;
         padding: 10px 20px;
@@ -335,15 +345,14 @@
 
     .table > :not(caption) > * > * {
         padding: .0px .1px;
-        color: var(--bs-table-color-state, var(--bs-table-color-type, var(--bs-table-color)));
         background-color: var(--bs-table-bg);
         border-bottom-width: var(--bs-border-width);
-        box-shadow: inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
     }
 
-    .content {
-        padding: 60px 1px 8px;
-        flex-grow: 1;
+    .dropdown-item.active {
+        color: var(--bs-dropdown-link-active-color);
+        text-decoration: none;
+        background-color: #800000;
     }
 </style>
 {% endblock %}

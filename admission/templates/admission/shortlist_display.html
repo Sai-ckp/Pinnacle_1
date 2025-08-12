@@ -1,31 +1,31 @@
-﻿{% extends 'master/layout.html' %}
+﻿{% extends 'layout.html' %}
 {% block title %}Confirmed Admissions – Fee Entry{% endblock %}
 {% block content %}
 
 <style>
     body {
-        background-color: #f0f2f5;
+        background-color: #f8f9fa;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin-left: 91px;
+        margin-left: 200px;
+        margin-top: 0;
     }
 
     .container {
-        background: #fff;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        background-color: #ffffff;
+        padding: 20px;
         margin-top: 10px;
-        margin-left: -64px;
-        margin-right: 27px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        max-width: 100%;
     }
 
     .form-title {
         text-align: center;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 700;
         color: #800000;
-        margin-bottom: 24px;
-        margin-top: -17px;
+        margin-bottom: 20px;
+        margin-top: -10px;
     }
 
     form select {
@@ -35,41 +35,41 @@
         border: 1px solid #ccc;
         background: #fff;
         cursor: pointer;
-        margin-bottom: 12px;
+        margin: 0 10px 12px 10px;
     }
 
-    .styled-table {
+    table {
         width: 100%;
+        font-size: 12px;
         border-collapse: collapse;
         margin-top: 10px;
-        font-size: 12px;
     }
 
-        .styled-table th, .styled-table td {
-            padding: 1px 6px;
-            border: 1px solid #dee2e6;
-            text-align: center;
-            vertical-align: middle;
-        }
+    th, td {
+        border: 1px solid #dee2e6;
+        padding: 6px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 9px;
+    }
 
-        .styled-table thead {
-            background: linear-gradient(135deg, #8B0000, #800000);
-            color: white;
-            font-size: 12px;
-        }
+    thead {
+        background: linear-gradient(135deg, #8B0000, #800000);
+        color: white;
+    }
 
-        .styled-table tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
+    tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
 
-        .styled-table tbody tr:hover {
-            background-color: #e9ecef;
-        }
+   /* tr:hover {
+        background-color: #e9ecef;
+    }*/
 
-        .styled-table td {
-            font-size: 10px;
-            color: #333;
-        }
+    .text-center {
+        font-style: italic;
+        color: #888;
+    }
 
     .icon-btn {
         border: 1px solid #dee2e6;
@@ -82,21 +82,17 @@
         display: inline-block;
     }
 
-        .icon-btn i {
-            color: #800000;
-            font-size: 13px;
-        }
+    .icon-btn i {
+        color: #800000;
+        font-size: 13px;
+    }
 
-        .icon-btn.text-danger i {
-            color: #b30000;
-        }
+    .icon-btn.text-danger i {
+        color: #b30000;
+    }
 
-        .icon-btn:hover {
-            background-color: #f3f3f3;
-        }
-
-    .text-center {
-        text-align: center;
+    .icon-btn:hover {
+        background-color: #f3f3f3;
     }
 
     .alert {
@@ -107,16 +103,17 @@
     }
 
     @media (max-width: 768px) {
-        .styled-table, .styled-table th, .styled-table td {
+        table, th, td {
             font-size: 10px;
         }
     }
 
     .content {
         padding: 21px 26px 40px;
-        margin-left: 200px;
+        margin-left: 0px;
     }
 </style>
+
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
       integrity="sha512-dYdAvXpHoA4rYUNFTZcmu9BsvZTCbNbsn/gyLv2eD9Ox8gVNk0Fqaq7mj2WyZKQXHTA1zOK6nDtxb4Ib8FJ/Og=="

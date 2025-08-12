@@ -1,10 +1,19 @@
-﻿{% extends 'master/layout.html' %}
+﻿{% extends 'layout.html' %}
 
 {% block head %}
 <style>
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: #f4f6f9;
+    }
+
+    .gradient-text {
+        font-size: 24px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #ff00cc, #3333ff, #800080); /* pink, blue, purple */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center !important;
     }
 
     .dashboard {
@@ -25,6 +34,7 @@
         color: white;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         margin-bottom: 30px;
+        text-align: center;
     }
 
         .dashboard-header h2 {
@@ -33,9 +43,9 @@
         }
 
         .dashboard-header h6 {
-            font-size: 1rem;
             font-weight: normal;
             margin: 0;
+            font-size: 17px;
         }
 
     .license-status {
@@ -116,6 +126,7 @@
         text-align: center;
         animation: dropFade 0.4s ease-out;
         box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        position: relative;
     }
 
     @keyframes dropFade {
@@ -148,12 +159,21 @@
         text-decoration: none;
     }
 
-        .modal-content a:hover {
-            text-decoration: underline;
-        }
+    .gradient-text {
+        font-size: 24px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #ff00cc, #3333ff, #800080); /* pink, blue, purple */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center !important;
+    }
+
+    .modal-content a:hover {
+        text-decoration: underline;
+    }
 
     .content {
-        padding: 156px 42px 18px;
+        padding: 97px 20px 18px;
         flex-grow: 1;
         text-align: center;
     }
@@ -162,52 +182,48 @@
 
 {% block content %}
 <div class="dashboard">
-
     <!-- Header -->
-    <div class="dashboard-header">
-        <h2>Welcome to CKP Software Solutions</h2>
-        <h6>You have full access to all features in your dashboard.</h6>
-    </div>
-
+    <!--<div class="dashboard-header">-->
+    <h2 style="text-align: center !important; " <!--class="gradient-text"-->Welcome to CKP Software Technologies</h2>
+    <br />
+    <h6 style="text-align: center !important; " You have full access to all features in your dashboard.</h6>
+    <!--</div>-->
     <!-- License Info -->
     <div class="license-status">
         <span>License Expiry Date: <strong>{{ license_end_date|default:"N/A" }}</strong></span>
-        <span class="status-tag {% if is_expiring_soon %}status-warning{% else %}status-ok{% endif %}">
-            {% if is_expiring_soon %} Expiring Soon {% else %} Active {% endif %}
+        <span class="status-tag {{ is_expiring_soon|yesno:"status-warning,status-ok" }}">
+            {{ is_expiring_soon|yesno:"Expiring Soon,Active" }}
         </span>
     </div>
 
-    {% if user.is_superuser %}
-    <div style="margin-top: 20px;">
-        <a href="{% url 'extend_license' %}" class="extend-btn">Extend License</a>
-    </div>
-    {% endif %}
+    <!-- Always show the extend button -->
 </div>
 
 <!-- Modal for expiry warning -->
-<div id="licenseExpiryModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <p>
-            <strong>Reminder:</strong> Your license is expiring on <br>
-            <span style="color:#d9534f; font-weight: bold;">{{ license_end_date|default:"N/A" }}</span>.
-        </p>
-        <p>Please contact <a href="mailto:support@ckpsoftware.com">support@ckpsoftware.com</a> to renew.</p>
+<!--<div id="licenseExpiryModal" class="modal" data-expiring="{{ license_expiring|default_if_none:'False' }}">-->
+<!--<div class="modal-content">
+    <span class="close">&times;</span>-->
+<p>
+    <strong>Reminder:</strong> Your license is expiring on <br>
+    <span style="color:#d9534f; font-weight: bold;">{{ license_end_date|default:"N/A" }}</span>.
+</p>
+<p>Please contact <a href="mailto:support@ckpsoftware.com">support@ckpsoftware.com</a> to renew.</p>
     </div>
 </div>
 
-{% if request.session.license_expiring %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById("licenseExpiryModal");
         const close = document.querySelector(".modal-content .close");
-
-        modal.style.display = "block";
-
-        close.onclick = function () {
-            modal.style.display = "none";
-        };
-
+        const shouldShow = modal.getAttribute('data-expiring') === 'True';
+        if (shouldShow) {
+            modal.style.display = "block";
+        }
+        if (close) {
+            close.onclick = function () {
+                modal.style.display = "none";
+            };
+        }
         window.onclick = function (event) {
             if (event.target === modal) {
                 modal.style.display = "none";
@@ -215,5 +231,4 @@
         };
     });
 </script>
-{% endif %}
 {% endblock %}

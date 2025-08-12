@@ -1,0 +1,124 @@
+{% extends 'lms/student_layout.html' %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+
+{% load static %}
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+    .student-profile-wrapper {
+        border: 2px solid #ccc;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 30px;
+        background-color: #fdfdfd;
+    }
+
+    .profile-card h5 {
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 6px;
+        margin-bottom: 16px;
+        font-size: 17px;
+        color: #800000;
+    }
+
+    .table td, .table th {
+        padding: 6px 10px;
+    }
+</style>
+
+<div class="student-profile-wrapper">
+
+    <!-- Profile Section -->
+    <div id="profile" class="content-section active">
+        <div style="margin-bottom: 16px;">
+            <h5 style="font-size: 18px; color: #800000; text-align: center;">{{ student.student_name }}</h5>
+            <table class="table table-bordered table-striped" style="margin-top: 20px;">
+                <tbody>
+                    <tr>
+                        <th class="text-center" style="width: 30%;">Admission No:</th>
+                        <td class="text-center">{{ admission.admission_no }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Roll Number:</th>
+                        <td class="text-center">{{ student.student_userid }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Program Type:</th>
+                        <td class="text-center">{{ student.course_type.name }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Course:</th>
+                        <td class="text-center">{{ student.course.name }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Quota:</th>
+                        <td class="text-center">{{ student.quota_type }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Gender:</th>
+                        <td class="text-center">{{ admission.gender }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Admission Date:</th>
+                        <td class="text-center">{{ admission.admission_date }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">DOB:</th>
+                        <td class="text-center">{{ admission.dob }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Mobile:</th>
+                        <td class="text-center">{{ admission.student_phone_no }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="address-section" style="margin-top: 30px;">
+                <h5 style="font-size: 16px; color: #800000;">Address</h5>
+                <table class="table table-bordered table-striped">
+                    <tbody>
+                        <tr>
+                            <th class="text-center">Current Address:</th>
+                            <td class="text-center">{{ admission.current_address }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-center">Permanent Address:</th>
+                            <td class="text-center">{{ admission.permanent_address }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="parent-section" style="margin-top: 30px;">
+                <h5 style="font-size: 16px; color: #800000;">Parent Details</h5>
+                <table class="table table-bordered table-striped">
+                    <tbody>
+                        <tr>
+                            <th class="text-center">Father's Name:</th>
+                            <td class="text-center">{{ admission.father_name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-center">Father's Phone No:</th>
+                            <td class="text-center">{{ admission.father_mobile_no }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-center">Mother's Name:</th>
+                            <td class="text-center">{{ admission.mother_name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-center">Mother's Phone No:</th>
+                            <td class="text-center">{{ admission.mother_phone_no }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

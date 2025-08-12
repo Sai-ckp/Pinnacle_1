@@ -12,13 +12,19 @@ class attendancesettings(models.Model):
 
 import datetime
 
+from django.db import models
+import datetime
+
+from master.models import Employee
+from .models import attendancesettings  # Ensure this is correct
+
 class attendance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     date = models.DateField()
     check_in = models.TimeField()
     check_out = models.TimeField(null=True, blank=True)
     status = models.CharField(max_length=20)  # 'Present', 'Late', 'Absent'
- 
+
     def save(self, *args, **kwargs):
         settings = attendancesettings.objects.first()
         if settings and self.check_in:
@@ -35,10 +41,14 @@ class attendance(models.Model):
             self.status = "Absent"
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"{self.employee.name} - {self.date}"
+
+
 
 from django.db import models
-from master.models import StudentDatabase, Subject
-
+from master.models import StudentDatabase, Subject,Course , CourseType
+from timetable.models import TimeSlot
 
 class StudentAttendance(models.Model):
     STATUS_CHOICES = [
@@ -46,23 +56,28 @@ class StudentAttendance(models.Model):
         ('late', 'Late'),
         ('absent', 'Absent'),
     ]
+    admission_number = models.CharField(max_length=50, blank=True, null=True)  # NEW FIELD
+    program_type = models.ForeignKey(CourseType, on_delete=models.SET_NULL, null=True, blank=True)  # NEW FIELD
 
-    course = models.CharField(max_length=100, null=True, blank=True)
-    subject = models.CharField(max_length=100, null=True, blank=True)
-    attendance_date = models.DateField(null=True, blank=True)
-    faculty_name = models.CharField(max_length=100, null=True, blank=True)
-
-    student_name = models.CharField(max_length=100, null=True, blank=True)
-    admission_no = models.CharField(max_length=20, null=True, blank=True)
-    student_userid = models.CharField(max_length=50, null=True, blank=True)
-
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
+    student = models.ForeignKey(StudentDatabase, on_delete=models.CASCADE)
+    student_userid = models.CharField(max_length=50, blank=True, null=True)
+    student_name = models.CharField(max_length=100, blank=True, null=True)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True)
+    semester_number = models.PositiveIntegerField(null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True)
+    faculty = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True)
+    attendance_date = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     remarks = models.CharField(max_length=255, blank=True, null=True)
-    overall_attendance = models.FloatField(default=0, null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.student_name} ({self.admission_no}) - {self.subject} on {self.attendance_date}: {self.status}"
+    # time_slot = models.ForeignKey(TimeSlot, on_delete=models.SET_NULL, null=True, blank=True)  # ✅ New field
+    time_slot = models.ForeignKey(TimeSlot, on_delete=models.SET_NULL, null=True, blank=True)
+    attendance_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    academic_year = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
-        unique_together = ('admission_no', 'subject', 'attendance_date')
+        unique_together = ('student', 'subject', 'attendance_date','time_slot')
+ 
+    def __str__(self):
+        return f"{self.student.student_name} - {self.subject.name} (Sem {self.semester_number}) on {self.attendance_date}: {self.status}"
+ 
 

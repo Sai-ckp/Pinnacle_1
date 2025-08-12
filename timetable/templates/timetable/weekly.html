@@ -1,4 +1,4 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 {% load utils %}
 
 {% block content %}
@@ -9,73 +9,18 @@
         font-size: 12px;
     }
 
-    input,
-    select,
-    textarea,
-    .form-select,
-    .form-control {
-        font-size: 12px !important;
-        padding: 4px 8px;
-        height: auto;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        box-shadow: none;
-    }
-
     .content {
         padding: 42px 37px 3px;
         flex-grow: 1;
         margin-left: 75px;
     }
 
-    .table th,
-    .table td {
-        vertical-align: middle;
-        padding: 2px;
-        font-size: 12px;
-    }
-
-    .badge {
-        font-size: 12px;
-    }
-
-    .subject-box {
-        padding: 2px 2px 2px 6px; /* top, right, bottom, left */
-        margin-bottom: 8px;
-        background-color: #ffffff;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        width: 96%;
-        font-size: 12px;
-        text-align: left; /* this aligns the text to the left */
-    }
-
-
-
-    .subject-name {
-        font-weight: 600;
-        color: #212529;
-        font-size: 12px;
-    }
-
-    .faculty-name {
-        font-size: 12px;
-        color: #6c757d;
-    }
-
-    .room-badge {
-        font-size: 12px;
-        background-color: #d0ebff;
-        color: #084298;
-    }
-
-    .table thead th {
-        background-color: #800000;
-        color: white;
-        font-size: 12px;
-        text-align: center;
-        width: 55px;
+    input, select, textarea, .form-select, .form-control {
+        font-size: 12px !important;
+        padding: 4px 8px;
+        height: auto;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
     }
 
     .heading {
@@ -86,140 +31,113 @@
         margin-top: 10px;
     }
 
-    .sidebar {
-        width: 200px;
-        height: 100vh;
-        background: linear-gradient(135deg, #8B0000, #800000); /* Maroon gradient */
-        color: white;
-        padding-top: 0px;
-        position: fixed;
-        top: 0;
-        left: 0;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
-    }
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.4);
-            border-radius: 4px;
-        }
-
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 8px;
-            display: block;
-            font-weight: 500;
-            font-size: 19px;
-        }
-
-    .dropdown-btn {
-        background: none;
-        border: none;
-        color: white;
-        text-align: left;
-        padding: 10px 8px;
-        font-weight: 500;
-        cursor: pointer;
-        font-family: inherit;
-        display: block;
-        width: 100%;
-        font-size: 17px;
-    }
-    .topbar {
-        background: linear-gradient(135deg, #8B0000, #800000);
-        padding: 12px 12px;
-        color: white;
-        width: calc(100% - 200px);
-        position: fixed;
-        top: 0;
-        left: 200px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        box-sizing: border-box;
-        z-index: 1000;
-    }
-
-        .topbar a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            margin: 0 -24px;
-            white-space: nowrap;
-        }
-
-            .topbar a:hover {
-                text-decoration: underline;
-            }
-
     .filter-form .form-select {
         display: inline-block;
         width: auto;
         min-width: 220px;
-        margin-right: 15px;
-        margin-top: 11px;
-        margin-bottom: 13px;
+        margin: 8px;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 4px;
         font-size: 12px;
+    }
+
+    .subject-box {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        padding: 3px 5px;
+        text-align: left;
+    }
+
+    .subject-name {
+        font-weight: 600;
+    }
+
+    .faculty-name {
+        color: #555;
+    }
+
+    .room-badge {
+        background: #d0ebff;
+        color: #084298;
+        font-size: 11px;
+        border-radius: 4px;
+        padding: 2px 4px;
+    }
+
+    .table thead th {
+        background: #800000;
+        color: #fff;
+        text-align: center;
     }
 </style>
 
+<div class="container mt-5" style="margin-left: 119px;">
+    <h2 class="heading">Weekly Timetable</h2>
 
-<div class="container mt-5" style=" margin-left: 119px;">
-    <h2 class="heading">
-        {% if semester %}{{ semester }} - Weekly Timetable{% else %}Weekly Timetable{% endif %}
-    </h2>
+            <form method="get" id="filter-form">
+                {% csrf_token %}
+                <!-- Course Type -->
+                <label for="id_program_type">Program Type:</label>
+                <select name="program_type" id="id_program_type">
+                    <option value="">-- Select Course Type --</option>
+                    {% for ct in program_types %}
+                    <option value="{{ ct.id }}" {% if ct.id|stringformat:"s" == selected_program_type %}selected{% endif %}>
+                        {{ ct.name }}
+                    </option>
+                    {% endfor %}
+                </select>
 
-    <!-- Filter Form -->
-    <form method="get" class="mb-4 text-center filter-form">
-            <label><strong>Course Type</strong></label>
-            <select name="course_type" class="form-select d-inline" onchange="this.form.submit()">
-                <option value="">Select Course Type</option>
-                {% for ct in course_types %}
-                <option value="{{ ct.id }}" {% if ct.id|stringformat:"s" == selected_course_type %}selected{% endif %}>{{ ct.name }}</option>
-                {% endfor %}
-            </select>
-       
+                <!-- Academic Year -->
+                <label for="id_academic_year">Batch:</label>
+                <select name="academic_year" id="id_academic_year">
+                    <option value="">-- Select Batch --</option>
+                    {% for ay in academic_years %}
+                    <option value="{{ ay.id }}" {% if ay.id|stringformat:"s" == selected_academic_year %}selected{% endif %}>
+                        {{ ay.year }}
+                    </option>
+                    {% endfor %}
+                </select>
 
-            <label><strong>Course</strong></label>
-            <select name="course" class="form-select d-inline" onchange="this.form.submit()">
-                <option value="">Select Course</option>
-                {% for course in courses %}
-                <option value="{{ course.id }}" {% if course.id|stringformat:"s" == selected_course %}selected{% endif %}>{{ course.name }}</option>
-                {% endfor %}
-            </select>
+                <!-- Course -->
+                <label for="id_course">Combination:</label>
+                <select name="course" id="id_course">
+                    <option value="">-- Select Combination --</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if course.id|stringformat:"s" == selected_course_id %}selected{% endif %}>
+                        {{ course.name }}
+                    </option>
+                    {% endfor %}
+                </select>
 
-            <label><strong>Semester</strong></label>
-            <select name="semester" class="form-select d-inline" onchange="this.form.submit()">
-                <option value="">Select Semester</option>
-                {% for sem in semesters %}
-                <option value="{{ sem.number }}" {% if sem.number|stringformat:"s" == selected_semester %}selected{% endif %}>Semester {{ sem.number }}</option>
-                {% endfor %}
-            </select>
-    </form>
+                <!-- Semester -->
+                <label for="id_semester">Sem/Year:</label>
+                <select name="semester" id="id_semester" onchange="this.form.submit()">
+                    <option value="">-- Select Sem/Year --</option>
+                    {% for sem in semesters %}
+                    <option value="{{ sem.number }}" {% if sem.number|stringformat:"s" == selected_semester_number %}selected{% endif %}>
+                        {{ sem.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
 
+
+    <!--<button type="submit" class="btn btn-primary mt-2">View</button>
+    </form>-->
     <!-- Timetable Table -->
-    {% if semester and time_slots %}
-    <div class="card shadow border-0">
+    {% if time_slots %}
+    <div class="card shadow border-0 mt-4">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-bordered text-center align-middle mb-0">
+                <table class="table table-bordered text-center">
                     <thead>
                         <tr>
-                            <th style="width: 12%;">Time</th>
+                            <th>Time</th>
                             {% for day in week_days %}
                             <th>{{ day }}</th>
                             {% endfor %}
@@ -227,8 +145,8 @@
                     </thead>
                     <tbody>
                         {% for time in time_slots %}
-                        <tr class="table-light">
-                            <td class="fw-semibold bg-white">{{ time }}</td>
+                        <tr>
+                            <td>{{ time }}</td>
                             {% for day in week_days %}
                             <td>
                                 {% with entries=timetable|dict_get:day %}
@@ -238,9 +156,7 @@
                                     <div class="subject-name">{{ entry.subject.name }}</div>
                                     <div class="faculty-name">{{ entry.faculty.name }}</div>
                                     <div class="faculty-name">{{ entry.faculty.role }}</div>
-
-                                    <div><span class="badge room-badge">{{ entry.room }}</span></div>
-                                   
+                                    <div><span class="room-badge">{{ entry.room }}</span></div>
                                 </div>
                                 {% endif %}
                                 {% endfor %}
@@ -254,10 +170,133 @@
             </div>
         </div>
     </div>
-    {% elif selected_semester %}
-    <div class="alert alert-warning mt-4 text-center">
-        No timetable entries found for the selected semester.
+    {% elif selected_course and selected_semester %}
+    <div class="alert alert-warning text-center mt-4">
+        No timetable entries found for the selected course and semester.
     </div>
     {% endif %}
 </div>
+
+<!-- AJAX Semester Loader -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        const programTypeSelect = $('#id_program_type');
+        const academicYearSelect = $('#id_academic_year');
+        const courseSelect = $('#id_course');
+        const semesterSelect = $('#id_semester');
+
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                program_type: params.get("program_type"),
+                academic_year: params.get("academic_year"),
+                course: params.get("course"),
+                semester: params.get("semester")
+            };
+        }
+
+        const initialValues = getQueryParams();
+        console.log("Initial values from URL:", initialValues);
+
+        function loadAcademicYearsAndCourses(programTypeId, callback) {
+            $.get("{% url 'get_courses_and_years_by_program_type' %}", {
+                program_type_id: programTypeId
+            }, function (data) {
+                academicYearSelect.find('option:not(:first)').remove();
+                courseSelect.find('option:not(:first)').remove();
+
+                $.each(data.academic_years, function (_, year) {
+                    academicYearSelect.append($('<option>', {
+                        value: year.id,
+                        text: year.year
+                    }));
+                });
+
+                $.each(data.courses, function (_, course) {
+                    courseSelect.append($('<option>', {
+                        value: course.id,
+                        text: course.name
+                    }));
+                });
+
+                // Explicitly set selected values AFTER options are loaded
+                if (initialValues.academic_year) {
+                    academicYearSelect.val(initialValues.academic_year);
+                }
+                if (initialValues.course) {
+                    courseSelect.val(initialValues.course);
+                }
+
+                if (callback) callback();
+            });
+        }
+
+        function loadSemesters(courseId, callback = null) {
+            $.post("{% url 'get_semesters_by_course' %}", {
+                course_id: courseId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            }, function (data) {
+                semesterSelect.find('option:not(:first)').remove();
+
+                $.each(data.semesters, function (_, semester) {
+                    semesterSelect.append($('<option>', {
+                        value: semester.number,
+                        text: semester.name
+                    }));
+                });
+
+                // Explicitly set selected semester
+                if (initialValues.semester) {
+                    semesterSelect.val(initialValues.semester);
+                }
+
+                if (callback) callback();
+            });
+        }
+
+        // Load everything if redirected with params
+        if (initialValues.program_type) {
+            programTypeSelect.val(initialValues.program_type);
+
+            loadAcademicYearsAndCourses(initialValues.program_type, function () {
+                if (initialValues.course) {
+                    loadSemesters(initialValues.course);
+                }
+            });
+        }
+
+        // Dynamic changes
+        programTypeSelect.change(function () {
+            const programTypeId = $(this).val();
+            academicYearSelect.find('option:not(:first)').remove();
+            courseSelect.find('option:not(:first)').remove();
+            semesterSelect.find('option:not(:first)').remove();
+
+            if (!programTypeId) return;
+            loadAcademicYearsAndCourses(programTypeId);
+        });
+
+        courseSelect.change(function () {
+            const courseId = $(this).val();
+            semesterSelect.find('option:not(:first)').remove();
+
+            if (!courseId) return;
+            loadSemesters(courseId);
+        });
+
+        semesterSelect.change(function () {
+            const program_type = programTypeSelect.val();
+            const academic_year = academicYearSelect.val();
+            const course = courseSelect.val();
+            const semester = semesterSelect.val();
+
+            if (program_type && academic_year && course && semester) {
+                const url = `?program_type=${program_type}&academic_year=${academic_year}&course=${course}&semester=${semester}`;
+                window.location.href = url;
+            }
+        });
+    });
+</script>
+
 {% endblock %}

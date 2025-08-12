@@ -1,0 +1,399 @@
+﻿{% extends 'layout.html' %}
+
+{% block title %}Student Profile{% endblock %}
+
+{% block content %}
+
+{% load static %}
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+
+    .student-profile-wrapper {
+        border: 2px solid #ccc;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 30px;
+        background-color: #fdfdfd;
+    }
+
+    .section-buttons {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+        .section-buttons button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #eee;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+            .section-buttons button.active {
+                background-color: #800000;
+                color: white;
+            }
+
+    .content-section {
+        display: none;
+        margin-top: 10px;
+    }
+
+        .content-section.active {
+            display: block;
+        }
+
+    .profile-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .info-row {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        padding: 6px 0;
+        border-bottom: 1px dashed #ddd;
+    }
+
+    .profile-label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .profile-card h5 {
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 6px;
+        margin-bottom: 16px;
+        font-size: 17px;
+        color: #800000;
+        /*text-align:center;*/
+    }
+
+    .address-section,
+    .parent-section {
+        border-top: 1px solid #ccc;
+        margin-top: 20px;
+        padding-top: 10px;
+    }
+
+    .summary-boxes {
+        display: flex;
+        gap: 20px;
+        margin: 10px 0;
+    }
+
+    .summary-box {
+        padding: 10px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        text-align: center;
+        width: 120px;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 8px;
+    }
+
+    /* Reduce table margin/padding */
+
+    .table-responsive {
+        margin-top: 10px;
+    }
+
+    .table td, .table th {
+        padding: 6px 10px;
+    }
+
+    @media (max-width: 768px) {
+        .info-row {
+            grid-template-columns: 1fr;
+        }
+
+            .info-row span {
+                margin-bottom: 4px;
+            }
+    }
+
+    .content {
+        margin-left: 200px;
+        padding: 35px 26px 40px;
+        min-height: 100vh;
+    }
+
+    /* Fees Table Styling */
+    .fees-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-top: 20px;
+    }
+
+        .fees-table th,
+        .fees-table td {
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .fees-table thead {
+            background-color: #800000;
+            color: #fff;
+        }
+
+        .fees-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .fees-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+    .status-paid {
+        color: green;
+        font-weight: bold;
+    }
+
+    .status-partial {
+        color: orange;
+        font-weight: bold;
+    }
+
+    .status-unpaid {
+        color: red;
+        font-weight: bold;
+    }
+
+    .btn-maroon {
+        background-color: #800000;
+        color: #fff;
+        border: none;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+        .btn-maroon:hover {
+            background-color: #a00000;
+        }
+</style>
+
+
+<div class="student-profile-wrapper">
+
+    <!-- Section Buttons -->
+    <div class="section-buttons">
+        <button class="active" onclick="showSection('profile')">Profile</button>
+        <button onclick="showSection('fees')">Fees</button>
+        <button onclick="showSection('attendance')">Attendance</button>
+        <button onclick="showSection('exam')">Exam</button>
+        <button onclick="showSection('documents')">Documents</button>
+        <button onclick="showSection('timeline')">Timeline</button>
+    </div>
+
+    <!-- Profile Section -->
+    <div id="profile" class="content-section active">
+        <div style="margin-bottom: 16px;">
+            <h5 style=" font-size: 14px;">{{ student.student_name }}</h5>
+            <p><strong>Admission No:</strong> {{ admission.admission_no }}</p>
+            <p><strong>Roll Number:</strong> {{ student.student_userid }}</p>
+            <div class="info-row"><span class="profile-label">Program Type:</span> <span>{{ student.course_type.name }}</span></div>
+            <div class="info-row"><span class="profile-label">Combination:</span> <span>{{ student.course.name }}</span></div>
+            <div class="info-row"><span class="profile-label">Quota:</span> <span>{{ student.quota_type }}</span></div>
+            <div class="info-row"><span class="profile-label">Gender:</span> <span>{{ admission.gender }}</span></div>
+            <div class="info-row"><span class="profile-label">Admission Date:</span> <span>{{ admission.admission_date }}</span></div>
+            <div class="info-row"><span class="profile-label">DOB:</span> <span>{{ admission.dob }}</span></div>
+            <div class="info-row"><span class="profile-label">Mobile:</span> <span>{{ admission.student_phone_no }}</span></div>
+
+            <div class="address-section">
+                <h5 style=" font-size: 14px;">Address</h5>
+                <div class="info-row"><span class="profile-label">Current:</span> <span>{{ admission.current_address }}</span></div>
+                <div class="info-row"><span class="profile-label">Permanent:</span> <span>{{ admission.permanent_address }}</span></div>
+            </div>
+
+            <div class="parent-section">
+                <h5 style=" font-size: 14px;">Parent Details</h5>
+                <div class="info-row"><span class="profile-label">Father:</span> <span>{{ admission.father_name }}</span></div>
+                <div class="info-row"><span class="profile-label">Mother:</span> <span>{{ admission.mother_name }}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fees Section -->
+    <div id="fees" class="content-section">
+        <div class="profile-card">
+            <!-- Header with center-aligned title and right-aligned button -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="flex: 1; text-align: center;">
+                    <h5 style="margin: 0;">Fees Information</h5>
+                </div>
+                <div>
+                    <form action="{% url 'fee_collection_collect' %}" method="get" style="margin: 0;">
+                        <input type="hidden" name="admission_no" value="{{ admission.admission_no }}">
+                        <button type="submit" class="btn btn-maroon px-3 py-2" style="border: none; border-radius: 6px;">
+                            Collect Fee
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if fee_collections %}
+            <div style="margin-top: 20px;">
+                <table class="fees-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background-color: #800000; color: #fff;">
+                            <th style="border: 1px solid #ccc; padding: 2px; font-size:12px;">Fee Type</th>
+                            <th style="border: 1px solid #ccc; padding: 2px; font-size: 12px;">Due Date</th>
+                            <th style="border: 1px solid #ccc; padding: 2px; font-size: 12px;">Amount</th>
+                            <th style="border: 1px solid #ccc; padding: 2px; font-size: 12px;">Paid</th>
+                            <th style="border: 1px solid #ccc; padding: 2px; font-size: 12px;">Discount</th>
+                            <th style="border: 1px solid #ccc; padding: 2px; font-size: 12px;">Balance</th>
+                            <th style="border: 1px solid #ccc; padding: 2px; font-size: 12px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fee in fee_collections %}
+                        <tr style="text-align: center;">
+                            <td style="border: 1px solid #ccc; padding: 2px; font-size: 9px;">{{ fee.fee_type.name }}</td>
+                            <td style="border: 1px solid #ccc; padding: 2px; font-size: 9px;">{{ fee.due_date|date:"d M Y" }}</td>
+                            <td style="border: 1px solid #ccc; padding: 2px; font-size: 9px;">₹{{ fee.amount }}</td>
+                            <td style="border: 1px solid #ccc; padding: 2px; font-size: 9px;">₹{{ fee.paid_amount }}</td>
+                            <td style="border: 1px solid #ccc; padding: 2px; font-size: 9px;">₹{{ fee.applied_discount }}</td>
+                            <td style="border: 1px solid #ccc; padding: 2px; font-size: 9px;">₹{{ fee.balance_amount }}</td>
+                            <td style="border: 1px solid #ccc; padding: 2px; font-size: 9px;">
+                                {% if fee.status == "Paid" %}
+                                <span style="color: green; font-weight: bold;">{{ fee.status }}</span>
+                                {% elif fee.status == "Partial" %}
+                                <span style="color: orange; font-weight: bold;">{{ fee.status }}</span>
+                                {% else %}
+                                <span style="color: red; font-weight: bold;">{{ fee.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="margin-top: 15px;">No fee information available yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+
+
+    <!-- Exam Section -->
+    <div id="exam" class="content-section">
+        <div class="profile-card">
+            <h5>Exam Records</h5>
+            <p>No exam records found.</p>
+        </div>
+    </div>
+
+    <!-- Attendance Section -->
+    <div id="attendance" class="content-section">
+        <div class="profile-card">
+            <div class="summary-boxes">
+                <div class="summary-box">Total Present<br><strong>{{ total_present }}</strong></div>
+                <div class="summary-box">Total Late<br><strong>{{ total_late }}</strong></div>
+                <div class="summary-box">Total Absent<br><strong>{{ total_absent }}</strong></div>
+                <div class="summary-box">Total Holiday<br><strong>{{ total_holiday }}</strong></div>
+                <div class="summary-box">Attendance %<br><strong>{{ attendance_percentage }}%</strong></div>
+
+            </div>
+
+            <!-- Attendance Legend -->
+            <div style="margin: 10px 0; font-weight: bold;">
+                Present: <span style="color:green;">P</span> &nbsp;
+                Late: <span style="color:orange;">L</span> &nbsp;
+                Absent: <span style="color:red;">A</span> &nbsp;
+                Holiday: <span style="color:blue;">H</span> &nbsp;
+                Weekend: <span style="color:maroon;">W</span> &nbsp;
+            </div>
+
+            <!-- Attendance Table -->
+            <table border="1" cellspacing="0" cellpadding="5" style="width: 100%; text-align: center; border-collapse: collapse;">
+                <thead style="background-color: #f2f2f2;">
+                    <tr>
+                        <th style="width: 60px;">Day</th>
+                        {% for m, label in months %}
+                        <th>{{ label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in attendance_grid %}
+                    <tr>
+                        <td>{{ row.day }}</td>
+                        {% for status in row.statuses %}
+                        <td>{{ status }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+
+        </div>
+    </div>
+
+    <!-- Documents Section -->
+    <div id="documents" class="content-section">
+        <div class="profile-card">
+            <h5>Documents</h5>
+            <p>No documents uploaded yet.</p>
+        </div>
+    </div>
+
+    <!-- Timeline Section -->
+    <div id="timeline" class="content-section">
+        <div class="profile-card">
+            <h5>Timeline</h5>
+            <p>No timeline entries available.</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    function showSection(id) {
+
+        const sections = document.querySelectorAll('.content-section');
+
+        sections.forEach(section => {
+
+            section.classList.remove('active');
+
+        });
+
+        document.getElementById(id).classList.add('active');
+
+        const buttons = document.querySelectorAll('.section-buttons button');
+
+        buttons.forEach(button => {
+
+            button.classList.remove('active');
+
+        });
+
+        event.target.classList.add('active');
+
+    }
+</script>
+
+{% endblock %}
+

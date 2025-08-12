@@ -1,25 +1,33 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
+{% block title %}Staff Attendance List{% endblock %}
 
 {% block content %}
 <style>
     .icon-btn {
         border: 1px solid #dee2e6;
         background-color: #fff;
-        padding: -5px;
+        padding: 3px 5px;
         margin: 2px;
         border-radius: 6px;
         cursor: pointer;
         transition: background-color 0.2s;
+        display: inline-block;
+        text-decoration: none;
     }
 
         .icon-btn i {
-            font-size: 10px;
+            font-size: 11px;
             color: #800000;
         }
 
-        .icon-btn:hover {
-            background-color: #e2e6ea;
+        .icon-btn.text-danger i {
+            color: #b30000;
         }
+
+        .icon-btn:hover {
+            background-color: #f3f3f3;
+        }
+
 
     body {
         background-color: #f0f2f5;
@@ -55,12 +63,12 @@
     th, td {
         vertical-align: middle !important;
         text-align: center;
-        padding: 5px;
+        padding: 1px;
         border: 1px solid #dee2e6;
     }
 
     td {
-        font-size: 10px;
+        font-size: 9px;
     }
 
     thead {
@@ -72,9 +80,9 @@
         background-color: #f8f9fa;
     }
 
-    tr:hover {
+  /*  tr:hover {
         background-color: #e9ecef;
-    }
+    }*/
 
     .filter-btn {
         text-decoration: none;
@@ -110,23 +118,23 @@
             min-width: 180px;
         }
 
-    .btn-maroon {
-        color: #800000;
-        border: 2px solid #800000;
-        background-color: transparent;
-        font-weight: 600;
-        min-width: 76px;
-        padding: 6px;
-        font-size: 12px;
-        transition: all 0.2s ease-in-out;
-        margin-left: 778px;
-        margin-right: -3px;
-        text-align: center;
-        border-radius: 5px;
+
+    .btn-add {
+        position: absolute;
+        right: 0;
+        background-color: #800000;
+        color: #fff;
+        font-size: 13px;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
         text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
     }
 
-        .btn-maroon:hover {
+        .btn-add:hover {
             background-color: #800000;
             color: #fff;
             border-color: #800000;
@@ -159,65 +167,108 @@
         display: none;
     }
 
+    .popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 1001;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+        display: none;
+        width: 300px;
+        text-align: center;
+    }
+
     #confirm-popup-message {
         margin-bottom: 15px;
         font-size: 13px;
         color: #800000;
     }
 
-    /*   #confirm-yes,
-    #confirm-no {
+    #confirm-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        display: none;
+        z-index: 1001;
+        text-align: center;
+    }
+
+    #confirm-yes, #confirm-no {
         margin: 0 5px;
         padding: 6px 12px;
-        border: none;
         font-size: 12px;
         border-radius: 4px;
         cursor: pointer;
-    }
-
-    #confirm-yes {
-        background-color: #800000;
-        color: white;
-    }
-
-    #confirm-no {
-        background-color: #e0e0e0;
-    }*/
-    #confirm-yes,
-    #confirm-no {
-        margin: 0 5px;
-        padding: 6px 12px;
-        border: 2px solid #800000;
-        font-size: 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        background-color: transparent;
+        background: transparent;
         color: #800000;
         font-weight: 600;
-        transition: all 0.2s ease-in-out;
+        border: 2px solid #800000;
+        transition: all 0.2s ease;
     }
 
-        #confirm-yes:hover {
+        #confirm-yes:hover, #confirm-no:hover {
             background-color: #800000;
-            color: #fff;
+            color: white;
         }
 
-        #confirm-no:hover {
-            background-color: #800000;
-            color: #fff;
+    .header-flex {
+        display: flex;
+        justify-content: center; /* center the heading */
+        align-items: center;
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+        .header-flex h2 {
+            flex-grow: 1;
+            margin: 0;
+            font-weight: 700;
+            font-size: 22px;
+            color: #800000;
+            text-align: center;
         }
+
+    .content {
+        padding: 39px 0px 40px;
+        margin-left: 200px;
+    }
+
+    .search-form {
+        position: absolute;
+        left: 0;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 200px;
+    }
 </style>
 
 <div class="container mt-4">
-    <h2>Attendance Records</h2>
 
     <!-- Add Attendance Button -->
-    <div class="d-flex justify-content-start mb-3">
-        <a href="{% url 'attendance_entry' %}" class="btn btn-maroon">+ Add Attendance</a>
+    <div class="header-flex">
+        <input type="text" id="attendanceSearch" class="search-form" placeholder="Search...">
+        <h2>Attendance Records</h2>
+        {% if form_permissions.employee_attendance_form.add %}
+        <a href="{% url 'employee_attendance_form_add' %}" class="btn-add">
+            <i class="bi bi-plus-lg me-2"></i> Add Attendance
+        </a>
+        {% endif %}
     </div>
 
+
     <!-- Filter Form -->
-    <form method="get" class="filter-form">
+    <!--<form method="get" class="filter-form">
         <input type="date" name="date" value="{{ request.GET.date }}" class="form-control" />
         <select name="department" class="form-control">
             <option value="">All Departments</option>
@@ -226,15 +277,13 @@
             {% endfor %}
         </select>
         <button type="submit" class="btn filter-btn">Filter</button>
-    </form>
-
+    </form>-->
     <!-- Attendance Table -->
     <table class="table table-bordered table-striped table-hover mt-3">
         <thead>
             <tr>
-                <th>Emp Code</th>
+                <th>Emp ID</th>
                 <th>Name</th>
-                <th>Department</th>
                 <th>Date</th>
                 <th>Check-in</th>
                 <th>Check-out</th>
@@ -247,30 +296,37 @@
             <tr>
                 <td>{{ record.employee.emp_code }}</td>
                 <td>{{ record.employee.name }}</td>
-                <td>{{ record.employee.department }}</td>
                 <td>{{ record.date }}</td>
                 <td>{{ record.check_in }}</td>
                 <td>{{ record.check_out }}</td>
                 <td>{{ record.status }}</td>
                 <td>
-                    <a href="{% url 'attendance_view' record.id %}" class="icon-btn" title="View">
+                    {% if form_permissions.employee_attendance_form.view %}
+                    <a href="{% url 'employee_attendance_form_view' record.id %}" class="icon-btn" title="View">
                         <i class="fas fa-eye"></i>
                     </a>
-                    <a href="{% url 'attendance_edit' record.id %}" class="icon-btn" title="Edit">
+                    {% endif %}
+                    {% if form_permissions.employee_attendance_form.edit %}
+                    <a href="{% url 'employee_attendance_form_edit' record.id %}" class="icon-btn" title="Edit">
                         <i class="fas fa-edit"></i>
                     </a>
+                    {% endif %}
+
+                    <!-- Hidden delete form -->
+                    {% if form_permissions.employee_attendance_form.delete %}
+                    <form id="attendance-delete-form-{{ record.id }}"
+                          method="POST"
+                          action="{% url 'employee_attendance_form_delete' record.id %}"
+                          style="display: none;">
+                        {% csrf_token %}
+                    </form>
+
+
                     <a href="#" class="icon-btn" title="Delete"
                        onclick="confirmAttendanceDelete({{ record.id }}, '{{ record.employee.name|escapejs }}')">
                         <i class="fas fa-trash-alt"></i>
                     </a>
-
-                    <!-- Hidden delete form -->
-                    <form id="attendance-delete-form-{{ record.id }}"
-                          method="POST"
-                          action="{% url 'attendance_delete' record.id %}"
-                          style="display: none;">
-                        {% csrf_token %}
-                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
@@ -315,4 +371,87 @@
         deleteAttendanceId = null;
     });
 </script>
+
+<script>
+    document.getElementById('attendanceSearch').addEventListener('input', function () {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('table tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    });
+</script>
+
+
+<!-- Snackbar -->
+<style>
+    #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #800000;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 14px 24px;
+        position: fixed;
+        z-index: 9999;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        font-size: 14px;
+    }
+
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.4s, fadeout 0.4s 2.6s;
+        }
+
+    @keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
+    }
+</style>
+
+<div id="snackbar"></div>
+
+
+<script>
+    function showSnackbar(message) {
+        const snackbar = document.getElementById("snackbar");
+        snackbar.textContent = message;
+        snackbar.className = "show";
+        setTimeout(() => {
+            snackbar.className = snackbar.className.replace("show", "");
+        }, 3000);
+    }
+
+    // Django message integration
+    {% if messages %}
+        {% for message in messages %}
+            showSnackbar("{{ message|escapejs }}");
+        {% endfor %}
+    {% endif %}
+</script>
+
 {% endblock %}

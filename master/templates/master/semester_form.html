@@ -1,145 +1,171 @@
-{% extends 'master/layout.html' %}
-{% block title %}Acadamic Cycle{% endblock %}
- 
+{% extends 'layout.html' %}
+{% load form_filters %}
+
+{% block title %}
+    {% if view_mode %}View{% elif form.instance.pk %}Edit{% else %}Add{% endif %} Academic Cycle
+{% endblock %}
+
 {% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
     body {
-        background-color: #f0f2f5;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin-left: 91px;
+        font-family: 'Inter', sans-serif;
+        background-color: #f4f6f9;
+        color: #333;
     }
- 
-    .container {
-        background: #fff;
+
+    .form-container {
+        max-width: 800px;
+        margin: 25px auto;
+        background: #ffffff;
         padding: 30px;
         border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-        margin-top: -15px;
-        margin-left: -64px;
-        margin-right: 27px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
     }
- 
-    h2 {
-        text-align: center;
-        font-weight: 700;
-        color: #800000;
-        margin-bottom: 24px;
-        margin-top: -17px;
+
+    h3 {
+        font-weight: 600;
+        color: #8b0000;
+        margin-bottom: 20px;
         font-size: 22px;
+        text-align: center;
     }
- 
-    .btn-add {
+
+    .form-label {
+        font-weight: 500;
+        font-size: 14px;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        font-size: 14px;
+        padding: 4px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 4px;
+        width: 100%;
+    }
+
+    .form-check {
+        margin-bottom: 12px;
+    }
+
+    .form-check-input {
+        margin-right: 10px;
+    }
+
+    .btn-save {
         background-color: #800000;
-        color: #fff;
+        font-weight: 500;
+        padding: 5px 16px;
+        font-size: 14px;
+        color: white;
         border: none;
-        font-size: 13px;
-        padding: 6px 12px;
-        font-weight: bold;
-        border-radius: 4px;
-        transition: background-color 0.3s;
-        margin-left: 738px;
+        border-radius: 8px;
+    }
+
+        .btn-save:hover {
+            background-color: #8a1f1f;
+        }
+
+    .btn-back {
+        background-color: #800000;
+        font-weight: 500;
+        padding: 5px 16px;
+        font-size: 14px;
+        color: white;
+        border: none;
+        border-radius: 8px;
         text-decoration: none;
     }
- 
-        .btn-add:hover {
-            background-color: #a10000;
+
+        .btn-back:hover {
+            background-color: #800000;
+            color: white;
         }
- 
-    table {
-        width: 100%;
-        font-size: 12px;
-        border-collapse: collapse;
-        margin-top: 10px;
+
+    .btn-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
     }
- 
-    th, td {
-        vertical-align: middle !important;
-        text-align: center;
-        padding: 5px;
-        border: 1px solid #dee2e6;
-    }
- 
-    td {
-        font-size: 10px;
-    }
- 
-    thead {
-        background: linear-gradient(135deg, #8B0000, #800000);
-        color: white;
-    }
- 
-    tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
- 
-    tr:hover {
-        background-color: #e9ecef;
-    }
- 
-    .empty {
-        text-align: center;
-        color: #6c757d;
-        font-size: 13px;
-        padding: 20px 0;
-    }
- 
+
     .content {
-        padding: 65px 26px 40px;
         margin-left: 200px;
+        padding: 22px 26px 40px;
+        min-height: 100vh;
+    }
+
+    .is-invalid {
+        border-color: red !important;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 13px;
+        margin-bottom: 12px;
     }
 </style>
- 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Academic Cycle </h2>
-        {% if form_permissions.semester_form.view %}
-        <a href="{% url 'semester_form_add' %}" class="btn-add">Add Academic Cycle</a>
+
+<div class="container form-container">
+    <h3>
+        {% if view_mode %}
+        View Academic Cycle
+        {% elif form.instance.pk %}
+        Edit Academic Cycle
+        {% else %}
+        Add Academic Cycle
         {% endif %}
-    </div>
- 
-    {% if semesters %}
-    <table class="table table-bordered table-striped table-hover mt-3">
-        <thead>
-            <tr>
-                <th>Academic Cycles (In Semesters)</th>
-                <th>Combinations</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for semester in semesters %}
-            <tr>
-                <td>{{ semester.number }}</td>
-                <td>{{ semester.course.name }}</td>
-                <td>
-                    {% if form_permissions.semester_form.view %}
-                    <a href="{% url 'semester_form_view' semester.id %}" class="icon-btn" title="View">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    {% endif %}
-                    {% if form_permissions.semester_form.edit %}
-                    <a href="{% url 'semester_form_edit' semester.id %}" class="icon-btn">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    {% endif %}
-                    {% if form_permissions.semester_form.delete %}
-                    <form action="{% url 'semester_form_delete' semester.id %}" method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="icon-btn" title="Delete" onclick="return confirm('Are you sure you want to delete this semester?');" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer;">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p class="empty">No Academic Cycles available.</p>
-    {% endif %}
+    </h3>
+
+    <form method="post" id="academic-cycle-form">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <label for="id_course" class="form-label">Select Combination</label>
+                {{ form.course|add_class:"form-select" }}
+            </div>
+            <div class="col-md-6">
+                <label for="id_number" class="form-label">Define Semester</label>
+                {{ form.number|add_class:"form-control" }}
+            </div>
+        </div>
+
+        <div class="form-check">
+            <input type="radio" id="active_radio" name="is_active" value="1" class="form-check-input"
+                   {% if form.instance.is_active %}checked{% endif %}
+                   {% if view_mode %}disabled{% endif %}>
+            <label for="active_radio" class="form-check-label">Active</label>
+        </div>
+
+        <div class="form-check">
+            <input type="radio" id="inactive_radio" name="is_active" value="0" class="form-check-input"
+                   {% if not form.instance.is_active %}checked{% endif %}
+                   {% if view_mode %}disabled{% endif %}>
+            <label for="inactive_radio" class="form-check-label">Inactive</label>
+        </div>
+
+        <div class="btn-container">
+            <a href="{% url 'semester_form_list' %}" class="btn-back">Back</a>
+            {% if not view_mode %}
+            <button type="submit" class="btn-save">
+                {% if form.instance.pk %}Update{% else %}Save{% endif %}
+            </button>
+            {% endif %}
+        </div>
+    </form>
 </div>
- 
- 
+
+{% if view_mode %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById("id_course").disabled = true;
+        document.getElementById("id_number").disabled = true;
+    });
+</script>
+{% endif %}
 {% endblock %}
- 

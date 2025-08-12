@@ -1,31 +1,9 @@
-﻿{% extends 'master/layout.html' %}
-{% block title %}Students List{% endblock %}
+﻿{% extends 'layout.html' %}
+
+{% block title %}All Students Information{% endblock %}
 
 {% block content %}
 <style>
-    .icon-btn {
-        border: 1px solid #dee2e6;
-        background-color: #fff;
-        padding: -5px;
-        margin: 2px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-        .icon-btn i,
-        .action-link svg {
-            font-size: 10px;
-            color: #800000;
-            vertical-align: middle;
-        }
-
-        .icon-btn:hover,
-        .action-link:hover svg {
-            background-color: #e2e6ea;
-            color: #800000;
-        }
-
     body {
         background-color: #f0f2f5;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -34,12 +12,11 @@
 
     .container {
         background: #fff;
-        padding: 30px;
+        padding: 20px 6px;
         border-radius: 12px;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
         margin-top: 10px;
-        margin-left: -64px;
-        margin-right: 27px;
+        margin-left: 110px;
     }
 
     h2 {
@@ -51,21 +28,72 @@
         font-size: 22px;
     }
 
+    .header-flex {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        margin-bottom: -41px;
+    }
+
+        .header-flex h2 {
+            flex-grow: 1;
+            margin: 0;
+            font-weight: 700;
+            font-size: 22px;
+            color: #800000;
+            text-align: center;
+            margin-top: -2px;
+            margin-bottom: 16px;
+        }
+
+    .filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        margin-top: -22px;
+    }
+
+        .filters select {
+            min-width: 180px;
+            font-size: 13px;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .filters button {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #6c757d;
+            background-color: white;
+            color: black;
+            transition: background-color 0.3s ease;
+        }
+
+            .filters button:hover {
+                background-color: #800000;
+                color: white;
+            }
+
     table {
         width: 100%;
         font-size: 12px;
         border-collapse: collapse;
+        margin-top: 10px;
     }
 
     th, td {
         vertical-align: middle !important;
         text-align: center;
-        padding: 5px;
+        padding: 1px;
         border: 1px solid #dee2e6;
     }
 
     td {
-        font-size: 10px;
+        font-size: 9px;
     }
 
     thead {
@@ -77,62 +105,97 @@
         background-color: #f8f9fa;
     }
 
-    tr:hover {
+    /* tr:hover {
         background-color: #e9ecef;
-    }
+    }*/
 
-    .alert {
-        background-color: #f8d7da;
-        color: #721c24;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid #f5c6cb;
-        font-size: 14px;
-        margin-top: 24px;
-    }
-
-    .action-link {
-        margin-right: 4px;
-        padding: 2px 4px;
-        display: inline-block;
+    .icon-btn {
         border: 1px solid #dee2e6;
-        border-radius: 6px;
         background-color: #fff;
+        padding: 1px 2px;
+        margin: 0px;
+        border-radius: 6px;
+        cursor: pointer;
         transition: background-color 0.2s;
+        display: inline-block;
+        text-decoration: none;
     }
 
-        .action-link:hover {
-            background-color: #e2e6ea;
-        }
-
-        .action-link svg {
-            width: 16px;
-            height: 16px;
-            fill: #800000;
+        .icon-btn i {
+            font-size: 11px;
+            color: #800000;
         }
 
     .content {
-        padding: 18px 26px 40px;
-        margin-left: 200px;
+        padding: 26px 16px 40px;
+        margin-left: 0px;
     }
+
+    .search-form {
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 200px;
+        margin-bottom: 23px;
+    }
+
+
+        .search-form input {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 200px;
+        }
 </style>
 
 <div class="container mt-4">
-    <h2>All Students</h2>
+    <div class="header-flex">
+        <h2>All Students Information</h2>
+    </div>
 
-    <table class="table table-bordered table-striped table-hover mt-3">
+    <div style="margin-bottom: 7px;">
+        <input type="text" id="studentSearch" class="search-form" placeholder="Search Students...">
+    </div>
+
+
+    <form method="get" class="filters">
+        <select name="program_type" id="program_type" onchange="this.form.submit()">
+            <option value="">-- Select Program Type --</option>
+            <option value="all" {% if selected_program_type == 'all' %}selected{% endif %}>All</option>
+            {% for pt in program_type_list %}
+            <option value="{{ pt }}" {% if pt == selected_program_type %}selected{% endif %}>{{ pt }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="combination" id="combination">
+            <option value="">-- Select Combination --</option>
+            <option value="all" {% if selected_combination == 'all' %}selected{% endif %}>All</option>
+            {% for combo in combination_list %}
+            <option value="{{ combo }}" {% if combo == selected_combination %}selected{% endif %}>{{ combo }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <table class="table table-bordered table-striped table-hover">
         <thead>
             <tr>
-                <th>SLN No</th>
+                <th>Sln No</th>
                 <th>Admission No</th>
+                <th>Batch</th>
+                <th>Student ID</th>
                 <th>Name</th>
-                <th>Course</th>
-                <th>Course Type</th>
-                <th>Quota Type</th>
+                <th>Program Type</th>
+                <th>Combination</th>
+                <th>Sem/Year</th>
+                <!--<th>Quota Type</th>-->
                 <th>Status</th>
-                <th>User ID</th>
-                <th>Student Phone No</th>
-                <th>Parent Name</th>
+
+                <!--<th>Student Phone No</th>-->
+                <th>Father Name</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -140,30 +203,217 @@
             {% for student in students %}
             <tr>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ student.admission_no }}</td>
-                <td>{{ student.student_name }}</td>
-                <td>{{ student.course }}</td>
-                <td>{{ student.course_type }}</td>
-                <td>{{ student.quota_type }}</td>
-                <td>{{ student.status }}</td>
+                <td data-admission-date="{{ student.admission_date|date:'Y-m-d H:i:s' }}">
+                    {% if student.pu_admission %}
+                    {{ student.pu_admission.admission_no }}
+                    {% elif student.degree_admission %}
+                    {{ student.degree_admission.admission_no }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+
+                <td>{{ student.academic_year }}</td>
                 <td>{{ student.student_userid|default:"-" }}</td>
-                <td>{{ student.student_phone_no|default:"-" }}</td>
-                <td>{{ student.parent_name|default:"-" }}</td>
                 <td>
-                    <a href="{% url 'master_student_view' student.pk %}" class="action-link" title="View">
-                        <svg viewBox="0 0 20 20"><path d="M10 3C5 3 1.73 7.11 1.13 9.1a1 1 0 0 0 0 .8C1.73 12.89 5 17 10 17s8.27-4.11 8.87-6.1a1 1 0 0 0 0-.8C18.27 7.11 15 3 10 3zm0 12c-3.87 0-7-3.13-7.73-5C3 8.13 6.13 5 10 5s7 3.13 7.73 5C17 11.87 13.87 15 10 15zm0-9a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" /></svg>
-                    </a>
-                    <a href="{% url 'master_student_edit' student.pk %}" class="action-link" title="Edit">
-                        <svg viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 0 0-2.828 0l-9.793 9.793A2 2 0 0 0 4 14v2.5A1.5 1.5 0 0 0 5.5 18h2.5a2 2 0 0 0 1.414-.586l9.793-9.793a2 2 0 0 0 0-2.828l-2-2zM6.207 14.207l8.586-8.586 1.586 1.586-8.586 8.586H6.207v-1.586zm-1.707.793a.5.5 0 0 1-.5-.5v-2.5l8.586-8.586 2.5 2.5-8.586 8.586H4.5zm11.207-10.207l-1.5-1.5a1 1 0 0 1 1.414-1.414l1.5 1.5a1 1 0 0 1-1.414 1.414z" /></svg>
+                    <a href="{% url 'student_profile' student.id %}">
+                        {{ student.student_name }}
                     </a>
                 </td>
+                <td>{{ student.course_type }}</td>
+                <td>{{ student.course.name }}</td>
+                <td>
+                    {{ student.course.name }}
+                    {% if student.course_type.name == "PUC Regular" %}
+                    {{ student.current_year }}
+                    {% else %}
+                    {{ student.semester }}
+                    {% endif %}
+                </td>
+
+                <!--<td>{{ student.quota_type }}</td>-->
+                <td>{{ student.status }}</td>
+
+                <!--<td>{{ student.student_phone_no|default:"-" }}</td>-->
+                <td>{{ student.father_name|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'student_profile' student.id %}" class="icon-btn" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'master_student_edit' student.pk %}" class="icon-btn" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+
+                    {% if student.status == "Active" %}
+                    {% if student.course_type.name == "PUC Regular" and student.current_year == 1 %}
+                    <form method="post" action="{% url 'promote_student' student.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="icon-btn" title="Promote">
+                            <i class="fas fa-level-up-alt"></i>
+                        </button>
+                    </form>
+                    {% elif student.course_type.name == "School of Commerce (UG)" and student.semester < 6 %}
+                    <form method="post" action="{% url 'promote_student' student.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="icon-btn" title="Promote">
+                            <i class="fas fa-level-up-alt"></i>
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="icon-btn" title="{{ student.status }}" disabled>
+                        <i class="fas fa-level-up-alt" style="color: grey;"></i>
+                    </button>
+                    {% endif %}
+                    {% else %}
+                    <button class="icon-btn" title="{{ student.status }}" disabled>
+                        <i class="fas fa-level-up-alt" style="color: grey;"></i>
+                    </button>
+                    {% endif %}
+                </td>
+
             </tr>
             {% empty %}
             <tr>
-                <td colspan="11" class="text-center alert">No students found.</td>
+                <td colspan="11" class="text-center">No records found.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<div id="snackbar"></div>
+
+<script>
+    function showSnackbar(message) {
+        const snackbar = document.getElementById("snackbar");
+        snackbar.textContent = message;
+        snackbar.className = "show";
+        setTimeout(() => {
+            snackbar.className = snackbar.className.replace("show", "");
+        }, 3000);
+    }
+
+    // Django message support
+    {% if messages %}
+        {% for message in messages %}
+            showSnackbar("{{ message|escapejs }}");
+        {% endfor %}
+    {% endif %}
+
+
+    document.getElementById('studentSearch').addEventListener('input', function () {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('table tbody tr');
+
+        rows.forEach(row => {
+            const admissionCell = row.querySelector('td:nth-child(2)');
+            const nameCell = row.querySelector('td:nth-child(5)');
+            const phoneCell = row.querySelector('td:nth-child(11)');
+
+            const admission = admissionCell ? admissionCell.textContent.toLowerCase() : '';
+            const name = nameCell ? nameCell.textContent.toLowerCase() : '';
+            const phone = phoneCell ? phoneCell.textContent.toLowerCase() : '';
+
+            if (admission.includes(filter) || name.includes(filter) || phone.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+
+</script>
+
+<script>
+    function getTimeDifferenceInSeconds(fromDate) {
+        const now = new Date();
+        const then = new Date(fromDate);
+        return Math.floor((now - then) / 1000);
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const rows = document.querySelectorAll('table tbody tr');
+        const SIX_MONTHS_SECONDS = 15552000; // 6 months in seconds
+        rows.forEach((row, index) => {
+            const admissionDateCell = row.querySelector('td[data-admission-date]');
+            const promoteButtons = row.querySelectorAll('form button[type="submit"]');
+            if (!admissionDateCell || !promoteButtons.length) return;
+            const admissionDate = admissionDateCell.getAttribute('data-admission-date');
+            // 🔐 Simulate data-last-promotion using localStorage
+            const studentKey = `student-last-promotion-${index}`;
+            const lastPromotionDate = localStorage.getItem(studentKey) || admissionDate;
+            const timeSinceLastPromotion = getTimeDifferenceInSeconds(lastPromotionDate);
+            const isEligible = timeSinceLastPromotion >= SIX_MONTHS_SECONDS;
+            promoteButtons.forEach(btn => {
+                const icon = btn.querySelector('i');
+                btn.disabled = !isEligible;
+                btn.title = isEligible
+                    ? "Promote"
+                    : "Promotion not allowed (6-month lock-in period)";
+                if (icon) icon.style.color = isEligible ? '#800000' : 'grey';
+                btn.addEventListener('click', (e) => {
+                    if (!isEligible) {
+                        e.preventDefault();
+                        alert("Promotion not allowed. Please wait 6 months after the last promotion.");
+                    } else {
+                        // 🔄 Simulate promotion by saving current time
+                        localStorage.setItem(studentKey, new Date().toISOString());
+                        // ✅ Let the form submit normally
+                    }
+                });
+            });
+        });
+    });
+</script>
+
+ 
+
+
+
+<style>
+    #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #800000;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 14px 24px;
+        position: fixed;
+        z-index: 9999;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        font-size: 14px;
+    }
+
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.4s, fadeout 0.4s 2.6s;
+        }
+
+    @keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
+    }
+</style>
 {% endblock %}

@@ -3,14 +3,17 @@ from django.shortcuts import render, redirect
 from .forms import PUAdmissionForm, DegreeAdmissionForm
 from .models import PUAdmission, DegreeAdmission
 from .models import Enquiry1
-
+from master.decorators import custom_login_required
 # ---------- PU Admission Form View (AUTOINCREMENT FIXED) ----------
 
 import datetime
 from django.shortcuts import render
 
+
+@custom_login_required
 def admission_list(request):
-    admissions = PUAdmission.objects.all().order_by('-admission_no')
+    admissions = PUAdmission.objects.all()
+    admissions = sorted(admissions, key=lambda a: int(a.admission_no.split('/')[-1]))
 
     # Extract all user IDs where admission_taken_by is not None
     user_ids = [a.admission_taken_by for a in admissions if a.admission_taken_by]
@@ -25,13 +28,207 @@ def admission_list(request):
     for admission in admissions:
         admission.created_by_username = user_dict.get(admission.admission_taken_by, "Unknown")
 
+         # Label based on admission_source saved in DB
+        if admission.admission_source == 'enquiry':
+            admission.taken_from_label = "From Enquiry"
+        elif admission.admission_source == 'bulk_import':
+            admission.taken_from_label = "From Bulk"
+        else:
+            admission.taken_from_label = "Direct"
+
     return render(request, 'admission/admission_list.html', {'admissions': admissions})
+ 
+ 
+ 
+ 
+from django.shortcuts import redirect
+from django.http import JsonResponse
+from django.contrib import messages
+import pandas as pd
+import pdfplumber
+import re
+from datetime import datetime
+from admission.models import PUAdmission, DegreeAdmission
+from master.models import Course
+from django.db import models
+
+
+
+@custom_login_required
+def parse_date_safe(value):
+    try:
+        if pd.isna(value) or value in ['', 'NaT', 'None']:
+            return None
+        if isinstance(value, datetime):
+            return value.date()
+        return pd.to_datetime(value, errors='coerce').date()
+    except Exception:
+        return None
+
+
+    
+@custom_login_required
+def normalize_category(value):
+    valid_categories = dict(PUAdmission.CATEGORY_CHOICES)
+    value = str(value).strip().upper()
+    return value if value in valid_categories else 'GM'
+
+
+@custom_login_required
+def get_course_object(course_name):
+    if not course_name:
+        return None
+    return Course.objects.filter(name__icontains=str(course_name).strip()).first()
+
+
+@custom_login_required
+def bulk_import_admissions(request):
+    if request.method == 'POST' and request.FILES.get('import_file'):
+        file = request.FILES['import_file']
+        filename = file.name.lower()
+
+        errors = []
+        count = 0
+
+        # Fetch current serials for PU and Degree
+        pu_prefix = "PSCM2025-26PUC"
+        deg_prefix = "PSCM2025-26DG"
+
+        last_pu = PUAdmission.objects.filter(admission_no__startswith=f"{pu_prefix}/").order_by('-id').first()
+        pu_serial = int(re.search(r"/(\d+)$", last_pu.admission_no).group(1)) if last_pu and last_pu.admission_no else 0
+
+        last_deg = DegreeAdmission.objects.filter(admission_no__startswith=f"{deg_prefix}/").order_by('-id').first()
+        deg_serial = int(re.search(r"/(\d+)$", last_deg.admission_no).group(1)) if last_deg and last_deg.admission_no else 0
+
+        try:
+            if filename.endswith('.pdf'):
+                print("📄 Reading PDF")
+                rows = []
+                with pdfplumber.open(file) as pdf:
+                    for page in pdf.pages:
+                        text = page.extract_text()
+                        if not text:
+                            continue
+                        for line in text.split('\n'):
+                            if 'admission_no' in line.lower():
+                                continue
+                            line = re.sub(r'\s{2,}', ' ', line).strip()
+                            parts = line.split()
+
+                            try:
+                                mobile = parts[-1] if re.match(r'^\d{10}$', parts[-1]) else ''
+                                category = parts[-2] if len(parts) >= 2 else ''
+                                gender = parts[-3] if len(parts) >= 3 else ''
+                                dob = parts[-4] if len(parts) >= 4 else ''
+                                dob_parsed = parse_date_safe(dob)
+                                slice_offset = 4 if mobile else 3
+                                rest = parts[:-slice_offset]
+
+                                admission_no = rest[0] if rest else ''
+                                course = next((t for t in rest if "PUC" in t), None)
+                                if not course:
+                                    raise ValueError("Course not found")
+                                course_idx = rest.index(course)
+                                student_name = ' '.join(rest[1:course_idx])
+                                parent_name = ' '.join(rest[course_idx + 1:])
+
+                                rows.append({
+                                    'admission_no': admission_no,
+                                    'student_name': student_name,
+                                    'course': course,
+                                    'parent_name': parent_name,
+                                    'dob': dob_parsed,
+                                    'gender': gender,
+                                    'categoy': category,
+                                    'parent_mobile_no': mobile,
+                                })
+                            except Exception as e:
+                                errors.append(f"⚠️ Line skipped: {line} → {e}")
+                df = pd.DataFrame(rows)
+
+            elif filename.endswith(('.xlsx', '.xls')):
+                print("📊 Reading Excel")
+                df = pd.read_excel(file)
+                df = df.fillna('')
+            else:
+                return JsonResponse({'success': False, 'error': '❌ Unsupported file format'})
+
+            if df.empty:
+                return JsonResponse({'success': False, 'error': '⚠️ No data found in file.'})
+
+            for _, row in df.iterrows():
+                data = {}
+                for field in PUAdmission._meta.get_fields():
+                    if field.name in df.columns:
+                        value = row.get(field.name, '')
+
+                        if isinstance(field, models.DateField):
+                            data[field.name] = parse_date_safe(str(value).strip())
+                        elif isinstance(field, models.DecimalField):
+                            try:
+                                data[field.name] = float(value) if str(value).strip() else None
+                            except:
+                                data[field.name] = None
+                        elif isinstance(field, models.BooleanField):
+                            data[field.name] = str(value).strip().lower() in ['true', '1', 'yes']
+                        elif isinstance(field, models.ForeignKey):
+                            if field.related_model.__name__ == 'Course':
+                                data[field.name] = get_course_object(value)
+                            else:
+                                data[field.name] = None
+                        else:
+                            data[field.name] = str(value).strip() if pd.notna(value) else ''
+
+                course = data.get('course')
+                course_type_name = course.course_type.name.upper() if course and course.course_type else ''
+
+                if not data.get('admission_no'):
+                    if 'PU' in course_type_name:
+                        data['admission_no'] = f"{pu_prefix}/{pu_serial + 1:03d}"
+                        pu_serial += 1
+                    elif 'DEGREE' in course_type_name or 'UG' in course_type_name:
+                        data['admission_no'] = f"{deg_prefix}/{deg_serial + 1:03d}"
+                        deg_serial += 1
+
+                if not data.get('student_name') or not data.get('dob'):
+                    errors.append(f"⚠️ Skipped row: Missing student_name or dob → {row.to_dict()}")
+                    continue
+
+                try:
+                    data['admission_source'] = 'bulk_import'
+                    if 'PU' in course_type_name:
+                        PUAdmission.objects.create(**data)
+                    elif 'DEGREE' in course_type_name or 'UG' in course_type_name:
+                        DegreeAdmission.objects.create(**data)
+                    else:
+                        errors.append(f"⚠️ Unknown course type for: {row.get('course')}")
+                        continue
+
+                    print(f"✅ Saved: {data.get('admission_no')} - {data.get('student_name')}")
+                    count += 1
+                except Exception as e:
+                    errors.append(f"❌ {data.get('student_name')} - DB Error: {e}")
+
+            return JsonResponse({
+                'success': True,
+                'message': f"✅ Successfully imported {count} record(s).",
+                'errors': errors[:10],
+                'error_count': len(errors)
+            })
+
+        except Exception as e:
+            print("❌ Import error:", e)
+            return JsonResponse({'success': False, 'error': f"❌ Import failed: {str(e)}"})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 from datetime import date, datetime
 from django.shortcuts import render
 from .models import PUAdmission, Enquiry1
 from .forms import PUAdmissionForm
 
+
+@custom_login_required
 def generate_next_receipt_no():
     today_str = datetime.today().strftime('%Y%m%d')
     latest = PUAdmission.objects.filter(receipt_no__startswith=today_str).order_by('-receipt_no').first()
@@ -48,137 +245,231 @@ def generate_next_receipt_no():
     next_receipt_no = f"{today_str}-{next_inc:03d}"
     return next_receipt_no, last_receipt_no
 
-from datetime import date
-
-from django.shortcuts import render
-
-from .models import PUAdmission, Enquiry1
-from django import forms
-
-from .forms import PUAdmissionForm
 
 from .utils import generate_next_receipt_no_shared
-from core.utils import get_logged_in_user,log_activity
+from core.utils import get_logged_in_user, log_activity
+import re
+from datetime import date
+from django.shortcuts import render
+from django.http import JsonResponse
+from admission.models import PUAdmission, Enquiry1
+from master.models import FeeMaster
+from admission.forms import PUAdmissionForm
+
+
+@custom_login_required
+def match_fee_name(name):
+    name = name.strip().lower().replace(" ", "")
+    if any(prefix in name for prefix in ["tution", "tuition"]):
+        return "tuition_fee"
+    elif "application" in name:
+        return "application_fee"
+    elif "books" in name:
+        return "books_fee"
+    elif "uniform" in name:
+        return "uniform_fee"
+    elif "transport" in name:
+        return "transport_fees"
+    return None
+
+@custom_login_required
+def get_fees_for_course_type(request):
+    course_type_id = request.GET.get("course_type_id")
+    course_id = request.GET.get("course_id")
+
+    fees = {
+        "tuition_fee": 0,
+        "books_fee": 0,
+        "uniform_fee": 0,
+        "application_fee": 0,
+        "transport_fees": 0
+    }
+
+    if course_type_id and course_id:
+        fee_qs = FeeMaster.objects.filter(program_type_id=course_type_id, combination_id=course_id)
+        for fee in fee_qs:
+            key = match_fee_name(fee.fee_name)
+            if key:
+                fees[key] = fee.fee_amount
+
+    return JsonResponse(fees)
+
+from django.db.models import Q
+from master.models import CourseType  # 👈 Make sure you import CourseType correctly
+from django.shortcuts import render, redirect
+
+@custom_login_required
 def admission_form(request, enquiry_no=None):
     success = False
+    academic_prefix = "PSCM2025-26PUC"
+    last = PUAdmission.objects.filter(admission_no__startswith=f"{academic_prefix}/").order_by('-id').first()
+    last_number = int(re.search(r"/(\d+)$", last.admission_no).group(1)) if (last and last.admission_no) else 0
 
-    # Compute the next admission number
-    last_admission = PUAdmission.objects.filter(admission_no__startswith='PU-').order_by('-id').first()
-    last_number = int(last_admission.admission_no.split('-')[1]) if last_admission and last_admission.admission_no else 0
-    next_admission_no = f"PU-{last_number + 1:03d}"
-
-    # Compute the next shared receipt number
+    next_serial = last_number + 1
+    next_admission_no = f"{academic_prefix}/{next_serial:03d}"
     next_receipt_no, last_receipt_no = generate_next_receipt_no_shared()
 
-    # Default initial data for the marks table
     marks_initial = {}
     for i in range(1, 7):
         marks_initial[f"subject{i}"] = ""
         marks_initial[f"max_marks{i}"] = ""
         marks_initial[f"marks_obtained{i}"] = ""
-        marks_initial[f"total_marks_percentage{i}"] = ""  # <-- FIX here
+        marks_initial[f"total_marks_percentage{i}"] = ""
 
-    admission = None  # No admission object yet for add mode
+    tuition_fee = books_fee = uniform_fee = application_fee = transport_fees = 0
+    course_type_id = course_id = None
 
-    if request.method == 'POST':
+    if enquiry_no:
+        try:
+            enquiry = Enquiry1.objects.get(enquiry_no=enquiry_no)
+            course_type_id = enquiry.course_type.id if enquiry.course_type else None
+            course_id = enquiry.course.id if enquiry.course else None
+        except Enquiry1.DoesNotExist:
+            pass
+
+    # 🔍 Identify default PU-type program from CourseType model
+    default_course_type = CourseType.objects.filter(
+        Q(name__icontains="PU") | Q(name__icontains="PUC")
+    ).first()
+
+    form = None
+
+    if request.method == "POST":
         form = PUAdmissionForm(request.POST, request.FILES)
         if form.is_valid():
-            student_name = form.cleaned_data.get('student_name')
-            enquiry_from_form = form.cleaned_data.get('enquiry_no')
+            ct = form.cleaned_data.get("course_type")
+            c = form.cleaned_data.get("course")
+            if ct:
+                course_type_id = ct.id
+            if c:
+                course_id = c.id
 
-            if not enquiry_no and not enquiry_from_form:
-                enquiry_obj = Enquiry1.objects.filter(student_name=student_name).first()
-                enquiry_no = enquiry_obj.enquiry_no if enquiry_obj else 'None'
-
-            pu_admission = form.save(commit=False)
-            pu_admission.admission_no = next_admission_no
-            pu_admission.enquiry_no = enquiry_no or enquiry_from_form
-            pu_admission.receipt_no = next_receipt_no
-            pu_admission.receipt_date = date.today()
-            user_id = request.session.get('user_id')
-            pu_admission.admission_taken_by = user_id if user_id else None
-
-            if not pu_admission.admission_date:
-                pu_admission.admission_date = date.today()
-
-            # Backend fee calculation
-            tuition_fee = pu_admission.tuition_fee or 0
-            tuition_advance = pu_admission.tuition_advance_amount or 0
-            scholarship = pu_admission.scholarship_amount or 0
-            pu_admission.final_fee_after_advance = tuition_fee - tuition_advance - scholarship
-
-            pu_admission.save()
-
-
-
-
-
-            user = get_logged_in_user(request)
-            log_activity(user, 'created', pu_admission)
-
-
-
-            success = True
-
-            # Prepare new form with incremented numbers
-            next_admission_no = f"PU-{last_number + 2:03d}"
-            next_receipt_no, last_receipt_no = generate_next_receipt_no_shared()
-            form = PUAdmissionForm(initial={
-                'admission_no': next_admission_no,
-                'admission_date': date.today(),
-                'receipt_no': next_receipt_no,
-                'receipt_date': date.today(),
-                **marks_initial
-            })
-        else:
-            print("Form Errors:", form.errors)
+            if course_type_id and course_id:
+                fee_qs = FeeMaster.objects.filter(program_type_id=course_type_id, combination_id=course_id)
+                for fee in fee_qs:
+                    key = match_fee_name(fee.fee_name)
+                    if key:
+                        locals()[key] = fee.fee_amount
     else:
         initial_data = {
+            **marks_initial,
             'admission_no': next_admission_no,
             'admission_date': date.today(),
             'receipt_no': next_receipt_no,
             'receipt_date': date.today(),
-            **marks_initial
-        }
+            'application_fee': application_fee,
+            'tuition_fee': tuition_fee,
+            'books_fee': books_fee,
+            'uniform_fee': uniform_fee,
+            'transport_fees': transport_fees,
+            'course_type': default_course_type.id if default_course_type else None
 
+        }
         if enquiry_no:
             try:
                 enquiry = Enquiry1.objects.get(enquiry_no=enquiry_no)
                 initial_data.update({
                     'enquiry_no': enquiry.enquiry_no,
-                    "student_name": enquiry.student_name,
-                    "gender": enquiry.gender,
-                    "parent_name": enquiry.parent_name,
-                    "parent_mobile_no": enquiry.parent_phone,
-                    "email": enquiry.email,
-                    "course_type": enquiry.course_type.id,
-                    "sslc_percentage": enquiry.percentage_10th,
+                    'student_name': enquiry.student_name,
+                    'gender': enquiry.gender,
+                    'parent_name': enquiry.parent_name,
+                    'parent_mobile_no': enquiry.parent_phone,
+                    'email': enquiry.email,
+                    'course_type': enquiry.course_type.id if enquiry.course_type else (
+                            default_course_type.id if default_course_type else None
+                        ),
+                    'course': enquiry.course.id if enquiry.course else None,
+                    'sslc_percentage': enquiry.percentage_10th,
                 })
-                # Optionally, if you have subject info in enquiry, add it here
-                # for i in range(1, 7):
-                #     initial_data[f"subject{i}"] = getattr(enquiry, f"subject{i}", "")
-                #     initial_data[f"max_marks{i}"] = getattr(enquiry, f"max_marks{i}", "")
-                #     initial_data[f"marks_obtained{i}"] = getattr(enquiry, f"marks_obtained{i}", "")
-                #     initial_data[f"total_marks_percentage{i}"] = getattr(enquiry, f"total_marks_percentage{i}", "")
-
             except Enquiry1.DoesNotExist:
                 pass
 
         form = PUAdmissionForm(initial=initial_data)
 
-    # Prepare rows for the template
-    subject_rows = []
-    for i in range(1, 7):
-        subject_rows.append({
+        if course_type_id and course_id:
+            fee_qs = FeeMaster.objects.filter(program_type_id=course_type_id, combination_id=course_id)
+            for fee in fee_qs:
+                key = match_fee_name(fee.fee_name)
+                if key:
+                    locals()[key] = fee.fee_amount
+
+    if request.method == "POST" and form and form.is_valid():
+        pu_admission = form.save(commit=False)
+        pu_admission.admission_no = next_admission_no
+        pu_admission.receipt_no = next_receipt_no
+        pu_admission.receipt_date = date.today()
+
+        student_name = form.cleaned_data.get('student_name')
+        enquiry_from_form = form.cleaned_data.get('enquiry_no')
+
+        # 👉 Convert student_name to uppercase (safe even if already in caps)
+        if student_name:
+            student_name = student_name.upper()
+
+        # 👉 Now match with Enquiry
+        if not enquiry_no and not enquiry_from_form:
+            enquiry_obj = Enquiry1.objects.filter(student_name=student_name).first()
+            enquiry_no = enquiry_obj.enquiry_no if enquiry_obj else None
+
+
+        pu_admission.enquiry_no = enquiry_no or enquiry_from_form
+        pu_admission.admission_taken_by = request.session.get('user_id')
+
+        pu_admission.admission_source = 'enquiry' if enquiry_from_form else 'direct'
+
+        if not pu_admission.admission_date:
+            pu_admission.admission_date = date.today()
+
+        pu_admission.application_fee = application_fee
+        pu_admission.tuition_fee = tuition_fee
+        pu_admission.books_fee = books_fee
+        pu_admission.uniform_fee = uniform_fee
+        if hasattr(pu_admission, "transport_fees"):
+            pu_admission.transport_fees = transport_fees
+        elif hasattr(pu_admission, "transport_amount"):
+            pu_admission.transport_amount = transport_fees
+
+        tuition_advance = pu_admission.tuition_advance_amount or 0
+        scholarship = pu_admission.scholarship_amount or 0
+        pu_admission.final_fee_after_advance = tuition_fee - tuition_advance - scholarship
+
+        pu_admission.save()
+
+        user = get_logged_in_user(request)
+        log_activity(user, 'created', pu_admission)
+
+        return HttpResponseRedirect(reverse('admission_list') + '?success=add')
+
+        success = True
+
+        snackbar_message = f"Admission {pu_admission.admission_no} saved successfully for {pu_admission.student_name}."
+
+        next_serial += 1
+        next_admission_no = f"{academic_prefix}/{next_serial:03d}"
+        next_receipt_no, last_receipt_no = generate_next_receipt_no_shared()
+
+        form = PUAdmissionForm(initial={
+            **marks_initial,
+            'admission_no': next_admission_no,
+            'admission_date': date.today(),
+            'receipt_no': next_receipt_no,
+            'receipt_date': date.today(),
+            'application_fee': application_fee,
+            'tuition_fee': tuition_fee,
+            'books_fee': books_fee,
+            'uniform_fee': uniform_fee,
+            'transport_fees': transport_fees
+        })
+
+    subject_rows = [
+        {
             "subject_field": form[f"subject{i}"],
             "max_marks_field": form[f"max_marks{i}"],
             "marks_field": form[f"marks_obtained{i}"],
-            "percent_field": form[f"total_marks_percentage{i}"],  # <-- FIX here
-            "subject_val": "",       # for add mode, values are blank
-            "max_marks_val": "",
-            "marks_val": "",
-            "percent_val": "",
-        })
+            "percent_field": form[f"total_marks_percentage{i}"],
+            "subject_val": "", "max_marks_val": "", "marks_val": "", "percent_val": ""
+        } for i in range(1, 7)
+    ]
 
     return render(request, 'admission/admission_form.html', {
         'form': form,
@@ -190,36 +481,48 @@ def admission_form(request, enquiry_no=None):
         'add_mode': True,
         'edit_mode': False,
         'view_mode': False,
-        'admission': admission,
+        'admission': pu_admission if success else None,
+        'snackbar_message': snackbar_message if success else "",
     })
 
+
+from django import forms  # ✅ Required for forms.CheckboxInput
+from django.shortcuts import render, get_object_or_404, redirect
+from admission.models import PUAdmission
+from admission.forms import PUAdmissionForm
+from core.utils import get_logged_in_user, log_activity
+
+@custom_login_required
 def view_pu_admission(request, pk):
     admission = get_object_or_404(PUAdmission, pk=pk)
     form = PUAdmissionForm(instance=admission)
 
-    # Disable all fields for view mode
+    # ✅ Disable all form fields
     for name, field in form.fields.items():
-        widget = field.widget
-        if isinstance(widget, forms.CheckboxInput):
-            widget.attrs['disabled'] = True
+        if isinstance(field.widget, forms.CheckboxInput):
+            field.widget.attrs['disabled'] = True
         else:
-            widget.attrs['readonly'] = True
-            widget.attrs['disabled'] = True
+            field.widget.attrs.update({'readonly': True, 'disabled': True})
 
-    # Prepare subject rows for template rendering (includes both fields and values)
+
+           
+    # ✅ Prepare subject rows
     subject_rows = []
     for i in range(1, 7):
-        percent_name = f"total_marks_percentage{i}"
+        percent_field = f"total_marks_percentage{i}"
         subject_rows.append({
             "subject_field": form[f"subject{i}"],
             "max_marks_field": form[f"max_marks{i}"],
             "marks_field": form[f"marks_obtained{i}"],
-            "percent_field": form[percent_name] if percent_name in form.fields else None,
+            "percent_field": form[percent_field],
             "subject_val": getattr(admission, f"subject{i}", ""),
             "max_marks_val": getattr(admission, f"max_marks{i}", ""),
             "marks_val": getattr(admission, f"marks_obtained{i}", ""),
-            "percent_val": getattr(admission, percent_name, ""),
+            "percent_val": getattr(admission, percent_field, ""),
         })
+
+        user = get_logged_in_user(request)
+        log_activity(user, 'viewed', admission)
 
     return render(request, 'admission/admission_form.html', {
         'form': form,
@@ -231,37 +534,49 @@ def view_pu_admission(request, pk):
     })
 
 
+from django.utils.http import url_has_allowed_host_and_scheme
+
+@custom_login_required
 def edit_pu_admission(request, pk):
     admission = get_object_or_404(PUAdmission, pk=pk)
     success = False
 
+    # Get the 'next' parameter from the query string (e.g., ?next=/pending-applications/)
+    next_url = request.GET.get('next')
+
     if request.method == 'POST':
         form = PUAdmissionForm(request.POST, request.FILES, instance=admission)
         if form.is_valid():
-            form.save()
+            pu_admission = form.save()
 
+            # ✅ Log the update
             user = get_logged_in_user(request)
-            log_activity(user, 'edited', admission)
-
+            log_activity(user, 'edited', pu_admission)
 
             success = True
-            return redirect('admission_list')  # Replace with your list view name
+
+            # ✅ Redirect to 'next' if it’s safe, else fallback
+            if next_url and url_has_allowed_host_and_scheme(next_url, request.get_host()):
+                return redirect(next_url)
+            return HttpResponseRedirect(reverse('admission_list') + '?success=edit')
+        else:
+            print("❌ Form errors:", form.errors)
     else:
         form = PUAdmissionForm(instance=admission)
 
-    # Prepare subject rows for template rendering (includes both fields and values)
+    # ✅ Prepare subject rows
     subject_rows = []
     for i in range(1, 7):
-        percent_name = f"total_marks_percentage{i}"
+        percent_field = f"total_marks_percentage{i}"
         subject_rows.append({
             "subject_field": form[f"subject{i}"],
             "max_marks_field": form[f"max_marks{i}"],
             "marks_field": form[f"marks_obtained{i}"],
-            "percent_field": form[percent_name] if percent_name in form.fields else None,
+            "percent_field": form[percent_field],
             "subject_val": getattr(admission, f"subject{i}", ""),
             "max_marks_val": getattr(admission, f"max_marks{i}", ""),
             "marks_val": getattr(admission, f"marks_obtained{i}", ""),
-            "percent_val": getattr(admission, percent_name, ""),
+            "percent_val": getattr(admission, percent_field, ""),
         })
 
     return render(request, 'admission/admission_form.html', {
@@ -275,23 +590,28 @@ def edit_pu_admission(request, pk):
         'subject_rows': subject_rows,
     })
 
+
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from .models import PUAdmission
 
+@custom_login_required
 def delete_pu_admission(request, pk):
     admission = get_object_or_404(PUAdmission, pk=pk)
+
+    # Store before delete
+    admission_no = admission.admission_no
+    student_name = admission.student_name
+
     admission.delete()
 
-
+    # ✅ Log the delete
     user = get_logged_in_user(request)
     log_activity(user, 'deleted', admission)
 
-    messages.success(request, "PU Admission deleted successfully.")
-    return redirect('admission_list')  # Must match name in urls.py
-
-# views.py
- 
+    # ✅ Success message with info
+    messages.success(request, f"Admission {admission_no} deleted successfully for {student_name}.")
+    return redirect('admission_list')  # Update if your URL name differs
 # ---------- Degree Admission Form View ----------
 import datetime
 import requests
@@ -301,160 +621,234 @@ from .forms import DegreeAdmissionForm
 
 
 
+from django.shortcuts import render
+from .models import DegreeAdmission
+from master.models import UserCustom
+
+@custom_login_required
 def degree_admission_list(request):
-    admissions = DegreeAdmission.objects.all().order_by('-id')
-  
-    # Extract all user IDs where admission_taken_by is not None
+    admissions = DegreeAdmission.objects.all().select_related('course')
+
+    # Sort by admission serial number
+    def extract_serial(adm):
+        try:
+            return int(adm.admission_no.split('/')[-1])
+        except:
+            return 0
+
+    admissions = sorted(admissions, key=extract_serial)
+
+    # Map user IDs to usernames
     user_ids = [a.admission_taken_by for a in admissions if a.admission_taken_by]
-
-    # Fetch corresponding users with their usernames
     users = UserCustom.objects.filter(id__in=user_ids).values('id', 'username')
-
-    # Create a dictionary to map user IDs to usernames
     user_dict = {user['id']: user['username'] for user in users}
 
-    # Add the username dynamically to each admission object
     for admission in admissions:
         admission.created_by_username = user_dict.get(admission.admission_taken_by, "Unknown")
-    return render(request, 'admission/degree_admission_list.html', {'admissions': admissions}) 
+
+        # Label based on admission_source saved in DB
+        if admission.admission_source == 'enquiry':
+            admission.taken_from_label = "From Enquiry"
+        elif admission.admission_source == 'bulk_import':
+            admission.taken_from_label = "From Bulk"
+        else:
+            admission.taken_from_label = "Direct"
+
+        # You do not need to attach admission_source separately; 
+        # use admission.get_admission_source_display in template.
+
+    return render(request, 'admission/degree_admission_list.html', {'admissions': admissions})
+
 
 # ---------- Degree Admission Form View ----------
 
+import re
 from datetime import date
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render
+from django.contrib import messages
 from .models import DegreeAdmission, Enquiry2
 from .forms import DegreeAdmissionForm
 from .utils import generate_next_receipt_no_shared
+from master.models import FeeMaster
+from core.utils import get_logged_in_user, log_activity
 
+@custom_login_required
+def match_fee_name(name):
+    name = name.strip().lower().replace(" ", "")
+    if any(prefix in name for prefix in ["tution", "tuition"]):
+        return "tuition_fee"
+    elif "application" in name:
+        return "application_fee"
+    elif "books" in name:
+        return "books_fee"
+    elif "uniform" in name:
+        return "uniform_fee"
+    elif "transport" in name:
+        return "transport_fees"
+    return None
+
+from django.db.models import Q
+from django.shortcuts import render, redirect
+from datetime import date
+
+@custom_login_required
 def degree_admission_form(request, enquiry_no=None):
-    form_submission_success = False
-
-    # Compute next admission number
-    last_admission = DegreeAdmission.objects.filter(admission_no__startswith='DG-').order_by('-id').first()
-    last_number = int(last_admission.admission_no.split('-')[1]) if last_admission and last_admission.admission_no else 0
-    next_admission_no = f"DG-{last_number + 1:03d}"
-
-    # Compute shared receipt number
-    next_receipt_no, _ = generate_next_receipt_no_shared()
-
-    # Default initial for subject/marks fields
-    marks_initial = {}
-    for i in range(1, 7):
-        marks_initial[f"subject{i}"] = ""
-        marks_initial[f"max_marks{i}"] = ""
-        marks_initial[f"marks_obtained{i}"] = ""
-        marks_initial[f"total_marks_percentage{i}"] = ""
-
-    admission = None  # No admission object yet for add mode
-
-    if request.method == 'POST':
+    success = False
+    prefix = "PSCM2025-26DG"
+ 
+    last = DegreeAdmission.objects.filter(admission_no__startswith=f"{prefix}/").order_by('-id').first()
+    last_num = int(re.search(r'/(\d+)$', last.admission_no).group(1)) if (last and last.admission_no) else 0
+    next_serial = last_num + 1
+    next_adm_no = f"{prefix}/{next_serial:03d}"
+    next_rcp_no, last_receipt_no = generate_next_receipt_no_shared()
+ 
+ 
+    marks_initial = {f"{key}{i}": "" for i in range(1, 7) for key in ["subject", "max_marks", "marks_obtained", "total_marks_percentage"]}
+ 
+    tuition_fee = books_fee = uniform_fee = application_fee = transport_fees = 0
+    course_type_id = course_id = None
+ 
+    # ✅ Default course_type as "School of Commerce"
+    default_course_type = CourseType.objects.filter(
+    Q(name__icontains="School of Commerce") |
+    Q(name__icontains="Commerce") |
+    Q(name__icontains="BCom")).first()
+ 
+    if enquiry_no:
+        try:
+            en = Enquiry2.objects.get(enquiry_no=enquiry_no)
+            course_type_id = en.course_type.id if en.course_type else None
+            course_id = en.course.id if hasattr(en, 'course') else None
+        except Enquiry2.DoesNotExist:
+            pass
+    elif default_course_type:
+        course_type_id = default_course_type.id
+ 
+    if request.method == "POST":
         form = DegreeAdmissionForm(request.POST, request.FILES)
         if form.is_valid():
-            degree_admission = form.save(commit=False)
-            degree_admission.admission_no = next_admission_no
-            degree_admission.receipt_no = next_receipt_no
-            degree_admission.receipt_date = date.today()
-
-            enquiry_from_form = form.cleaned_data.get('enquiry_no')
-            student_name = form.cleaned_data.get('student_name')
-
-            if not enquiry_no and not enquiry_from_form:
-                enquiry_obj = Enquiry2.objects.filter(student_name=student_name).first()
-                enquiry_no = enquiry_obj.enquiry_no if enquiry_obj else 'None'
-
-            degree_admission.enquiry_no = enquiry_no or enquiry_from_form
-
-            user_id = request.session.get('user_id')
-            degree_admission.admission_taken_by = user_id if user_id else None
-
-            if not degree_admission.admission_date:
-                degree_admission.admission_date = date.today()
-
-            tuition_fee = degree_admission.tuition_fee or 0
-            tuition_advance = degree_admission.tuition_advance_amount or 0
-            scholarship = degree_admission.scholarship_amount or 0
-            degree_admission.final_fee_after_advance = tuition_fee - tuition_advance - scholarship
-
-            degree_admission.save()
-
-
-            user = get_logged_in_user(request)
-            log_activity(user, 'created', degree_admission)
-
-            form_submission_success = True
-
-            # Prepare new form for next entry
-            next_admission_no = f"DG-{last_number + 2:03d}"
-            next_receipt_no, _ = generate_next_receipt_no_shared()
-            form = DegreeAdmissionForm(initial={
-                'admission_no': next_admission_no,
-                'admission_date': date.today(),
-                'receipt_no': next_receipt_no,
-                'receipt_date': date.today(),
-                **marks_initial
-            })
-        else:
-            print("Form Errors:", form.errors)
+            ct = form.cleaned_data.get("course_type")
+            c = form.cleaned_data.get("course")
+            course_type_id = ct.id if ct else None
+            course_id = c.id if c else None
+ 
+            if course_type_id and course_id:
+                qs = FeeMaster.objects.filter(program_type_id=course_type_id, combination_id=course_id)
+                for fee in qs:
+                    key = match_fee_name(fee.fee_name)
+                    if key:
+                        locals()[key] = fee.fee_amount
     else:
-        initial_data = {
-            'admission_no': next_admission_no,
-            'admission_date': date.today(),
-            'receipt_no': next_receipt_no,
-            'receipt_date': date.today(),
-            **marks_initial
+        form = DegreeAdmissionForm(initial={
+            **marks_initial,
+            'admission_no': next_adm_no,
+            'receipt_no': next_rcp_no,
+            'course_type': course_type_id  # ✅ Set default course_type
+        })
+ 
+        if course_type_id and course_id:
+            qs = FeeMaster.objects.filter(program_type_id=course_type_id, combination_id=course_id)
+            for fee in qs:
+                key = match_fee_name(fee.fee_name)
+                if key:
+                    locals()[key] = fee.fee_amount
+ 
+    if request.method == "POST" and form.is_valid():
+        da = form.save(commit=False)
+        da.admission_no = next_adm_no
+        da.receipt_no = next_rcp_no
+        da.receipt_date = date.today()
+ 
+        ef = form.cleaned_data.get("enquiry_no")
+        sn = form.cleaned_data.get("student_name")
+        if not enquiry_no and not ef:
+            tmp = Enquiry2.objects.filter(student_name=sn).first()
+            enquiry_no = tmp.enquiry_no if tmp else None
+        da.enquiry_no = enquiry_no or ef
+ 
+        da.admission_taken_by = request.session.get('user_id')
+        da.admission_source = 'enquiry' if ef else 'direct'
+        da.admission_date = date.today() if not da.admission_date else da.admission_date
+ 
+        da.application_fee = application_fee
+        da.tuition_fee = tuition_fee
+        da.books_fee = books_fee
+        da.uniform_fee = uniform_fee
+        if hasattr(da, "transport_fees"):
+            da.transport_fees = transport_fees
+ 
+        da.final_fee_after_advance = tuition_fee - (da.tuition_advance_amount or 0) - (da.scholarship_amount or 0)
+        da.save()
+ 
+        log_activity(get_logged_in_user(request), 'created', da)
+ 
+        messages.success(
+            request,
+            f"Admission {da.admission_no} successfully added for {da.student_name}. "
+            f"Receipt No: {da.receipt_no}, Date: {da.receipt_date.strftime('%d-%m-%Y')}"
+        )
+        return HttpResponseRedirect (reverse('degree_admission_list') + '?success=add')
+ 
+ 
+        success = True
+        next_serial += 1
+        next_adm_no = f"{prefix}/{next_serial:03d}"
+        next_rcp_no, _ = generate_next_receipt_no_shared()
+        form = DegreeAdmissionForm(initial={**marks_initial, 'admission_no': next_adm_no, 'receipt_no': next_rcp_no})
+ 
+    else:
+        initial = {
+            **marks_initial,
+            'admission_no': next_adm_no,
+            'receipt_no': next_rcp_no,
+            'course_type': course_type_id,  # ✅ Ensure it’s included even outside POST
+            'receipt_date': date.today(),  # 👈 add this line
+ 
         }
-
         if enquiry_no:
             try:
-                enquiry = Enquiry2.objects.get(enquiry_no=enquiry_no)
-                initial_data.update({
-                    'enquiry_no': enquiry.enquiry_no,
-                    "student_name": enquiry.student_name,
-                    "gender": enquiry.gender,
-                    "parent_name": enquiry.parent_name,
-                    "parent_mobile_no": enquiry.parent_phone,
-                    "email": enquiry.email,
-                    "course_type": enquiry.course_type.id,
-                    "sslc_percentage": enquiry.percentage_12th,
+                en = Enquiry2.objects.get(enquiry_no=enquiry_no)
+                initial.update({
+                    'enquiry_no': en.enquiry_no,
+                    'student_name': en.student_name,
+                    'gender': en.gender,
+                    'parent_name': en.parent_name,
+                    'parent_mobile_no': en.parent_phone,
+                    'email': en.email,
+                    'sslc_percentage': en.percentage_12th,
+                    'course': course_id,
                 })
-                # Optionally fill subject marks fields from enquiry if available
-                # for i in range(1, 7):
-                #     initial_data[f"subject{i}"] = getattr(enquiry, f"subject{i}", "")
-                #     initial_data[f"max_marks{i}"] = getattr(enquiry, f"max_marks{i}", "")
-                #     initial_data[f"marks_obtained{i}"] = getattr(enquiry, f"marks_obtained{i}", "")
-                #     initial_data[f"total_marks_percentage{i}"] = getattr(enquiry, f"total_marks_percentage{i}", "")
             except Enquiry2.DoesNotExist:
                 pass
-
-        form = DegreeAdmissionForm(initial=initial_data)
-
-    # Prepare subject rows for template rendering (form fields and empty values)
-    subject_rows = []
-    for i in range(1, 7):
-        subject_rows.append({
-            "subject_field": form[f"subject{i}"],
-            "max_marks_field": form[f"max_marks{i}"],
-            "marks_field": form[f"marks_obtained{i}"],
-            "percent_field": form[f"total_marks_percentage{i}"],
-            # For add mode, values are empty
-            "subject_val": "",
-            "max_marks_val": "",
-            "marks_val": "",
-            "percent_val": "",
-        })
-
+        form = DegreeAdmissionForm(initial=initial)
+ 
+    subject_rows = [{
+        "subject_field": form[f"subject{i}"],
+        "max_marks_field": form[f"max_marks{i}"],
+        "marks_field": form[f"marks_obtained{i}"],
+        "percent_field": form[f"total_marks_percentage{i}"],
+        "subject_val": "", "max_marks_val": "", "marks_val": "", "percent_val": ""
+    } for i in range(1, 7)]
+ 
     return render(request, 'admission/degree_admission_form.html', {
         'form': form,
-        'form_submission_success': form_submission_success,
-        'next_admission_no': next_admission_no,
+        'form_submission_success': success,
+        'next_admission_no': next_adm_no,
         'subject_rows': subject_rows,
-        'add_mode': True,  # This is add mode!
+        'add_mode': True,
         'edit_mode': False,
         'view_mode': False,
-        'admission': admission,
+        'last_receipt_no': last_receipt_no if next_rcp_no else None,
+ 
     })
 
+@custom_login_required
+def ajax_load_courses(request):
+    course_type_id = request.GET.get("course_type")
+    courses = Course.objects.filter(course_type_id=course_type_id).values('id', 'name')
+    return JsonResponse(list(courses), safe=False)
 
+@custom_login_required
 def view_degree_admission(request, pk):
     admission = get_object_or_404(DegreeAdmission, pk=pk)
     form = DegreeAdmissionForm(instance=admission)
@@ -493,20 +887,26 @@ def view_degree_admission(request, pk):
     return render(request, "admission/degree_admission_form.html", context)
 
 
+from django.utils.http import url_has_allowed_host_and_scheme
+
+@custom_login_required
 def edit_degree_admission(request, pk):
     admission = get_object_or_404(DegreeAdmission, pk=pk)
     view_only = request.GET.get("view") == "1"
-    success = False
+    next_url = request.GET.get("next")  # 🔁 Flexible redirect target
 
     if request.method == 'POST' and not view_only:
         form = DegreeAdmissionForm(request.POST, request.FILES, instance=admission)
         if form.is_valid():
             form.save()
-
             user = get_logged_in_user(request)
             log_activity(user, 'edited', admission)
 
+            messages.success(request, f"Admission No '{admission.admission_no}' updated successfully.")
 
+            # ✅ Redirect to next if valid, fallback to degree_admission_list
+            if next_url and url_has_allowed_host_and_scheme(next_url, request.get_host()):
+                return redirect(next_url)
             return redirect('degree_admission_list')
     else:
         form = DegreeAdmissionForm(instance=admission)
@@ -531,33 +931,32 @@ def edit_degree_admission(request, pk):
 
     return render(request, 'admission/degree_admission_form.html', {
         'form': form,
-        'success': success,
         'edit_mode': not view_only,
         'view_mode': view_only,
         'admission': admission,
         'subject_rows': subject_rows,
-        'add_mode': False,  # Explicitly add this for consistency
+        'add_mode': False,
     })
 
 from django.shortcuts import redirect
 from django.contrib import messages
 from .models import DegreeAdmission
 
+@custom_login_required
 def delete_degree_admission(request, pk):
     admission = DegreeAdmission.objects.filter(pk=pk).first()
+
     if admission:
-        admission.delete()
-
-
+        admission_no = admission.admission_no
         user = get_logged_in_user(request)
         log_activity(user, 'deleted', admission)
+        admission.delete()
 
-
-        messages.success(request, "Degree Admission deleted successfully.")
+        messages.success(request, f"Admission No '{admission_no}' deleted successfully.")
     else:
         messages.warning(request, "This admission record does not exist or was already deleted.")
-    return redirect('degree_admission_list')
 
+    return redirect('degree_admission_list')
 
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -567,7 +966,7 @@ from django.http import JsonResponse
 from .models import PUAdmission, DegreeAdmission, PUAdmissionshortlist, DegreeAdmissionshortlist
 import json
 
-
+@custom_login_required
 def shortlisted_students_view(request):
     stream = request.GET.get('stream', 'PU')
 
@@ -611,6 +1010,7 @@ def shortlisted_students_view(request):
     return render(request, 'admission/shortlisted_students.html', context)
 
 
+@custom_login_required
 @csrf_exempt
 def approve_student(request, stream, student_id):
     if request.method == 'POST':
@@ -705,7 +1105,9 @@ def approve_student(request, stream, student_id):
 #     })
 from django.shortcuts import render
 from .models import PUAdmission, DegreeAdmission, CourseType
+from django.http import HttpResponseRedirect
 
+@custom_login_required
 def shortlist_display(request):
     selection = request.GET.get('type', 'PU')  # Default to PU
     course_type_id = request.GET.get('course_type')  # ID from dropdown
@@ -742,6 +1144,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import PUAdmission, PUFeeDetail
 from .forms import PUFeeDetailForm
 
+@custom_login_required
 def pu_fee_detail_form(request, admission_id):
     admission = get_object_or_404(PUAdmission, pk=admission_id, status="Confirmed")
     fee = PUFeeDetail.objects.filter(admission_no=admission.admission_no).first()
@@ -807,6 +1210,8 @@ def pu_fee_detail_form(request, admission_id):
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import DegreeAdmission, DegreeFeeDetail
 from .forms import DegreeFeeDetailForm
+
+@custom_login_required
 def degree_fee_detail_form(request, admission_id):
     admission = get_object_or_404(DegreeAdmission, pk=admission_id, status="Confirmed")
     fee = DegreeFeeDetail.objects.filter(admission_no=admission.admission_no).first()
@@ -883,7 +1288,7 @@ from django.db.models import Value, CharField
 
 from django.utils import timezone
  
- 
+@custom_login_required
 def enquiry_list1(request):
 
     # Get current date and time
@@ -977,7 +1382,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from admission.models import Enquiry1, Enquiry2
 from .utils import send_msgkart_template  # adjust this import as needed
 
-
+@custom_login_required
 @csrf_exempt
 def send_whatsapp_message(request, enquiry_no):
 
@@ -1066,12 +1471,15 @@ def send_whatsapp_message(request, enquiry_no):
 
 
 
+
+from django.db.models import Q
 from django.utils import timezone
 
 from django.shortcuts import render
 
 from admission.models import Enquiry1, Enquiry2, PUAdmission, DegreeAdmission, FollowUp
  
+@custom_login_required
 def enquiry_dashboard(request):
 
     now = timezone.now()
@@ -1098,17 +1506,30 @@ def enquiry_dashboard(request):
  
     # Converted enquiries this month
 
-    pu_converted = pu_enquiries.filter(enquiry_no__in=pu_converted_nos).count()
+    pu_converted_qs = PUAdmission.objects.filter(
+        admission_date__gte=start_of_month,
+        enquiry_no__isnull=False
+    ).exclude(enquiry_no='').filter(
+        enquiry_no__in=Enquiry1.objects.filter(is_converted=True).values_list('enquiry_no', flat=True)
+    )
 
-    degree_converted = degree_enquiries.filter(enquiry_no__in=degree_converted_nos).count()
+    degree_converted_qs = DegreeAdmission.objects.filter(
+        admission_date__gte=start_of_month,
+        enquiry_no__isnull=False
+    ).exclude(enquiry_no='').filter(
+        enquiry_no__in=Enquiry2.objects.filter(is_converted=True).values_list('enquiry_no', flat=True)
+    )
+    total_converted_enquiries=pu_converted_qs.count() + degree_converted_qs.count()
+    
+    
 
-    total_converted_enquiries = pu_converted + degree_converted
  
     # Follow-up Scheduled: this week, after now, and not converted
 
     followup_scheduled = FollowUp.objects.filter(
 
         follow_up_date__gte=now,
+
 
         follow_up_date__lte=end_of_week,
 
@@ -1202,6 +1623,8 @@ from datetime import timedelta
 from .models import PUAdmission, DegreeAdmission, Enquiry1, Enquiry2, FollowUp
 from django.db.models import Q
 from .forms import FollowUpForm
+
+@custom_login_required
 def followups_due_list(request):
     now = timezone.now()
     start_of_week = now - timedelta(days=now.weekday())
@@ -1245,6 +1668,7 @@ def followups_due_list(request):
     return render(request, 'admission/followups_due_list.html', context)
 
 
+@custom_login_required
 def pending_followups_list(request):
     now = timezone.now()
     start_of_month = now.replace(day=1)
@@ -1268,13 +1692,13 @@ def pending_followups_list(request):
     return render(request, 'admission/pending_followups_list.html', context)
 
 
-
+@custom_login_required
 def schedule_follow_up_form_add(request):
     enquiry_no = request.GET.get('enquiry_no')
-    student_name = request.GET.get('student_name')  # NEW
+    student_name = request.GET.get('student_name')
     enquiry = None
     enquiry_type = None
-
+    action = request.GET.get('action', 'add')  # default to 'edit' if not provided
     if enquiry_no:
         if enquiry_no.startswith("PU-ENQ-"):
             enquiry = get_object_or_404(Enquiry1, enquiry_no=enquiry_no)
@@ -1283,41 +1707,36 @@ def schedule_follow_up_form_add(request):
             enquiry = get_object_or_404(Enquiry2, enquiry_no=enquiry_no)
             enquiry_type = "DEG"
 
-    # 👇 Pass combined_enquiry key matching the dropdown logic (e.g., 'pu_1')
     initial_data = {}
     if enquiry:
         if enquiry_type == "PU":
             initial_data['combined_enquiry'] = f"pu_{enquiry.id}"
         elif enquiry_type == "DEG":
             initial_data['combined_enquiry'] = f"deg_{enquiry.id}"
-        initial_data['student_name_display'] = student_name  # NEW
+        initial_data['student_name_display'] = student_name
 
     if request.method == 'POST':
         form = FollowUpForm(request.POST)
         if form.is_valid():
             followup = form.save(commit=False)
             followup.status = 'Pending'
-
-            if enquiry_type == "PU":
-                followup.pu_enquiry = enquiry
-            elif enquiry_type == "DEG":
-                followup.degree_enquiry = enquiry
-
             followup.save()
 
             user = get_logged_in_user(request)
             log_activity(user, 'followup_scheduled', followup)
+
             messages.success(request, "Follow-up scheduled successfully!")
-
-
             return redirect('enquiry_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
     else:
         form = FollowUpForm(initial=initial_data)
 
     return render(request, 'admission/schedule_follow_up_form.html', {
         'form': form,
         'enquiry': enquiry,
-        'enquiry_no': enquiry_no
+        'enquiry_no': enquiry_no,
+        'action': action, 
     })
 
 from django.http import JsonResponse
@@ -1325,7 +1744,8 @@ from .models import Enquiry1, Enquiry2  # adjust to your model names
  
 from django.http import JsonResponse
 from .models import Enquiry1, Enquiry2
- 
+
+@custom_login_required 
 def get_student_name(request):
     value = request.GET.get('value')
     if value:
@@ -1349,40 +1769,48 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .models import FollowUp
 from .forms import FollowUpForm
 
+@custom_login_required
 def schedule_follow_up_form_edit(request, pk):
     followup = get_object_or_404(FollowUp, pk=pk)
+    action = request.GET.get('action', 'edit')  # default to 'edit' if not provided
     if request.method == 'POST':
         form = FollowUpForm(request.POST, instance=followup)
+        form.instance.combined_enquiry = followup.combined_enquiry
         if form.is_valid():
             form.save()
-
+ 
             user = get_logged_in_user(request)
             log_activity(user, 'followup_scheduled', followup)
             messages.success(request, "Follow-up updated successfully!")
-
+ 
             return redirect('follow_up_list')
     else:
         form = FollowUpForm(instance=followup)
-    
-    return render(request, 'admission/schedule_follow_up_form.html', {'form': form, 'edit': True})
+         
+    return render(request, 'admission/schedule_follow_up_form.html', {'form': form, 'edit': True, 'action': action})
+
 
 from django.shortcuts import render, get_object_or_404
 from .models import FollowUp
 from .forms import FollowUpForm
 
+@custom_login_required
 def schedule_follow_up_form_view(request, pk):
     followup = get_object_or_404(FollowUp, pk=pk)
+    action = request.GET.get('action', 'view')  # default to 'edit' if not provided
+
     form = FollowUpForm(instance=followup)
     for field in form.fields.values():
         field.disabled = True  # make all fields read-only
-
+ 
     return render(request, 'admission/schedule_follow_up_form.html', {
         'form': form,
-        'view': True
+        'view': True, 'action': action
     })
-
+@custom_login_required
 def schedule_follow_up_form_delete(request, pk):
     followup = get_object_or_404(FollowUp, pk=pk)
+
     followup.delete()
     user = get_logged_in_user(request)
     log_activity(user, 'followup_scheduled', followup)
@@ -1392,12 +1820,12 @@ def schedule_follow_up_form_delete(request, pk):
 
 
 
-
+@custom_login_required
 def follow_up_list(request):
     followups = FollowUp.objects.select_related('pu_enquiry', 'degree_enquiry').all().order_by('-follow_up_date')
     return render(request, 'admission/follow_up_list.html', {'followups': followups})
 
-
+@custom_login_required
 def update_followup_status(request, id):
     if request.method == 'POST':
         followup = get_object_or_404(FollowUp, id=id)
@@ -1418,6 +1846,7 @@ from admission.models import Enquiry1, Enquiry2, FollowUp,PUAdmission,DegreeAdmi
  
 from admission.forms import Enquiry1Form, Enquiry2Form
  
+@custom_login_required
 def enquiry_list(request):
     enquiries1 = Enquiry1.objects.all().annotate(enquiry_type=Value('PU', output_field=CharField()))
     enquiries2 = Enquiry2.objects.all().annotate(enquiry_type=Value('DEG', output_field=CharField()))
@@ -1425,15 +1854,10 @@ def enquiry_list(request):
     now = timezone.now()
  
     # Extract all user IDs where admission_taken_by is not None
-    user_ids = [a.created_by for a in enquiries if a.created_by]
- 
-    # Fetch corresponding users with their usernames
-    users = UserCustom.objects.filter(id__in=user_ids).values('id', 'username')
-    user_dict = {user['id']: user['username'] for user in users}
- 
+   
     # Add the username dynamically to each admission object
     for enquiry in enquiries:
-        enquiry.created_by_username = user_dict.get(enquiry.created_by, "Unknown")
+        enquiry.created_by_username = enquiry.created_by or "Unknown"
  
     # Attach follow-up status and conversion flag
     for enquiry in enquiries:
@@ -1510,18 +1934,31 @@ from django.shortcuts import render, get_object_or_404
 from admission.models import Enquiry1, Enquiry2
 from admission.forms import Enquiry1Form, Enquiry2Form
 
+from django.core.exceptions import ObjectDoesNotExist
+
+@custom_login_required
 def enquiry_form_view(request, enquiry_no):
     if enquiry_no.startswith("PU"):
         enquiry = get_object_or_404(Enquiry1, enquiry_no=enquiry_no)
         form = Enquiry1Form(instance=enquiry)
         template = 'admission/enquiry1_form.html'
-    else :
+    else:
         enquiry = get_object_or_404(Enquiry2, enquiry_no=enquiry_no)
         form = Enquiry2Form(instance=enquiry)
         template = 'admission/enquiry2_form.html'
-  
 
-    # Disable all fields
+    # ✅ Safe course_type queryset assignment
+    form.fields['course_type'].queryset = CourseType.objects.all()
+
+    try:
+        if enquiry.course_type_id:
+            form.fields['course'].queryset = Course.objects.filter(course_type_id=enquiry.course_type_id).order_by('name')
+        else:
+            form.fields['course'].queryset = Course.objects.none()
+    except ObjectDoesNotExist:
+        form.fields['course'].queryset = Course.objects.none()
+
+    # ✅ Disable all fields after setting the querysets
     for field in form.fields.values():
         field.widget.attrs['disabled'] = True
 
@@ -1532,7 +1969,7 @@ def enquiry_form_view(request, enquiry_no):
     })
 
 
-
+@custom_login_required
 def enquiry_form_edit(request, enquiry_no):
     if enquiry_no.startswith("PU"):
         enquiry = get_object_or_404(Enquiry1, enquiry_no=enquiry_no)
@@ -1548,21 +1985,25 @@ def enquiry_form_edit(request, enquiry_no):
         if form.is_valid():
             form.save()
 
-
             user = get_logged_in_user(request)
             log_activity(user, 'edited', enquiry)
+
+            # Add success snackbar message including enquiry_no
+            messages.success(request, f"Enquiry {enquiry_no} updated successfully!")
 
             return redirect('enquiry_list')  # Replace with your actual listing view name
     else:
         form = form_class(instance=enquiry)
+        form.fields['enquiry_date'].widget.attrs['readonly'] = True
+
 
     return render(request, template, {
         'form': form,
         'next_enquiry_no': enquiry.enquiry_no,
         'edit_mode': True
     })
-from django.contrib import messages
 
+@custom_login_required
 def enquiry_form_delete(request, enquiry_no):
     if enquiry_no.startswith("PU"):
         model = Enquiry1
@@ -1578,115 +2019,129 @@ def enquiry_form_delete(request, enquiry_no):
     user = get_logged_in_user(request)
     log_activity(user, 'deleted', enquiry)
 
+    # Add success snackbar message including enquiry_no
+    messages.success(request, f"Enquiry {enquiry_no} deleted successfully!")
+
     return redirect('enquiry_list')
-
-
-def enquiry_form_add(request):
-    if request.method == 'POST':
-        form = Enquiry1Form(request.POST)
-        if form.is_valid():
-            enquiry = form.save(commit=False)
-            enquiry.course_type_id = 1 
-            user_id = request.session.get('user_id')
-            
-
-            if user_id:
-                # assign by user instance
-                try:
-                    enquiry.created_by = user_id
-                    
-                except User.DoesNotExist:
-                    
-                    enquiry.created_by = None
-            else:
-                print("No user ID in session")
-                enquiry.created_by = None
-
-            enquiry.save()
-
-
-
-            user = get_logged_in_user(request)
-            log_activity(user, 'created', enquiry)
-
-
-            print("Enquiry saved with created_by:", enquiry.created_by)
-            messages.success(request, "Saved successfully!")
-            return redirect('enquiry_list')
-
-    else:
-        last_enquiry = Enquiry1.objects.order_by('-id').first()
-        if last_enquiry and last_enquiry.enquiry_no and last_enquiry.enquiry_no.startswith('PU-ENQ-'):
-            try:
-                last_number = int(last_enquiry.enquiry_no.split('-')[2])
-            except (IndexError, ValueError):
-                last_number = 0
-        else:
-            last_number = 0
-        next_enquiry_no = f"PU-ENQ-{last_number+1:02d}"
-        form = Enquiry1Form(initial={
-                'enquiry_no': next_enquiry_no,
-                'enquiry_date': timezone.now().date()
-            })
-
-    return render(request, 'admission/enquiry1_form.html', {
-        'form': form,
-        'next_enquiry_no': next_enquiry_no if request.method != 'POST' else None
-    })
-
-
 
 
 
 from master.models import UserCustom
-from admission.models import Enquiry2
-from admission.forms import Enquiry2Form
+from admission.models import Enquiry1
+from admission.forms import Enquiry1Form
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.utils import timezone
+from core.utils import get_logged_in_user, log_activity  # make sure these are imported
 
+@custom_login_required
+def enquiry_form_add(request):
+    next_enquiry_no = None  # Available for both GET and POST
 
-def degree_enquiry_add(request):
+    # Generate enquiry number
+    last_enquiry = Enquiry1.objects.order_by('-id').first()
+    if last_enquiry and last_enquiry.enquiry_no and last_enquiry.enquiry_no.startswith('PU-ENQ-'):
+        try:
+            last_number = int(last_enquiry.enquiry_no.split('-')[2])
+        except (IndexError, ValueError):
+            last_number = 0
+    else:
+        last_number = 0
+    next_enquiry_no = f"PU-ENQ-{last_number+1:02d}"
+
     if request.method == 'POST':
-        form = Enquiry2Form(request.POST)
+        form = Enquiry1Form(request.POST)
+
         if form.is_valid():
             enquiry = form.save(commit=False)
-            enquiry.course_type_id = 2
-            user_id = request.session.get('user_id')
-            
+            enquiry.enquiry_no = next_enquiry_no
+            enquiry.enquiry_date = timezone.now().date()
 
-            if user_id:
-                # assign by user instance
-                try:
-                    enquiry.created_by = user_id
-                    
-                except User.DoesNotExist:
-                    
-                    enquiry.created_by = None
-            else:
-                print("No user ID in session")
-                enquiry.created_by = None
+            user = get_logged_in_user(request)
+            if user:
+                enquiry.created_by = user.username # Or user.get_full_name()
 
             enquiry.save()
 
-
+            # Log activity
             user = get_logged_in_user(request)
             log_activity(user, 'created', enquiry)
 
             print("Enquiry saved with created_by:", enquiry.created_by)
-            messages.success(request, "Saved successfully!")
+
+            # Add success snackbar message including enquiry_no
+            messages.success(request, f"Enquiry {next_enquiry_no} saved successfully!")
+
             return redirect('enquiry_list')
+        else:
+            print("Form Errors:", form.errors)
+            return render(request, 'admission/enquiry1_form.html', {
+                'form': form,
+                'next_enquiry_no': next_enquiry_no
+            })
 
     else:
-        last_enquiry = Enquiry2.objects.order_by('-id').first()
-        if last_enquiry and last_enquiry.enquiry_no and last_enquiry.enquiry_no.startswith('DEG-ENQ-'):
-            try:
-                last_number = int(last_enquiry.enquiry_no.split('-')[2])
-            except (IndexError, ValueError):
-                last_number = 0
-        else:
+        form = Enquiry1Form(initial={
+            'enquiry_no': next_enquiry_no,
+            'enquiry_date': timezone.now().date()
+        })
+
+    return render(request, 'admission/enquiry1_form.html', {
+        'form': form,
+        'next_enquiry_no': next_enquiry_no
+    })
+
+
+from master.models import UserCustom, CourseType
+from admission.models import Enquiry2
+from admission.forms import Enquiry2Form
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from core.utils import get_logged_in_user, log_activity
+
+@custom_login_required
+def degree_enquiry_add(request):
+    # Generate next enquiry number
+    last_enquiry = Enquiry2.objects.order_by('-id').first()
+    if last_enquiry and last_enquiry.enquiry_no and last_enquiry.enquiry_no.startswith('DEG-ENQ-'):
+        try:
+            last_number = int(last_enquiry.enquiry_no.split('-')[2])
+        except (IndexError, ValueError):
             last_number = 0
-        next_enquiry_no = f"DEG-ENQ-{last_number+1:02d}"
-        form = Enquiry2Form(initial={'enquiry_no': next_enquiry_no,'enquiry_date': timezone.now().date()})
+    else:
+        last_number = 0
+
+    next_enquiry_no = f"DEG-ENQ-{last_number + 1:02d}"
+
+    if request.method == 'POST':
+        form = Enquiry2Form(request.POST)
+        if form.is_valid():
+            enquiry = form.save(commit=False)
+
+            # Attach creator info
+            user = get_logged_in_user(request)
+            if user:
+               enquiry.created_by = user.username # Or user.get_full_name()
+
+            # Set system-generated fields
+            enquiry.enquiry_no = next_enquiry_no
+            enquiry.enquiry_date = timezone.now().date()
+            enquiry.save()
+
+            user = get_logged_in_user(request)
+            log_activity(user, 'created', enquiry)
+
+            # ✅ Snackbar-style message with enquiry number
+            messages.success(request, f"Enquiry {next_enquiry_no} saved successfully!")
+            return redirect('enquiry_list')
+        else:
+            print("Form Errors:", form.errors)
+    else:
+        form = Enquiry2Form(initial={
+            'enquiry_no': next_enquiry_no,
+            'enquiry_date': timezone.now().date(),
+        })
 
     return render(request, 'admission/enquiry2_form.html', {
         'form': form,
@@ -1694,19 +2149,28 @@ def degree_enquiry_add(request):
     })
 
 
-
+@custom_login_required
 def load_courses(request):
     course_type_id = request.GET.get('course_type')
     courses = Course.objects.filter(course_type_id=course_type_id).order_by('name')
     return JsonResponse(list(courses.values('id', 'name')), safe=False)
 
+from django.http import JsonResponse
+
+@custom_login_required
 def load_courses_degree(request):
     course_type_id = request.GET.get('course_type')
+
+    try:
+        course_type_id = int(course_type_id)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Invalid course_type ID'}, status=400)
+
     courses = Course.objects.filter(course_type_id=course_type_id).order_by('name')
     return JsonResponse(list(courses.values('id', 'name')), safe=False)
 
 
-
+@custom_login_required
 def load_courses(request):
     course_type_id = request.GET.get('course_type')
     courses = Course.objects.filter(course_type_id=course_type_id).order_by('name')
@@ -1720,6 +2184,7 @@ from django.contrib.auth.models import User
 from .models import PUAdmissionshortlist, DegreeAdmissionshortlist
 from .email_sender import EmailSender
 
+@custom_login_required
 def send_bulk_emails(request):
     if request.method == "POST":
         provider_name = settings.EMAIL_PROVIDER_NAME
@@ -1782,6 +2247,7 @@ from django.contrib import messages
 
 DEFAULT_PASSWORD = "Temp@1234"  # Make sure this constant is defined
 
+@custom_login_required
 def student_login(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -1828,6 +2294,7 @@ def student_login(request):
 
 
 # @login_required
+@custom_login_required
 def reset_password(request):
     student_id = request.session.get('student_id')
     if not student_id:
@@ -1858,6 +2325,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 
 
+@custom_login_required
 def student_list(request):
     search_query = request.GET.get('search', '').strip()
     student_list = Student.objects.all().order_by('admission_no')
@@ -1885,6 +2353,7 @@ def student_list(request):
 from django.http import JsonResponse
 from .models import Student, PUAdmission  # Assuming PUAdmission covers both PU and degree admissions
 
+@custom_login_required
 def get_student_details(request):
     admission_no = request.GET.get('admission_no')
     data = {}
@@ -1942,6 +2411,7 @@ from datetime import date
 from django.db.models import Max
 from .models import Student
 
+@custom_login_required
 def generate_new_receipt_no_and_date():
     max_receipt = Student.objects.aggregate(Max('receipt_no'))['receipt_no__max']
     if max_receipt:
@@ -1958,6 +2428,7 @@ def generate_new_receipt_no_and_date():
 from django.contrib import messages
 from django.urls import reverse
 
+@custom_login_required
 def student_fee_form_add(request):
     if request.method == "POST":
         admission_no = request.POST.get('admission_no')
@@ -2008,13 +2479,14 @@ from .models import Student, StudentPaymentHistory
 from .forms import StudentForm
 from decimal import Decimal, InvalidOperation
 
+@custom_login_required
 def safe_decimal(val):
     try:
         return Decimal(val or 0)
     except (InvalidOperation, TypeError):
         return Decimal(0)
 
-
+@custom_login_required
 def student_fee_form_edit(request, admission_no):
     student = get_object_or_404(Student, admission_no=admission_no)
 
@@ -2144,6 +2616,7 @@ def student_fee_form_edit(request, admission_no):
 
 from datetime import datetime
 
+@custom_login_required
 def save_student_data_from_request(student, request):
     def get_amount(field):
         try:
@@ -2211,6 +2684,7 @@ def save_student_data_from_request(student, request):
     student.save()
 
 
+@custom_login_required
 def save_payment_history(student, request):
     try:
         print("Saving payment history for:", student.admission_no)
@@ -2288,6 +2762,7 @@ from io import BytesIO
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 
+@custom_login_required
 @require_GET
 def generate_qr_dynamic(request):
     amount = request.GET.get("amount")
@@ -2312,13 +2787,15 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 from .models import Student
 from decimal import Decimal
- 
+
+@custom_login_required 
 def safe_decimal(value):
     try:
         return Decimal(str(value).strip()) if value not in [None, ''] else Decimal(0)
     except:
         return Decimal(0)
  
+@custom_login_required
 def generate_fee_receipt_pdf(request, student_id):
     student = Student.objects.get(id=student_id)
  
@@ -2381,7 +2858,8 @@ from django.http import HttpResponseNotAllowed
 from django.contrib import messages
  
 from .models import StudentPaymentHistory
- 
+
+@custom_login_required 
 def student_fee_form_delete(request, admission_no):
     if request.method in ['POST', 'GET']:  # TEMPORARY for testing only
         student = get_object_or_404(Student, admission_no=admission_no)
@@ -2397,6 +2875,7 @@ def student_fee_form_delete(request, admission_no):
     return HttpResponseNotAllowed(['POST'])
 
 
+@custom_login_required
 def student_fee_form_view(request):
     query = request.GET.get('search')
     filter_status = request.GET.get('filter_status')
@@ -2457,6 +2936,7 @@ def student_fee_form_view(request):
 
 from .models import Student, StudentPaymentHistory
 
+@custom_login_required
 def save_payment(request):
     if request.method == 'POST':
         admission_no = request.POST.get('admission_no')
@@ -2499,13 +2979,14 @@ from weasyprint import HTML
 from .models import Student
 from decimal import Decimal
 
-
+@custom_login_required
 def safe_decimal(value):
     try:
         return Decimal(str(value).strip()) if value not in [None, ''] else Decimal(0)
     except:
         return Decimal(0)
 
+@custom_login_required
 def download_student_receipt(request, pk):
     payment = get_object_or_404(StudentPaymentHistory, pk=pk)
 
@@ -2560,6 +3041,7 @@ from .models import StudentPaymentHistory
 
 from decimal import Decimal
 
+@custom_login_required
 def download_admin_receipt(request, pk):
     payment = StudentPaymentHistory.objects.get(pk=pk)
 
@@ -2601,6 +3083,7 @@ from django.http import HttpResponse
 
 from .models import StudentPaymentHistory  # adjust import if needed
  
+@custom_login_required
 def export_payments_excel(request):
 
     wb = openpyxl.Workbook()
@@ -2684,6 +3167,7 @@ from django.http import HttpResponse
 import openpyxl
 from .models import StudentPaymentHistory  # Ensure this model matches your DB
 
+@custom_login_required
 def export_payments_excel(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -2837,6 +3321,7 @@ def export_payments_excel(request):
 from django.http import JsonResponse
 from .models import Enquiry1
 
+@custom_login_required
 def enquiry_lookup(request):
     enquiry_no = request.GET.get('enquiry_no')
     form_type = request.GET.get('form_type', '').lower()
@@ -2874,6 +3359,7 @@ from .models import Enquiry1  # Or your actual enquiry model
 from django.http import JsonResponse
 from .models import Enquiry1  # Adjust as needed
 
+@custom_login_required
 def degree_enquiry_lookup(request):
     enquiry_no = request.GET.get('enquiry_no')
     try:
@@ -2901,6 +3387,7 @@ def degree_enquiry_lookup(request):
 
 from django.shortcuts import render
 
+@custom_login_required
 def enquiry_print_form(request):
     # You can use any template path; adjust if needed
     return render(request, 'admission/enquiry_print_form.html')
@@ -2912,7 +3399,8 @@ from django.http import HttpResponse
 import openpyxl
 
 from .models import Student
- 
+
+@custom_login_required 
 def export_payments_excel(request):
 
     wb = openpyxl.Workbook()
@@ -3145,6 +3633,7 @@ from django.http import HttpResponse
 import openpyxl
 from .models import StudentPaymentHistory  # Ensure this model matches your DB
 
+@custom_login_required
 def export_payments_excel(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -3298,6 +3787,7 @@ from django.utils import timezone
 from datetime import timedelta
 from admission.models import Enquiry1, PUAdmission, DegreeAdmission
 
+@custom_login_required
 def admission_dashboard(request):
     now = timezone.now()
     today = now.date()
@@ -3365,70 +3855,10 @@ def admission_dashboard(request):
  
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import PUAdmission, DegreeAdmission, ConfirmedAdmission
- 
-def pending_admissions(request):
-    if request.method == 'POST':
-        admission_no = request.POST.get('admission_no')
-        action = request.POST.get('action')
- 
-        admission = None
-        source = None
-        degree_adm = DegreeAdmission.objects.filter(admission_no=admission_no).first()
-        if degree_adm:
-            admission = degree_adm
-            source = "DegreeAdmission"
-        else:
-            pu_adm = PUAdmission.objects.filter(admission_no=admission_no).first()
-            if pu_adm:
-                admission = pu_adm
-                source = "PUAdmission"
- 
-        if not admission:
-            print(f"Admission number {admission_no} not found in either table.", flush=True)
-            return redirect('pending_admissions')
- 
-        # Update status and move to ConfirmedAdmission if confirmed
-        if action == 'confirm':
-            admission.status = 'Confirmed'
-            admission.save()
-            # Check if already in ConfirmedAdmission to avoid duplicates
-            if not ConfirmedAdmission.objects.filter(admission_no=admission.admission_no).exists():
-                ConfirmedAdmission.objects.create(
-                    admission_no=admission.admission_no,
-                    student_name=admission.student_name,
-                    course=admission.course,
-                    admission_date=admission.admission_date,
-                    documents_complete=admission.document_submitted,  # <-- Correct mapping
-                    # add other fields as needed
-                )
-        elif action == 'review':
-            admission.status = 'Review'
-            admission.save()
-        elif action == 'reject':
-            admission.status = 'Rejected'
-            admission.save()
-        print(f"{source}: Updated admission_no {admission_no} to status {admission.status}", flush=True)
-        return redirect('pending_admissions')
- 
-    pu_pending = PUAdmission.objects.filter(status__in=['Pending', 'Review'])
-    degree_pending = DegreeAdmission.objects.filter(status__in=['Pending', 'Review'])
- 
-    def admission_dict(adm):
-        return {
-            "admission_no": adm.admission_no,
-            "student_name": adm.student_name,
-            "course": str(adm.course),
-            "admission_date": adm.admission_date,
-            "documents_complete": adm.document_submitted,
-            "status": adm.status,
-        }
- 
-    admissions_list = [admission_dict(adm) for adm in pu_pending] + [admission_dict(adm) for adm in degree_pending]
- 
-    return render(request, "admission/pending_admissions.html", {"admissions_list": admissions_list})
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import PUAdmission, DegreeAdmission, ConfirmedAdmission
+from django.contrib import messages
+from core.utils import log_activity, get_logged_in_user 
 
+@custom_login_required
 def pending_admissions(request):
     if request.method == 'POST':
         admission_no = request.POST.get('admission_no')
@@ -3436,6 +3866,7 @@ def pending_admissions(request):
 
         admission = None
         source = None
+
         degree_adm = DegreeAdmission.objects.filter(admission_no=admission_no).first()
         if degree_adm:
             admission = degree_adm
@@ -3447,37 +3878,71 @@ def pending_admissions(request):
                 source = "PUAdmission"
 
         if not admission:
-            print(f"Admission number {admission_no} not found in either table.", flush=True)
+            messages.error(request, f"❌ Admission number {admission_no} not found.")
             return redirect('pending_admissions')
 
-        # Update status and move to ConfirmedAdmission if confirmed
+        user = get_logged_in_user(request)  # ✅ get the logged in user
+
         if action == 'confirm':
             admission.status = 'Confirmed'
             admission.save()
-            # Check if already in ConfirmedAdmission to avoid duplicates
-            if not ConfirmedAdmission.objects.filter(admission_no=admission.admission_no).exists():
+            start_year = admission.admission_date.year
+            end_year = start_year + (2 if source == "PUAdmission" else 3)
+            academic_year_str = f"{start_year}-{str(end_year)[-2:]}"
+
+
+# Get or create the academic year object using `year` field
+            academic_year_obj, _ = AcademicYear.objects.get_or_create(year=academic_year_str)
+
+            exists = ConfirmedAdmission.objects.filter(
+                pu_admission=admission if source == "PUAdmission" else None,
+                degree_admission=admission if source == "DegreeAdmission" else None
+            ).exists()
+
+            if not exists:
                 ConfirmedAdmission.objects.create(
-                    admission_no=admission.admission_no,
+                    pu_admission=admission if source == "PUAdmission" else None,
+                    degree_admission=admission if source == "DegreeAdmission" else None,
                     student_name=admission.student_name,
-                    course=admission.course,
+                    course=str(admission.course),
                     admission_date=admission.admission_date,
-                    documents_complete=admission.document_submitted,  # <-- Correct mapping
+                    documents_complete=admission.document_submitted,
                     tuition_advance_amount=getattr(admission, "tuition_advance_amount", None),
-                    # add other fields as needed
+                    academic_year=academic_year_obj,
+                    current_year=1 if source == "PUAdmission" else None,
+                    semester=1 if source == "DegreeAdmission" else None,
                 )
+
+            messages.success(request, f"✅ Admission {admission_no} confirmed successfully.")
+
+            # ✅ Log activity
+            log_activity(user, 'confirmed admission', admission)
+
         elif action == 'review':
             admission.status = 'Review'
             admission.save()
+            messages.warning(request, f"🔍 Admission {admission_no} marked for review.")
+
+            # ✅ Log activity
+            log_activity(user, 'marked admission for review', admission)
+
         elif action == 'reject':
             admission.status = 'Rejected'
             admission.save()
-        print(f"{source}: Updated admission_no {admission_no} to status {admission.status}", flush=True)
+            messages.error(request, f"❌ Admission {admission_no} rejected.")
+
+            # ✅ Log activity
+            log_activity(user, 'rejected admission', admission)
+
         return redirect('pending_admissions')
 
+    # Fetch PU & Degree pending admissions
     pu_pending = PUAdmission.objects.filter(status__in=['Pending', 'Review'])
     degree_pending = DegreeAdmission.objects.filter(status__in=['Pending', 'Review'])
 
-    def admission_dict(adm):
+    # ✅ Map function
+    # @custom_login_required
+    def admission_dict(adm, program_type):
         return {
             "admission_no": adm.admission_no,
             "student_name": adm.student_name,
@@ -3485,79 +3950,138 @@ def pending_admissions(request):
             "admission_date": adm.admission_date,
             "documents_complete": adm.document_submitted,
             "status": adm.status,
-            "tuition_advance_amount": getattr(adm, "tuition_advance_amount", 0) or 0,
+            # "tuition_advance_amount": getattr(adm, "tuition_advance_amount", 0) or 0,
+            "application_fee": getattr(adm, "application_fee", 0) or 0, 
+            "pk": adm.pk,
+            "course_type": program_type,
         }
 
-    admissions_list = [admission_dict(adm) for adm in pu_pending] + [admission_dict(adm) for adm in degree_pending]
+    admissions_list = (
+        [admission_dict(adm, "PU") for adm in pu_pending] +
+        [admission_dict(adm, "Degree") for adm in degree_pending]
+    )
 
-    return render(request, "admission/pending_admissions.html", {"admissions_list": admissions_list})
-
+    return render(request, "admission/pending_admissions.html", {
+        "admissions_list": admissions_list
+    })
+ 
+ 
+from django.shortcuts import redirect
+from django.db import transaction
+from django.contrib import messages
 from master.models import StudentDatabase
-from django.shortcuts import get_object_or_404, redirect
-from .utils import generate_student_credentials  # Adjust import if needed
 from .models import ConfirmedAdmission, PUAdmission, DegreeAdmission
-from master.models import StudentDatabase
+from .utils import generate_student_credentials  # Ensure this exists
 
+@custom_login_required
 def generate_student_userid(request, admission_no):
+    user = get_logged_in_user(request)  # Your custom auth logic
 
-    user = get_logged_in_user(request)
+    # Try to find ConfirmedAdmission via PU or Degree
+    confirmed = ConfirmedAdmission.objects.select_related('pu_admission', 'degree_admission') \
+        .filter(status='confirmed') \
+        .filter(pu_admission__admission_no=admission_no).first()
 
-    confirmed = get_object_or_404(ConfirmedAdmission, admission_no=admission_no, status='confirmed')
-    existing = set(ConfirmedAdmission.objects.values_list('student_userid', flat=True))
-    userid, password = generate_student_credentials(existing_userids=existing)
-    confirmed.student_userid = userid
-    confirmed.student_password = password
-    confirmed.save()
+    if not confirmed:
+        confirmed = ConfirmedAdmission.objects.select_related('pu_admission', 'degree_admission') \
+            .filter(status='confirmed') \
+            .filter(degree_admission__admission_no=admission_no).first()
 
+    if not confirmed:
+        messages.error(request, f"No confirmed admission found for Admission No: {admission_no}")
+        return redirect('confirmed_admissions')
 
-    log_activity(user, 'generated', confirmed)
+    admission = confirmed.pu_admission or confirmed.degree_admission
+    is_degree = isinstance(admission, DegreeAdmission)
 
+    try:
+        with transaction.atomic():
+            # Only generate new ID if not already present
+            if not confirmed.student_userid:
+                existing_userids = set(
+                    ConfirmedAdmission.objects.exclude(student_userid__isnull=True).values_list('student_userid', flat=True)
+                )
+                userid, password = generate_student_credentials(existing_userids)
+                confirmed.student_userid = userid
+                confirmed.student_password = password
 
-    # Fetch admission details (PU or Degree)
-    admission = PUAdmission.objects.filter(admission_no=admission_no).first()
-    if not admission:
-        admission = DegreeAdmission.objects.filter(admission_no=admission_no).first()
-    if not admission:
-        return redirect('confirmed_admissions')  # Or your fallback
+            # Try to update/create StudentDatabase
+            StudentDatabase.objects.update_or_create(
+                pu_admission=admission if not is_degree else None,
+                degree_admission=admission if is_degree else None,
+                defaults={
+                    'student_name': admission.student_name,
+                   'course': admission.course if admission.course else None,  
+                    'course_type': getattr(admission, 'course_type', None),
+                    'quota_type': getattr(admission, 'quota_type', None) if is_degree else None,
+                    'student_userid': confirmed.student_userid,
+                    'student_phone_no': getattr(admission, 'student_phone_no', None),
+                    'father_name': getattr(admission, 'father_name', None),
+                    'academic_year': confirmed.academic_year,  # ✅ Pass the academic year
+                    'current_year': confirmed.current_year,
+                    'semester': confirmed.semester
+                }
+            )
 
-    # Link/save to StudentDatabase
-    StudentDatabase.objects.update_or_create(
-    admission_no=admission.admission_no,
-    defaults={
-        'student_name': admission.student_name,
-        'course': admission.course or "Unknown",  # <-- Always a string, never None
-        'course_type': getattr(admission, 'course_type', None),
-        'quota_type': getattr(admission, 'quota_type', None),
-        'status': admission.status,
-        'student_userid': userid,
-        'student_phone_no': getattr(admission, 'student_phone_no', None),
-        'parent_name': getattr(admission, 'parent_name', None),
-        # Add other fields if needed
-    }
-)
-    
-    return redirect('confirmed_admissions')  # Or wherever you want to redirect
+            # Save only after student record created
+            confirmed.save()
+            log_activity(user, 'generated', confirmed)
+            messages.success(request, f"Student ID generated and saved for Admission No: {admission_no}")
 
+    except Exception as e:
+        # ID was generated, but student database failed — log this
+        print(f"[ERROR] StudentDatabase save failed for {admission_no}: {e}")
+        confirmed.student_userid = None
+        confirmed.student_password = None
+        messages.error(request, f"ID was generated but not saved for Admission No: {admission_no}. Please try again.")
+        # Don't save confirmed record here — allow retry
 
+    return redirect('confirmed_admissions')
+ 
+ 
+ 
 from .models import PUAdmission, DegreeAdmission, ConfirmedAdmission
+ 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .utils import generate_student_credentials  # Assuming you have a utility function
 
+@custom_login_required
 def confirmed_admissions(request):
     if request.method == 'POST':
         admission_id = request.POST.get('admission_id')
         admission = get_object_or_404(ConfirmedAdmission, id=admission_id)
+
         if not admission.student_userid:
             userid, password = generate_student_credentials()
             admission.student_userid = userid
             admission.student_password = password
             admission.save()
+
+            messages.success(
+                request,
+                f"Student credentials generated for {admission.student_name} (ID: {userid})"
+            )
+        else:
+            messages.info(
+                request,
+                f"Credentials already exist for {admission.student_name} (ID: {admission.student_userid})"
+            )
+
         return redirect('confirmed_admissions')
 
-    admissions_list = ConfirmedAdmission.objects.all()
-    return render(request, "admission/confirmed_admissions.html", {"admissions_list": admissions_list})
+    admissions_list = ConfirmedAdmission.objects.select_related('pu_admission', 'degree_admission').all()
 
+    return render(request, "admission/confirmed_admissions.html", {
+        "admissions_list": admissions_list
+    })
+
+ 
+ 
 from django.shortcuts import get_object_or_404, redirect
 from .models import DegreeAdmission
 
+@custom_login_required 
 def update_status(request, pk, new_status):
     admission = get_object_or_404(DegreeAdmission, pk=pk)
     admission.status = new_status
@@ -3572,6 +4096,7 @@ from django.shortcuts import redirect, get_object_or_404
 from .models import Enquiry1, Enquiry2
 from  core.utils import get_logged_in_user, log_activity
 
+@custom_login_required
 def convert_enquiry(request, enquiry_no):
     user = get_logged_in_user(request)
 
@@ -3590,6 +4115,7 @@ def convert_enquiry(request, enquiry_no):
 from django.shortcuts import render
 from .models import PUAdmission, DegreeAdmission
 
+@custom_login_required
 def reports(request):
     # Course-wise admission counts
     pu_count = PUAdmission.objects.count()
@@ -3624,6 +4150,7 @@ from django.db.models import Value, CharField
 from django.shortcuts import render
 from admission.models import Enquiry1, Enquiry2, PUAdmission, DegreeAdmission
 
+@custom_login_required
 def converted_enquiry_list(request):
     # Get enquiry numbers that are converted
     pu_admissions = PUAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values('enquiry_no', 'admission_no')
@@ -3659,19 +4186,19 @@ def converted_enquiry_list(request):
         'enquiries': enquiries,
     })
 
-def confirmed_admissions(request):
-    if request.method == 'POST':
-        admission_id = request.POST.get('admission_id')
-        admission = get_object_or_404(ConfirmedAdmission, id=admission_id)
-        if not admission.student_userid:
-            userid, password = generate_student_credentials()
-            admission.student_userid = userid
-            admission.student_password = password
-            admission.save()
-        return redirect('confirmed_admissions')
+# def confirmed_admissions(request):
+#     if request.method == 'POST':
+#         admission_id = request.POST.get('admission_id')
+#         admission = get_object_or_404(ConfirmedAdmission, id=admission_id)
+#         if not admission.student_userid:
+#             userid, password = generate_student_credentials()
+#             admission.student_userid = userid
+#             admission.student_password = password
+#             admission.save()
+#         return redirect('confirmed_admissions')
 
-    admissions_list = ConfirmedAdmission.objects.all()
-    return render(request, "admission/confirmed_admissions.html", {"admissions_list": admissions_list})
+#     admissions_list = ConfirmedAdmission.objects.all()
+#     return render(request, "admission/confirmed_admissions.html", {"admissions_list": admissions_list})
 
 #fee dashboard
 
@@ -3685,13 +4212,14 @@ from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.db.models.functions import Coalesce
 
 
-
+@custom_login_required
 def to_decimal(value):
     try:
         return Decimal(value or 0)
     except:
         return Decimal(0)
 
+@custom_login_required
 def dashboard_view(request):
     total_declared_fee = Decimal(0)
     total_advance_fee = Decimal(0)
@@ -3790,7 +4318,8 @@ from django.http import HttpResponse
 from weasyprint import HTML
 
 from .models import DegreeAdmission
- 
+
+@custom_login_required 
 def download_degree_admission_fee_receipt(request, admission_no):
 
     admission = DegreeAdmission.objects.filter(admission_no=admission_no).first()
@@ -3817,28 +4346,30 @@ def download_degree_admission_fee_receipt(request, admission_no):
 # Application form fee PDF for PU
 
 from .models import PUAdmission
- 
+
+@custom_login_required
 def download_pu_admission_fee_receipt(request, admission_no):
-
+ 
     admission = PUAdmission.objects.filter(admission_no=admission_no).first()
-
+ 
     if not admission:
-
+ 
         return HttpResponse("Admission not found.", status=404)
- 
+
     html_string = render_to_string('admission/admission_form_fee_receipt.html', {
-
+ 
         'admission': admission
-
+ 
     })
- 
+
     pdf_file = HTML(string=html_string).write_pdf()
- 
+
     response = HttpResponse(pdf_file, content_type='application/pdf')
-
+ 
     response['Content-Disposition'] = f'inline; filename=pu_fee_receipt_{admission_no}.pdf'
-
+ 
     return response
+ 
 
  
 
@@ -3855,6 +4386,7 @@ from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Case, When
 from django.db.models.functions import Coalesce
 from .models import Student
 
+@custom_login_required
 def fee_management(request):
     now = timezone.now()
     today = now.date()
@@ -3938,9 +4470,485 @@ def fee_management(request):
 
 
 
+from django.http import JsonResponse
+from master.models import Course
+
+@custom_login_required
+def get_courses_by_type(request):
+    course_type_id = request.GET.get('course_type_id')
+    courses = Course.objects.filter(course_type_id=course_type_id).values('id', 'name')
+    return JsonResponse(list(courses), safe=False)
+
+from django.http import JsonResponse
+from django.shortcuts import render
+from master.models import AcademicYear, CourseType, Course, StudentDatabase
+
+@custom_login_required
+def get_course_types_by_academic(request):
+    academic_year_id = request.POST.get('academic_year_id')
+    course_types = CourseType.objects.filter(academic_year_id=academic_year_id)
+    data = {
+        "course_types": [
+            {"id": ct.id, "name": ct.name}
+            for ct in course_types
+        ]
+    }
+    return JsonResponse(data)
+
+
+@custom_login_required
+# AJAX: Get Courses for selected CourseType
+def get_courses_by_type(request):
+    course_type_id = request.POST.get('course_type_id')
+    courses = Course.objects.filter(course_type_id=course_type_id).values('id', 'name')
+    return JsonResponse({'courses': list(courses)})
+
+
+from django.http import JsonResponse
+from master.models import Course,Semester
+
+# AJAX: Get Courses for selected CourseType
+@custom_login_required
+def get_courses_by_type(request):
+    course_type_id = request.POST.get('course_type_id')
+
+    if not course_type_id:
+        return JsonResponse({'error': 'Course type ID is required'}, status=400)
+
+    try:
+        course_type_id = int(course_type_id)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid course type ID format'}, status=400)
+
+    courses = Course.objects.filter(course_type_id=course_type_id).values('id', 'name')
+    return JsonResponse({'courses': list(courses)})
+
+
+# AJAX: Get Semesters by Course
+@custom_login_required
+def get_sem_by_course(request):
+    course_id = request.GET.get("course_id")
+
+    if not course_id:
+        return JsonResponse({'error': 'Course ID not provided'}, status=400)
+
+    try:
+        course_id = int(course_id)
+        course = Course.objects.get(id=course_id)
+
+        semester_list = []
+
+        # Handle course type logic
+        course_type_name = course.course_type.name.strip().lower()
+
+        total = (
+            course.duration_years if course_type_name == "puc regular"
+            else course.total_semesters or 0
+        )
+
+        for i in range(1, total + 1):
+            semester_list.append({
+                'number': i,
+                'name': f"{course.name} {i}"
+            })
+
+        if not semester_list:
+            semester_list.append({'number': 0, 'name': "NOT APPLICABLE"})
+
+        return JsonResponse({'semesters': semester_list})
+
+    except ValueError:
+        return JsonResponse({'error': 'Invalid course ID format'}, status=400)
+
+    except Course.DoesNotExist:
+        return JsonResponse({'error': 'Invalid course ID'}, status=404)
 
 
 
 
+@custom_login_required
+def student_fee_list(request):
+    course_type_id = request.GET.get('course_type')
+    course_id = request.GET.get('course')
+    academic_year_id = request.GET.get('academic_year')
+    semester_number = request.GET.get('semester')
+
+    # Handle undefined or empty semester gracefully
+    try:
+        semester_number = int(semester_number) if semester_number else None
+    except (ValueError, TypeError):
+        semester_number = None
+
+    # Fetch course types and academic years for dropdowns
+    course_types = CourseType.objects.all()
+    academic_years = AcademicYear.objects.all()
+
+    # Get the actual academic year string (e.g., "2025–2027") for comparison
+    academic_year_obj = AcademicYear.objects.filter(id=academic_year_id).first()
+    academic_year_str = academic_year_obj.year if academic_year_obj else None
+
+    # Fetch courses based on course_type_id, if provided
+    courses = Course.objects.filter(course_type_id=course_type_id) if course_type_id else Course.objects.all()
+
+    # Fetch semesters based on selected course (to populate semester dropdown)
+    semesters = []
+    if course_id:
+        semesters = Semester.objects.filter(course_id=course_id).order_by('number')
+
+    students_data = []
+    fee_names = []
+
+    if all([course_type_id, course_id, academic_year_id, semester_number is not None]):
+        course_type = CourseType.objects.filter(id=course_type_id).first()
+
+        if course_type and "PU" in course_type.name.upper():
+            students = StudentDatabase.objects.filter(
+                course_type_id=course_type_id,
+                course_id=course_id,
+                current_year=semester_number,
+                status="Active",
+                student_userid__isnull=False,
+                pu_admission__isnull=False,
+                academic_year__iexact=academic_year_str  # ✅ safer comparison
+            ).select_related('pu_admission', 'degree_admission')
+        else:
+            students = StudentDatabase.objects.filter(
+                course_type_id=course_type_id,
+                course_id=course_id,
+                semester=semester_number,
+                status="Active",
+                student_userid__isnull=False,
+                degree_admission__isnull=False,
+                academic_year__iexact=academic_year_str  # ✅ safer comparison
+            ).select_related('pu_admission', 'degree_admission')
+
+        fee_masters = FeeMaster.objects.filter(
+            program_type_id=course_type_id,
+            combination_id=course_id
+        ).order_by('fee_name')
+
+        fee_names = [fm.fee_name for fm in fee_masters] if fee_masters.exists() else ["No fee details available"]
+
+        for student in students:
+            admission = student.pu_admission or student.degree_admission
+            if not admission:
+                continue
+
+            if not student.academic_year:
+                print(f"⚠️ Missing academic year for student: {student.student_name}, ID: {student.student_userid}")
+                continue
+
+            # ✅ Corrected indentation: append only if academic_year is present
+            students_data.append({
+                'admission_no': admission.admission_no,
+                'student_id': student.student_userid,
+                'student_name': student.student_name,
+                'admission_course_type': admission.course_type.name if admission.course_type else "",
+                'admission_course': admission.course.name if admission.course else "",
+                'admission_dob': getattr(admission, 'dob', ""),
+                'admission_academic_year': student.academic_year or "",  # ✅ updated
+                'admission_father_name': getattr(admission, 'father_name', ""),
+                'admission_father_mobile_no': getattr(admission, 'father_mobile_no', ""),
+                'fees': {fm.fee_name: fm.fee_amount for fm in fee_masters}
+            })
+    else:
+        print("⚠️ Incomplete parameters. Please ensure all filters are provided.")
+
+    context = {
+        'course_types': course_types,
+        'courses': courses,
+        'academic_years': academic_years,
+        'semesters': semesters,  # <-- Pass semesters here to populate dropdown and keep selection
+        'selected_academic_year': int(academic_year_id) if academic_year_id else None,
+        'selected_course_type': int(course_type_id) if course_type_id else None,
+        'selected_course': int(course_id) if course_id else None,
+        'selected_semester': semester_number,
+        'students': students_data,
+        'fee_names': fee_names,
+    }
+
+    return render(request, 'admission/student_fee_list.html', context)
+
+
+
+
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.contrib import messages
+from decimal import Decimal
+from admission.models import PUAdmission, DegreeAdmission, StudentFeeCollection
+from master.models import FeeMaster, StudentDatabase
+
+@custom_login_required
+def fee_collection_collect(request):
+    if request.method == 'POST':
+        admission_no = request.POST.get('admission_no')
+        selected_fee_ids = request.POST.getlist('selected_fees')
+        payment_mode = request.POST.get('payment_mode')
+        payment_id = request.POST.get('payment_id')
+
+        for fee_id in selected_fee_ids:
+            fee_collection = get_object_or_404(StudentFeeCollection, id=fee_id)
+            paid_amount_str = request.POST.get(f'paid_amount_{fee_id}', '0')
+            paid_amount = Decimal(paid_amount_str) if paid_amount_str else Decimal('0')
+
+            if paid_amount <= 0:
+                continue
+
+            new_paid_amount = fee_collection.paid_amount + paid_amount
+            new_balance = max(fee_collection.amount - new_paid_amount, Decimal('0'))
+
+            if new_balance == 0:
+                status = 'Paid'
+            elif new_paid_amount > 0:
+                status = 'Partial'
+            else:
+                status = 'Pending'
+
+            fee_collection.paid_amount = new_paid_amount
+            fee_collection.balance_amount = new_balance
+            fee_collection.payment_mode = payment_mode
+            fee_collection.payment_id = payment_id
+            fee_collection.payment_date = timezone.now()
+            fee_collection.status = status
+            fee_collection.save()
+
+        messages.success(request, "Payment recorded successfully.")
+        return redirect('student_fee_list')
+
+    admission_no = request.GET.get('admission_no')
+    admission = None
+    student_type = None
+
+    try:
+        admission = PUAdmission.objects.get(admission_no=admission_no)
+        student_type = 'PU'
+    except PUAdmission.DoesNotExist:
+        try:
+            admission = DegreeAdmission.objects.get(admission_no=admission_no)
+            student_type = 'DEGREE'
+        except DegreeAdmission.DoesNotExist:
+            messages.error(request, "Admission not found.")
+            return redirect('student_fee_list')
+
+    student_db = StudentDatabase.objects.filter(
+        pu_admission=admission if student_type == 'PU' else None,
+        degree_admission=admission if student_type == 'DEGREE' else None
+    ).first()
+
+    fees_master = FeeMaster.objects.filter(program_type=admission.course_type)
+    fee_collections = []
+
+    for fee in fees_master:
+        fee_name = fee.fee_name.lower().strip()
+
+        if fee_name in ['tuition fee', 'hostel fee']:
+            # For Tuition/Hostel Fee, check if any installments already exist
+            existing_installments = StudentFeeCollection.objects.filter(
+                admission_no=admission.admission_no,
+                fee_type=fee
+            ).order_by('installment_number')
+
+            if existing_installments.exists():
+                fee_collections.extend(existing_installments)
+            else:
+                # Create 3 installments
+                for inst in range(1, 4):
+                    inst_amount = round(Decimal(fee.fee_amount) / 3, 2)
+                    new_record = StudentFeeCollection.objects.create(
+                        admission_no=admission.admission_no,
+                        student_userid=getattr(student_db, 'student_userid', '') if student_db else '',
+                        academic_year=admission.academic_year,
+                        semester=getattr(admission, 'semester', None),
+                        fee_type=fee,
+                        installment_number=inst,
+                        amount=inst_amount,
+                        paid_amount=Decimal('0'),
+                        balance_amount=inst_amount,
+                        status='Pending'
+                    )
+                    fee_collections.append(new_record)
+        else:
+            # For ALL OTHER FEES, use full amount as is
+            existing = StudentFeeCollection.objects.filter(
+                admission_no=admission.admission_no,
+                fee_type=fee,
+                installment_number=None
+            ).first()
+
+            if existing:
+                fee_collections.append(existing)
+            else:
+                new_record = StudentFeeCollection.objects.create(
+                    admission_no=admission.admission_no,
+                    student_userid=getattr(student_db, 'student_userid', '') if student_db else '',
+                    academic_year=admission.academic_year,
+                    semester=getattr(admission, 'semester', None),
+                    fee_type=fee,
+                    installment_number=None,
+                    amount=Decimal(fee.fee_amount),
+                    paid_amount=Decimal('0'),
+                    balance_amount=Decimal(fee.fee_amount),
+                    status='Pending'
+                )
+                fee_collections.append(new_record)
+
+    context = {
+        'student': {
+            'admission_no': admission.admission_no,
+            'student_name': admission.student_name,
+            'admission_course_type': admission.course_type.name,
+            'admission_course': admission.course.name,
+            'admission_dob': admission.dob,
+            'admission_academic_year': admission.academic_year,
+            'admission_father_name': admission.father_name,
+            'admission_father_mobile_no': admission.father_mobile_no,
+            'category': admission.category,
+            'roll_number': getattr(student_db, 'student_userid', '') if student_db else '',
+        },
+        'fee_collections': fee_collections,
+        'now': timezone.now()
+    }
+    return render(request, 'admission/fee_collection_collect.html', context)
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@custom_login_required
+@csrf_exempt
+def collect_fee_payment_ajax(request):
+    if request.method == "POST":
+        admission_no = request.POST.get('admission_no')
+        selected_fee_ids = request.POST.get('selected_fee_ids', '').split(',')
+        payment_mode = request.POST.get('payment_mode')
+        amount_paid = request.POST.get('amount_paid')
+
+        try:
+            amount_paid = float(amount_paid)
+            selected_fee_ids = [int(i) for i in selected_fee_ids if i.isdigit()]
+            fees = StudentFeeCollection.objects.filter(id__in=selected_fee_ids, admission_no=admission_no)
+
+            for fee in fees:
+                fee.paid_amount += amount_paid
+                fee.balance_amount = fee.amount - fee.paid_amount
+                if fee.paid_amount >= fee.amount:
+                    fee.status = "Paid"
+                elif fee.paid_amount > 0:
+                    fee.status = "Partial"
+                fee.payment_mode = payment_mode
+                fee.payment_date = timezone.now().date()
+                fee.save()
+
+            return JsonResponse({"success": True})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": False, "error": "Invalid request."})
+
+
+
+
+
+
+
+
+
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from admission.models import StudentFeeCollection, StudentPaymentHistory
+
+
+@custom_login_required
+@csrf_exempt
+def collect_fee_payment_page(request):
+    now = timezone.now()
+
+    if request.method == "POST":
+        admission_no = request.POST.get("admission_no")
+        fee_ids = request.POST.getlist("selected_fees")
+        payment_mode = request.POST.get("payment_mode")
+        payment_reference = request.POST.get("payment_reference", "").strip()
+
+        for fee_id in fee_ids:
+            try:
+                paid_amount_str = request.POST.get(f"paid_amount_{fee_id}", "0").strip()
+                if not paid_amount_str:
+                    continue
+
+                paid_amount = float(paid_amount_str)
+                fee_obj = StudentFeeCollection.objects.get(id=fee_id)
+
+                # Update fee collection
+                fee_obj.paid_amount += paid_amount
+                fee_obj.balance_amount = max(fee_obj.amount - fee_obj.paid_amount, 0)
+                fee_obj.payment_mode = payment_mode
+                fee_obj.payment_reference = payment_reference
+                fee_obj.payment_date = now.date()
+                fee_obj.status = "Paid" if fee_obj.balance_amount == 0 else "Partial"
+                fee_obj.save()
+
+                # Save payment history
+                StudentPaymentHistory.objects.create(
+                    admission_no=admission_no,
+                    fee=fee_obj,
+                    paid_amount=paid_amount,
+                    payment_mode=payment_mode,
+                    payment_reference=payment_reference,
+                )
+
+                print(f"✅ Payment done for Fee ID {fee_id}")
+
+            except Exception as e:
+                print(f"❌ Error for Fee ID {fee_id}: {e}")
+
+        return redirect("student_fee_list")
+
+    return redirect("student_fee_list")
+
+
+
+# admission/views.py
+
+import qrcode
+from io import BytesIO
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
+
+# admission/views.py
+
+import qrcode
+from io import BytesIO
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
+
+@custom_login_required
+@require_GET
+def generate_qr_dynamic(request):
+    amount = request.GET.get("amount")
+    if not amount:
+        return HttpResponse("Amount is required", status=400)
+
+    upi_id = "9483508971@ybl"
+    upi_link = f"upi://pay?pa={upi_id}&pn=Your College Name&am={amount}&cu=INR"
+
+    qr = qrcode.make(upi_link)
+    buffer = BytesIO()
+    qr.save(buffer)
+    buffer.seek(0)
+
+    return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+
+
+@custom_login_required
+def student_fee_history(request, admission_no):
+    history = StudentPaymentHistory.objects.filter(admission_no=admission_no).order_by('-payment_date')
+    return render(request, "student_fee_history.html", {"history": history})
 
 

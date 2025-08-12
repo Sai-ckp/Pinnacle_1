@@ -1,4 +1,6 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
+{% block title %}        {% if action == 'edit' %}Edit User{% elif action == 'view' %}View User{% else %}Add New User{% endif %}
+{% endblock %}
 
 {% block content %}
 <style>
@@ -49,17 +51,55 @@
     button[type="submit"] {
         background-color: #800000;
         color: white;
-        padding: 10px 20px;
+        padding: 5px 9px;
         border: none;
         border-radius: 6px;
         font-weight: bold;
-        font-size: 14px;
-        width: 100%;
+        font-size: 12px;
+        width: 17%;
         cursor: pointer;
         transition: background-color 0.3s;
     }
 
-        button[type="submit"]:hover {
+    /*  button[type="submit"]:hover {
+            background-color: #a10000;
+        }*/
+
+    .form-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    .back-button {
+        background-color: #800000;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    /* .back-button:hover {
+            background-color: #5a6268;
+        }*/
+
+    .submit-button {
+        background-color: #800000;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .submit-button:hover {
             background-color: #a10000;
         }
 </style>
@@ -68,6 +108,11 @@
     <h2>
         {% if action == 'edit' %}Edit User{% elif action == 'view' %}View User{% else %}Add New User{% endif %}
     </h2>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="message {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
 
     <form method="post">
         {% csrf_token %}
@@ -76,17 +121,17 @@
         <label for="username">Username:</label>
         <input type="text" name="username" id="username" placeholder="Username"
                value="{{ user_instance.username|default:'' }}"
-               {% if action  == 'view' %}readonly{% endif %}>
+               {% if action == 'view' %}readonly{% endif %}>
 
         <!-- Password -->
         <label for="password">Password:</label>
         <input type="text" name="password" id="password" placeholder="Password"
                value="{{ user_instance.password|default:'' }}"
-               {% if action  == 'view' %}readonly{% endif %}>
+               {% if action == 'view' %}readonly{% endif %}>
 
         {% if action == 'edit' %}
         <!-- is_locked dropdown -->
-        <label for="is_locked">Is Locked:</label>
+        <label for="is_locked">Is Blocked:</label>
         <select name="is_locked" id="is_locked" {% if action == 'view' %}disabled{% endif %}>
             <option value="True" {% if user_instance.is_locked %}selected{% endif %}>True</option>
             <option value="False" {% if not user_instance.is_locked %}selected{% endif %}>False</option>
@@ -97,11 +142,76 @@
         <input type="text" id="wrong_attempts" readonly value="{{ user_instance.wrong_attempts }}">
         {% endif %}
 
-        {% if action != 'view' %}
-        <button type="submit">
-            {% if action == 'edit' %}Update{% else %}Save{% endif %}
-        </button>
-        {% endif %}
+        <div class="form-buttons">
+            <a href="{% url 'user_list' %}" class="back-button">Back</a>
+
+            {% if action != 'view' %}
+            <button type="submit" class="submit-button">
+                {% if action == 'edit' %}Update{% else %}Save{% endif %}
+            </button>
+            {% endif %}
+        </div>
+
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        const passwordInput = document.getElementById('password');
+
+        function validatePassword(password) {
+            // Password must:
+            // - Start with a capital letter
+            // - Include at least one special character from !@#$%^&*(),.?":{}|<>
+            // - End with a digit
+            // - Be 8-16 characters long
+            const pattern = /^[A-Z][a-z]*[!@#$%^&*(),.?":{}|<>][a-zA-Z0-9]*[0-9]$/;
+            return pattern.test(password) && password.length >= 8 && password.length <= 16;
+        }
+
+        function showError(message) {
+            let errorDiv = document.getElementById('error_password');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'error_password';
+                errorDiv.style.color = 'red';
+                errorDiv.style.marginTop = '4px';
+                passwordInput.parentNode.insertBefore(errorDiv, passwordInput.nextSibling);
+            }
+            errorDiv.textContent = message;
+        }
+
+        function clearError() {
+            const errorDiv = document.getElementById('error_password');
+            if (errorDiv) {
+                errorDiv.textContent = '';
+            }
+        }
+
+        form.addEventListener('submit', function (e) {
+            const password = passwordInput.value.trim();
+            if (!validatePassword(password)) {
+                e.preventDefault();
+                showError("Invalid password format. Password must:\n" +
+                    "- Start with a capital letter\n" +
+                    "- Include a special character\n" +
+                    "- End with a digit\n" +
+                    "- Be 8-16 characters long\n" +
+                    "- eg: Admin@12");
+                passwordInput.focus();
+            } else {
+                clearError();
+            }
+        });
+
+        // Optional: live feedback while typing
+        passwordInput.addEventListener('input', function () {
+            if (validatePassword(this.value.trim())) {
+                clearError();
+            }
+        });
+    });
+</script>
+
 {% endblock %}

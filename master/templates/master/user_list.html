@@ -1,9 +1,10 @@
-{% extends 'master/layout.html' %}
+    {% extends 'layout.html' %}
 
-{% block title %}Users{% endblock %}
+    {% block title %}Users{% endblock %}
 
-{% block content %}
+    {% block content %}
 <style>
+
     body {
         background-color: #f0f2f5;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -62,21 +63,22 @@
         width: 100%;
         font-size: 12px;
         border-collapse: collapse;
+        margin-top: 10px;
     }
 
     th, td {
-        padding: 1px;
+        padding: 0px;
         text-align: center;
         border: 1px solid #dee2e6;
         vertical-align: middle !important;
     }
 
     td {
-        font-size: 10px;
+        font-size: 9px;
     }
 
     thead {
-        background: linear-gradient(135deg, #8B0000, #800000);
+        background: linear-gradient( #8B0000, #800000);
         color: white;
     }
 
@@ -84,29 +86,29 @@
         background-color: #f8f9fa;
     }
 
-    tr:hover {
+    /*tr:hover {
         background-color: #e9ecef;
-    }
+    }*/
 
     .icon-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        border-radius: 4px;
-        background-color: #800000;
-        color: white;
-        border: none;
-        font-size: 12px;
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: 3px 5px;
+        margin: 2px;
+        border-radius: 6px;
         cursor: pointer;
-        margin: 0 2px;
+        transition: background-color 0.2s;
+        display: inline-block;
         text-decoration: none;
-        transition: background-color 0.3s;
     }
 
-        .icon-btn:hover {
-            background-color: #a52a2a;
+        .icon-btn i {
+            font-size: 11px;
+            color: #800000;
+        }
+
+        .icon-btn.text-danger i {
+            color: #b30000;
         }
 
     /* Confirm popup */
@@ -123,7 +125,7 @@
 
     #confirm-popup {
         position: fixed;
-        top: 30%;
+        top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         background: #fff;
@@ -153,42 +155,125 @@
             color: white;
         }
 
-    .icon-btn {
-        border: 1px solid #dee2e6;
-        background-color: #fff;
-        padding: 3px 5px;
-        margin: 2px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: inline-block;
-        text-decoration: none;
-    }
+    /* .icon-btn {
+         border: 1px solid #dee2e6;
+         background-color: #fff;
+         padding: 3px 5px;
+         margin: 2px;
+         border-radius: 6px;
+         cursor: pointer;
+         transition: background-color 0.2s;
+         display: inline-block;
+         text-decoration: none;
+     }
 
-        .icon-btn i {
-            font-size: 11px;
-            color: #800000;
-        }
+         .icon-btn i {
+             font-size: 11px;
+             color: #800000;
+         }
 
-        .icon-btn.text-danger i {
-            color: #b30000;
-        }
+         .icon-btn.text-danger i {
+             color: #b30000;
+         }*/
 
 
     .content {
         margin-left: 0px;
-        padding: 27px 24px 40px;
+        padding: 10px 24px 40px;
         min-height: 100vh;
+    }
+
+    .search-form {
+        position: absolute;
+        left: 0;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 200px;
+    }
+
+
+        .search-form input {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 200px;
+        }
+
+        .search-form button {
+            padding: 6px 10px;
+            border: none;
+            background-color: #800000;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+            .search-form button:hover {
+                background-color: #a10000;
+            }
+
+    #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #800000;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 14px 24px;
+        position: fixed;
+        z-index: 9999;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        font-size: 14px;
+    }
+
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.4s, fadeout 0.4s 2.6s;
+        }
+
+    @keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
     }
 </style>
 
 <div class="container mt-4">
+    <!-- In your header-flex div -->
     <div class="header-flex">
+        <input type="text" id="userSearch" class="search-form" placeholder="Search Users...">
+
         <h2>Users</h2>
         <a href="{% url 'add_user' %}" class="btn-add">
             <i class="bi bi-plus-lg me-2"></i> Add User
         </a>
     </div>
+
 
     <table class="table table-bordered table-striped table-hover">
         <thead>
@@ -200,6 +285,7 @@
                 <th>Passcode</th>
                 <th>Actions</th>
                 {% endif %}
+
             </tr>
         </thead>
         <tbody>
@@ -210,7 +296,6 @@
                 {% if custom_user and custom_user.id == 1 %}
                 <td>{{ user.password|default:"-" }}</td>
                 <td>{{ user.passcode|default:"-" }}</td>
-                {% endif %}
                 <td>
                     <a href="{% url 'view_user' user.id %}" class="icon-btn" title="View">
                         <i class="fas fa-eye"></i>
@@ -224,6 +309,7 @@
                         <i class="fas fa-trash-alt"></i>
                     </a>
                 </td>
+                {% endif %}
 
             </tr>
             {% empty %}
@@ -237,12 +323,13 @@
 
 <div id="overlay"></div>
 <div id="confirm-popup">
-    <p id="confirm-popup-message"></p>
+    <p id="confirm-popup-message" style="margin-bottom:8px;"></p>
     <button id="confirm-yes">Yes</button>
     <button id="confirm-no">No</button>
 </div>
 
 <script>
+    // Existing delete confirmation...
     let deleteUserId = null;
     function confirmUserDelete(userId, username) {
         deleteUserId = userId;
@@ -259,4 +346,54 @@
         deleteUserId = null;
     });
 </script>
-{% endblock %}
+
+<script>
+    document.getElementById('userSearch').addEventListener('input', function () {
+        const filter = this.value.trim().toLowerCase();
+        const rows = document.querySelectorAll("table tbody tr");
+
+        rows.forEach(row => {
+            const cells = Array.from(row.querySelectorAll("td"));
+            const isEmptyRow = cells.length === 1 && cells[0].colSpan;
+
+            if (isEmptyRow) {
+                // Hide "no users found" message by default
+                row.style.display = 'none';
+                return;
+            }
+
+            // Combine all text from cells in the row
+            const rowText = cells.map(cell => cell.textContent.toLowerCase()).join(" ");
+            row.style.display = rowText.includes(filter) ? '' : 'none';
+        });
+
+        // Show or hide the "no users found" row based on visible rows
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+        const noDataRow = document.querySelector("table tbody tr td[colspan]");
+        if (noDataRow) {
+            noDataRow.parentElement.style.display = visibleRows.length === 0 ? '' : 'none';
+        }
+    });
+</script>
+
+<div id="snackbar"></div>
+
+<script>
+    function showSnackbar(message) {
+        const snackbar = document.getElementById("snackbar");
+        snackbar.textContent = message;
+        snackbar.className = "show";
+        setTimeout(() => {
+            snackbar.className = snackbar.className.replace("show", "");
+        }, 3000);
+    }
+
+    // Django message support
+    {% if messages %}
+        {% for message in messages %}
+            showSnackbar("{{ message|escapejs }}");
+        {% endfor %}
+    {% endif %}
+</script>
+
+    {% endblock %}

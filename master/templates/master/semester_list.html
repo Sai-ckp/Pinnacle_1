@@ -1,44 +1,56 @@
-{% extends 'master/layout.html' %}
-{% block title %}Acadamic Cycle{% endblock %}
+{% extends 'layout.html' %}
+{% block title %}Academic Cycle{% endblock %}
 
 {% block content %}
 <style>
     body {
         background-color: #f0f2f5;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin-left: 91px;
+        margin: 0;
+        padding: 0;
     }
 
     .container {
-        background: #fff;
+        margin-left: 200px;
         padding: 30px;
+        max-width: calc(100% - 200px);
+        background: #fff;
         border-radius: 12px;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-        margin-top: -15px;
-        margin-left: -64px;
-        margin-right: 27px;
+        margin-top: 20px;
+        box-sizing: border-box;
     }
 
-    h2 {
-        text-align: center;
-        font-weight: 700;
-        color: #800000;
-        margin-bottom: 24px;
-        margin-top: -17px;
-        font-size: 22px;
+    .header-flex {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        margin-bottom: 20px;
     }
+
+        .header-flex h2 {
+            flex-grow: 1;
+            margin: 0;
+            font-weight: 700;
+            font-size: 22px;
+            color: #800000;
+            text-align: center;
+        }
 
     .btn-add {
+        position: absolute;
+        right: 0;
         background-color: #800000;
         color: #fff;
-        border: none;
         font-size: 13px;
         padding: 6px 12px;
-        font-weight: bold;
+        border: none;
         border-radius: 4px;
-        transition: background-color 0.3s;
-        margin-left: 877px;
+        font-weight: bold;
         text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
     }
 
         .btn-add:hover {
@@ -53,10 +65,10 @@
     }
 
     th, td {
-        vertical-align: middle !important;
+        padding: 0px;
         text-align: center;
-        padding: 5px;
         border: 1px solid #dee2e6;
+        vertical-align: middle !important;
     }
 
     td {
@@ -72,16 +84,9 @@
         background-color: #f8f9fa;
     }
 
-    tr:hover {
+   /* tr:hover {
         background-color: #e9ecef;
-    }
-
-    .empty {
-        text-align: center;
-        color: #6c757d;
-        font-size: 13px;
-        padding: 20px 0;
-    }
+    }*/
 
     .icon-btn {
         border: 1px solid #dee2e6;
@@ -92,6 +97,7 @@
         cursor: pointer;
         transition: background-color 0.2s;
         display: inline-block;
+        text-decoration: none;
     }
 
         .icon-btn i {
@@ -103,18 +109,70 @@
             color: #b30000;
         }
 
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        z-index: 1000;
+    }
+
+    #confirm-popup {
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        display: none;
+        z-index: 1001;
+        text-align: center;
+    }
+
+    #confirm-yes, #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        background: transparent;
+        color: #800000;
+        font-weight: 600;
+        border: 2px solid #800000;
+        transition: all 0.2s ease;
+    }
+
+        #confirm-yes:hover, #confirm-no:hover {
+            background-color: #800000;
+            color: white;
+        }
+
+    .empty {
+        text-align: center;
+        color: #6c757d;
+        font-size: 13px;
+        padding: 20px 0;
+    }
 
     .content {
-        padding: 65px 26px 40px;
-        margin-left: 200px;
+        margin-left: 0px;
+        padding: 27px 24px 40px;
+        min-height: 100vh;
     }
 </style>
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Academic Cycle </h2>
-        {% if form_permissions.semester_form.view %}
-        <a href="{% url 'semester_form_add' %}" class="btn-add">Add Academic Cycle</a>
+    <div class="header-flex">
+        <h2>Academic Cycle</h2>
+        {% if form_permissions.semester_form.add %}
+        <a href="{% url 'semester_form_add' %}" class="btn-add">
+            <i class="bi bi-plus-lg me-2"></i> Add Academic Cycle
+        </a>
         {% endif %}
     </div>
 
@@ -124,7 +182,7 @@
             <tr>
                 <th>Academic Cycles (In Semesters)</th>
                 <th>Combinations</th>
-                <th>Actions</th>
+                <th style="width: 150px;">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -138,22 +196,19 @@
                         <i class="fas fa-eye"></i>
                     </a>
                     {% endif %}
-
                     {% if form_permissions.semester_form.edit %}
                     <a href="{% url 'semester_form_edit' semester.id %}" class="icon-btn" title="Edit">
                         <i class="fas fa-edit"></i>
                     </a>
                     {% endif %}
-
                     {% if form_permissions.semester_form.delete %}
-                    <form action="{% url 'semester_form_delete' semester.id %}" method="post" style="display:inline;">
+                    <form id="delete-form-{{ semester.id }}" action="{% url 'semester_form_delete' semester.id %}" method="post" style="display: none;">
                         {% csrf_token %}
-                        <button type="submit" class="icon-btn" title="Delete" onclick="return confirm('Are you sure you want to delete this semester?');" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer;">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
                     </form>
+                    <a href="#" class="icon-btn text-danger" title="Delete" onclick="confirmDelete('{{ semester.id }}', '{{ semester.number }}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
                     {% endif %}
-
                 </td>
             </tr>
             {% endfor %}
@@ -164,5 +219,33 @@
     {% endif %}
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="overlay"></div>
+<div id="confirm-popup">
+    <p id="confirm-popup-message"></p>
+    <button id="confirm-yes">Yes</button>
+    <button id="confirm-no">No</button>
+</div>
 
+<script>
+    let deleteId = null;
+    function confirmDelete(id, name) {
+        deleteId = id;
+        document.getElementById('confirm-popup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('confirm-popup-message').innerHTML = `Are you sure you want to delete Academic Cycle <b>${name}</b>?`;
+    }
+
+    document.getElementById('confirm-yes').addEventListener('click', () => {
+        if (deleteId) {
+            document.getElementById(`delete-form-${deleteId}`).submit();
+        }
+    });
+
+    document.getElementById('confirm-no').addEventListener('click', () => {
+        document.getElementById('confirm-popup').style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+        deleteId = null;
+    });
+</script>
 {% endblock %}

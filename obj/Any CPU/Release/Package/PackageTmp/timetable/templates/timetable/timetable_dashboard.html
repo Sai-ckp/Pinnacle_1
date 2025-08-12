@@ -1,9 +1,17 @@
-{% extends 'master/layout.html' %}
-{% block title %}Campus Attendance{% endblock %}
+{% extends 'layout.html' %}
+{% block title %}Class Timetable{% endblock %}
 {% block content %}
 <div class="container py-5">
     <h2 class="fw-bold  mb-7"> Class Timetable</h2>
     <!-- Dashboard Summary Cards -->
+    {% if form_permissions.timetable_form.add %}
+    <div class="d-flex justify-content-end mb-4">
+        <a href="{% url 'timetable_form_add' %}" class="btn btn-maroon">
+            <i class="fas fa-plus-circle"></i> Add entry
+        </a>
+    </div>
+    {% endif %}
+
     <div class="row mb-5">
         <div class="col-md-3 mb-3">
 
@@ -94,6 +102,8 @@
         color: #800000;
         border: 2px solid #800000;
         background-color: transparent;
+        margin-top: -23px;
+        /* margin-right: 18px; */
     }
 
         .btn-maroon:hover {
@@ -109,7 +119,7 @@
 
     .text {
         --bs-text-opacity: 1;
-        color: #6c757d !important;
+        color: #8b0000 !important;
         text-align: center;
         font-size: 12px;
     }
@@ -118,7 +128,7 @@
         margin-bottom: 21px !important;
         font-size: 27px;
         text-align: center;
-        margin-top: -23px;
+        margin-top: -30px;
         /* margin-left: -90px; */
     }
 
@@ -150,7 +160,7 @@
     }
 
     .gap-3 {
-        gap: 1rem !important;
+        gap: 15rem !important;
     }
 
     .mb-4 {

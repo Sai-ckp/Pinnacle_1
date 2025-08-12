@@ -34,3 +34,13 @@ def role_permission_required(form_name, action='view'):
 
         return _wrapped_view
     return decorator
+from functools import wraps
+from django.shortcuts import redirect
+ 
+def custom_login_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            return redirect('login')  # Use the URL name of your login view
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view

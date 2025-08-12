@@ -1,109 +1,173 @@
-﻿{% extends 'master/layout.html' %}
+﻿{% extends 'layout.html' %}
 
 {% block head %}
 <style>
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: #f4f6f9;
+        margin: 0;
+        padding: 0;
     }
 
-    .gradient-text {
-        font-size: 24px;
-        font-weight: bold;
-        background: linear-gradient(135deg, #ff00cc, #3333ff, #800080); /* pink, blue, purple */
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center !important;
+    .content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 140px);
+        padding: 20px;
+        margin-left: 200px; /* Account for sidebar */
+        margin-top: 52px; /* Account for topbar */
     }
 
     .dashboard {
-        max-width: 1000px;
-        margin: 80px auto;
-        padding: 30px;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px;
         background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
         position: relative;
         overflow: hidden;
-    }
-
-    .dashboard-header {
-        background: linear-gradient(135deg, #5b86e5, #36d1dc);
-        padding: 30px 40px;
-        border-radius: 12px;
-        color: white;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        margin-bottom: 30px;
         text-align: center;
     }
 
-        .dashboard-header h2 {
-            font-size: 2rem;
-            margin-bottom: 5px;
+        .dashboard::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #5b86e5, #36d1dc, #ff00cc);
+            border-radius: 20px 20px 0 0;
         }
 
-        .dashboard-header h6 {
-            font-weight: normal;
-            margin: 0;
-            font-size: 17px;
-        }
+    .dashboard-header {
+        margin-bottom: 40px;
+        padding: 0;
+    }
+
+    .gradient-text {
+        font-size: 2.5rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #ff00cc, #3333ff, #800080);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .welcome-subtitle {
+        font-size: 1.2rem;
+        color: #666;
+        font-weight: 400;
+        margin: 0;
+        text-align: center;
+        line-height: 1.6;
+    }
+
+    .license-section {
+        margin: 40px 0;
+        padding: 30px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 15px;
+        border: 1px solid #dee2e6;
+    }
 
     .license-status {
         font-size: 1.1rem;
         margin: 20px 0;
-        padding: 15px;
-        border-radius: 10px;
-        background: #f1f1f1;
+        padding: 20px;
+        border-radius: 12px;
+        background: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .license-info {
+        font-weight: 600;
+        color: #333;
     }
 
     .status-tag {
         font-weight: bold;
-        padding: 6px 14px;
-        border-radius: 20px;
+        padding: 8px 16px;
+        border-radius: 25px;
         font-size: 0.9rem;
-        transition: background-color 0.3s ease;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .status-ok {
-        background-color: #d4edda;
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
         color: #155724;
+        border: 2px solid #b8dacc;
     }
 
     .status-warning {
-        background-color: #fff3cd;
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
         color: #856404;
-        animation: blink 1.2s linear infinite;
+        border: 2px solid #f1c40f;
+        animation: glow 2s ease-in-out infinite alternate;
     }
 
-    @keyframes blink {
-        0%, 100% {
-            opacity: 1;
+    @keyframes glow {
+        from {
+            box-shadow: 0 0 5px #f39c12;
         }
 
-        50% {
-            opacity: 0.3;
+        to {
+            box-shadow: 0 0 20px #f39c12, 0 0 30px #f39c12;
         }
     }
 
-    .extend-btn {
-        background-color: #36d1dc;
-        color: #fff;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
+    .reminder-section {
+        margin-top: 30px;
+        padding: 25px;
+        background: linear-gradient(135deg, #ffe6e6, #fff5f5);
+        border-radius: 12px;
+        border-left: 5px solid #d9534f;
+        text-align: center;
+    }
+
+        .reminder-section strong {
+            color: #721c24;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+    .expiry-date {
+        color: #d9534f;
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin: 10px 0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .support-link {
+        color: #007bff;
         text-decoration: none;
-        font-size: 1rem;
-        transition: background-color 0.3s;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-block;
+        margin-top: 10px;
     }
 
-        .extend-btn:hover {
-            background-color: #2aace2;
+        .support-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+            transform: translateY(-1px);
         }
 
-    /* Modal */
+    /* Modal Styles */
     .modal {
         display: none;
         position: fixed;
@@ -112,102 +176,116 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        padding-top: 120px;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
     }
 
     .modal-content {
         background: white;
-        margin: auto;
-        padding: 30px;
-        border-radius: 10px;
+        margin: 10% auto;
+        padding: 40px;
+        border-radius: 20px;
         width: 90%;
         max-width: 500px;
         text-align: center;
-        animation: dropFade 0.4s ease-out;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        animation: modalSlideIn 0.4s ease-out;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         position: relative;
     }
 
-    @keyframes dropFade {
+    @keyframes modalSlideIn {
         from {
-            transform: translateY(-50px);
+            transform: translateY(-100px) scale(0.8);
             opacity: 0;
         }
 
         to {
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
             opacity: 1;
         }
     }
 
-    .modal-content span.close {
+    .modal-content .close {
         position: absolute;
-        top: 10px;
+        top: 15px;
         right: 20px;
-        font-size: 26px;
+        font-size: 28px;
         color: #999;
         cursor: pointer;
+        transition: color 0.3s ease;
     }
 
-        .modal-content span.close:hover {
+        .modal-content .close:hover {
             color: #333;
+            transform: scale(1.1);
         }
 
-    .modal-content a {
-        color: #007bff;
-        text-decoration: none;
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .content {
+            margin-left: 0;
+            padding: 10px;
+        }
+
+        .dashboard {
+            padding: 25px;
+            margin: 10px;
+        }
+
+        .gradient-text {
+            font-size: 2rem;
+        }
+
+        .license-status {
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .welcome-subtitle {
+            font-size: 1rem;
+        }
     }
 
-    .gradient-text {
-        font-size: 24px;
-        font-weight: bold;
-        background: linear-gradient(135deg, #ff00cc, #3333ff, #800080); /* pink, blue, purple */
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center !important;
-    }
+    @media (max-width: 480px) {
+        .gradient-text {
+            font-size: 1.8rem;
+        }
 
-    .modal-content a:hover {
-        text-decoration: underline;
-    }
-
-    .content {
-        padding: 97px 20px 18px;
-        flex-grow: 1;
-        text-align: center;
+        .dashboard {
+            padding: 20px;
+            border-radius: 15px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <!-- Header -->
-    <!--<div class="dashboard-header">-->
-    <h2 style="text-align: center !important; " <!--class="gradient-text"-->Welcome to CKP Software Technologies</h2>
-    <br />
-    <h6 style="text-align: center !important; " You have full access to all features in your dashboard.</h6>
-    <!--</div>-->
-    <!-- License Info -->
-    <div class="license-status">
-        <span>License Expiry Date: <strong>{{ license_end_date|default:"N/A" }}</strong></span>
-        <span class="status-tag {{ is_expiring_soon|yesno:"status-warning,status-ok" }}">
-            {{ is_expiring_soon|yesno:"Expiring Soon,Active" }}
-        </span>
-    </div>
+<div class="content">
+    <div class="dashboard">
+        <!-- Header Section -->
+        <div class="dashboard-header">
+            <h2 class="gradient-text">Welcome to CKP Software Technologies</h2>
+            <h6 class="welcome-subtitle">You have full access to all features in your dashboard.</h6>
+        </div>
 
-    <!-- Always show the extend button -->
-</div>
+        <!-- License Information Section -->
+        <div class="license-section">
+            <div class="license-status">
+                <span class="license-info">License Expiry Date: <strong>{{ license_end_date|default:"N/A" }}</strong></span>
+                <span class="status-tag {{ is_expiring_soon|yesno:"status-warning,status-ok" }}">
+                    {{ is_expiring_soon|yesno:"Expiring Soon,Active" }}
+                </span>
+            </div>
 
-<!-- Modal for expiry warning -->
-<!--<div id="licenseExpiryModal" class="modal" data-expiring="{{ license_expiring|default_if_none:'False' }}">-->
-<!--<div class="modal-content">
-    <span class="close">&times;</span>-->
-<p>
-    <strong>Reminder:</strong> Your license is expiring on <br>
-    <span style="color:#d9534f; font-weight: bold;">{{ license_end_date|default:"N/A" }}</span>.
-</p>
-<p>Please contact <a href="mailto:support@ckpsoftware.com">support@ckpsoftware.com</a> to renew.</p>
+            <!-- Reminder Section -->
+            <div class="reminder-section">
+                <strong>Reminder:</strong>
+                <p>Your license is expiring on</p>
+                <div class="expiry-date">{{ license_end_date|default:"N/A" }}</div>
+                <p>Please contact <a href="mailto:support@ckpsoftware.com" class="support-link">support@ckpsoftware.com</a> to renew.</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -215,15 +293,18 @@
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById("licenseExpiryModal");
         const close = document.querySelector(".modal-content .close");
-        const shouldShow = modal.getAttribute('data-expiring') === 'True';
+        const shouldShow = modal && modal.getAttribute('data-expiring') === 'True';
+
         if (shouldShow) {
             modal.style.display = "block";
         }
+
         if (close) {
             close.onclick = function () {
                 modal.style.display = "none";
             };
         }
+
         window.onclick = function (event) {
             if (event.target === modal) {
                 modal.style.display = "none";
@@ -231,4 +312,4 @@
         };
     });
 </script>
-{% endblock %}
+{% endblock %}  

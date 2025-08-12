@@ -19,10 +19,16 @@ class TimetableEntry(models.Model):
     ]
     day = models.CharField(max_length=10, choices=DAYS_OF_WEEK)
     time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    course = models.ForeignKey('master.Course', on_delete=models.CASCADE)
+    semester_number = models.PositiveIntegerField()
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     faculty = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     room = models.CharField(max_length=20)
-    def __str__(self): return f"{self.semester} - {self.day} - {self.time_slot}"
+    def __str__(self): return f"{self.semester_number} - {self.day} - {self.time_slot}"
 
 
+class DailySubstitution(models.Model):
+    timetable_entry = models.ForeignKey(TimetableEntry, on_delete=models.CASCADE)
+    date = models.DateField()
+    substitute_faculty = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    updated_subject = models.ForeignKey(Subject, null=True, blank=True, on_delete=models.SET_NULL)

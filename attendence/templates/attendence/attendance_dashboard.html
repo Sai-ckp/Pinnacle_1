@@ -1,164 +1,114 @@
-﻿{% extends 'master/layout.html' %}
+﻿{% extends 'layout.html' %}
 {% block title %}Campus Attendance{% endblock %}
 {% block content %}
 <div class="container py-5">
-    <h2 class="fw-bold  mb-7">Campus Attendance Management</h2>
+    <h2 class="fw-bold mb-7">Campus Attendance Management</h2>
 
-    <div class="mb-4 d-flex justify-content-end">
-        <div class="dropdown">
-            <button class="btn btn-outline-secondary px-4 py-2 dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-funnel"></i> Filter
-            </button>
-            <ul class="dropdown-menu" style=" width: 100%;     font-size: 10px;" aria-labelledby="filterDropdown">
-                <li><a class="dropdown-item {% if active_filter == 'day' %}active{% endif %}" href="?filter=day">Per Day</a></li>
-                <li><a class="dropdown-item {% if active_filter == 'week' %}active{% endif %}" href="?filter=week">Per Week</a></li>
-                <li><a class="dropdown-item {% if active_filter == 'month' %}active{% endif %}" href="?filter=month">Per Month</a></li>
-                <li><a class="dropdown-item {% if active_filter == 'all' %}active{% endif %}" href="?filter=all">All</a></li>
-            </ul>
-        </div>
-    </div>
-
+   
     <!-- Dashboard Summary Cards -->
     <div class="row mb-5">
+        <!-- Overall Attendance Rate -->
         <div class="col-md-3 mb-3">
-
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
                     <h6 class="text-muted"> Today's Attendace <i class="fas fa-calendar-check"></i></h6>
-                    <h3 class="fw-bold">{{ overall_attendance_rate  }}%</h3>
+                    <h3 class="fw-bold">{{ overall_attendance_rate }}%</h3>
                     <h4 class="text">Overall attendance rate</h4>
-                    <h6 class="text-mute">
-                        {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                    </h6>
+                    <p class="mb-1 text-muted" style="font-size: 12px;">
+                        Students: <strong class="text-dark">{{ student_attendance_rate }}%</strong>
+                    </p>
+                    <p class="mb-1 text-muted" style="font-size: 12px;">
+                        Staff: <strong class="text-dark">{{ staff_attendance_rate }}%</strong>
+                    </p>
                 </div>
             </div>
-
         </div>
+        <!-- Students Present -->
         <div class="col-md-3 mb-3">
-
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
                     <h6 class="text-muted">Students Present <i class="fas fa-users"></i></h6>
-                    <h3 class="fw-bold">{{ student_present}}</h3>
-                    <h4 class="text">Out of {{ total_students}} employees</h4>
-                    <h6 class="text-mute">
-                        {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                    </h6>
+                    <h3 class="fw-bold">{{ student_present }}</h3>
+                    <h4 class="text">Out of {{ total_students }} Students</h4>
                 </div>
             </div>
-
         </div>
+        <!-- Students Absent -->
         <div class="col-md-3 mb-3">
-
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
-                    <h6 class="text-muted">
-
-                        Staff Present <i class="fas fa-users"></i>
-                    </h6>
-                    <h3 class="fw-bold">{{ staff_present}}</h3>
-                    <h4 class="text">Out of {{ total_staff}} employees</h4>
-                    <h6 class="text-mute">
-                        {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                    </h6>
+                    <h6 class="text-muted">Students Absent <i class="fas fa-users"></i></h6>
+                    <h3 class="fw-bold">{{ student_absent }}</h3>
+                    <h4 class="text">Out of {{ total_students }} Students</h4>
                 </div>
-
             </div>
-
         </div>
+        <!-- Employees Present -->
         <div class="col-md-3 mb-3">
-
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Employees Present <i class="fas fa-users"></i></h6>
+                    <h3 class="fw-bold">{{ staff_present }}</h3>
+                    <h4 class="text">Out of {{ total_staff }} employees</h4>
+                </div>
+            </div>
+        </div>
+        <!-- Late Arrivals -->
+        <div class="col-md-3 mb-3">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body text-center">
                     <h6 class="text-muted">Late Arrivals <i class="fas fa-clock"></i></h6>
-                    <h3 class="fw-bold"> {{ total_late}}</h3>
-                    <h4 class="text">Students & Staff combined</h4>
-                    <h6 class="text-mute">
-                        {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                    </h6>
+                    <h3 class="fw-bold">{{ total_late }}</h3>
+                    <h4 class="text">Out of {{ total_staff }} employees</h4>
                 </div>
             </div>
-
         </div>
-
-    </div>
-
-
-
-    <!-- Action Buttons -->
-    <!-- Action Buttons -->
-    <div class="d-flex flex-wrap gap-3 mb-4">
-
-        <!--  Staff Attendance -->
-        {% if form_permissions.student_attendance_form.add %}
-        <div>
-
-            <a href="{% url 'student_attendance_form_add' %}" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-card-list me-2"></i> Faculty Class Attendance
-            </a>
-
-        </div>
-        {% endif %}
-        <div>
-            <a href="{% url 'student_attendance_list' %}" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-card-list me-2"></i> Student Attendance
-            </a>
-
-        </div>
-        {% if form_permissions.employee_attendance_form.add %}
-        <div>
-            <a href="{% url 'employee_attendance_list' %}" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-card-list me-2"></i> Employee Attendance
-            </a>
-
-        </div>
-        {% endif %}
-        {% if form_permissions.employee_attendance_form.add %}
-        <div>
-            <a href="{% url 'attendance_report' %}" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-card-list me-2"></i> Reports
-            </a>
-
-        </div>
-        {% endif %}
-        {% if form_permissions.employee_attendance_form.add %}
-        <div>
-            <a href="{% url 'attendance_settings_view' %}" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-card-list me-2"></i> Settings
-            </a>
-
-        </div>
-        {% endif %}
-
-        {% if low_attendance_students %}
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-body">
-                <h5 class="card-title text-danger">📢 Low Attendance Alert</h5>
-                <p class="text-muted">Students with <strong>less than 75%</strong> attendance:</p>
-                <ul class="list-group list-group-flush">
-                    {% for student in low_attendance_students %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ student.name }} (Roll No: {{ student.roll_no }})
-                        <span class="badge bg-danger rounded-pill">{{ student.percentage }}%</span>
-                    </li>
-                    {% endfor %}
-                </ul>
+        <!-- Employees Absent -->
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Employees Absent <i class="fas fa-users"></i></h6>
+                    <h3 class="fw-bold">{{ staff_absent }}</h3>
+                    <h4 class="text">Out of {{ total_staff }} employees</h4>
+                </div>
             </div>
         </div>
-        {% endif %}
-
-
     </div>
 
+    <!-- Action Buttons -->
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <div><a href="{% url 'student_attendance_list' %}" class="btn btn-maroon px-4 py-3"><i class="bi bi-card-list me-2"></i> Student Attendance</a></div>
+        {% if form_permissions.employee_attendance_form.add %}
+        <div><a href="{% url 'employee_attendance_list' %}" class="btn btn-maroon px-4 py-3"><i class="bi bi-card-list me-2"></i> Employee Attendance</a></div>
+        <div><a href="{% url 'attendance_report' %}" class="btn btn-maroon px-4 py-3"><i class="bi bi-card-list me-2"></i> Reports</a></div>
+        <div><a href="{% url 'attendance_settings_view' %}" class="btn btn-maroon px-4 py-3"><i class="bi bi-card-list me-2"></i> Settings</a></div>
+        {% endif %}
+    </div>
+
+    <!-- Low Attendance Alert -->
+    {% if low_attendance_students %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h5 class="card-title text-danger">📢 Low Attendance Alert</h5>
+            <p class="text-muted">Students with <strong>less than 75%</strong> attendance:</p>
+            <ul class="list-group list-group-flush">
+                {% for student in low_attendance_students %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ student.name }} (Roll No: {{ student.roll_no }})
+                    <span class="badge bg-danger rounded-pill">{{ student.percentage }}%</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Bootstrap CSS & Icons -->
+<!-- Bootstrap CSS & Icons, same as your original -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-
-<!-- Styles -->
+<!-- Original style block preserved fully -->
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -388,5 +338,12 @@
         text-decoration: none;
         background-color: #800000;
     }
+
+    @media (min-width: 768px) {
+        .col-md-3 {
+            flex: 0 0 auto;
+            width: 20%;
+        }
+    }
 </style>
-        {% endblock %}
+{% endblock %}

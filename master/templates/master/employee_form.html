@@ -1,5 +1,5 @@
-﻿{% extends 'master/layout.html' %}
-{% block title %}Add Employee{% endblock %}
+﻿{% extends 'layout.html' %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     h3 {
         font-weight: 600;
-        color: #8b0000;
+        color: #800000;
         margin-bottom: 20px;
         font-size: 20px;
         text-align: center;
@@ -52,13 +52,13 @@
     }
 
     .btn-save {
-        background-color: #a23030;
+        background-color: #800000;
         font-weight: 500;
-        padding: 5px 12px;
+        padding: 1px 2px;
         border-radius: 8px;
         font-size: 12px;
         color: white;
-        width: 100px;
+        width: 65px;
         margin-top: 10px;
     }
 
@@ -69,135 +69,452 @@
     .text-danger {
         font-size: 10px;
     }
+
+    .subject-assignment-template {
+        display: none;
+    }
+
+    /* 🔥 ADD THIS BLOCK */
+    input[readonly], textarea[readonly], select[readonly] {
+        background-color: #fff !important;
+        color: #000;
+    }
+</style>
+<style>
+    .form-control.error-border {
+        border: 1px solid red !important;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 2px;
+        display: none;
+    }
 </style>
 
+
 <div class="container form-container">
-    <h3>Add Employee</h3>
+    <h3>{{ title }}</h3>
     <form method="post">
         {% csrf_token %}
         <div class="row">
-            <!-- Employee Code -->
+            <!-- Employee ID -->
             <div class="col-md-6 mb-3">
-                <label class="form-label" for="{{ form.emp_code.id_for_label }}">Employee Code</label>
+                <label class="form-label">Employee ID <span style="color:red">*</span></label>
+                {% if readonly %}
+                <input type="text" class="form-control" value="{{ form.emp_code.value|default_if_none:'' }}" readonly>
+                <input type="hidden" name="emp_code" value="{{ form.emp_code.value|default_if_none:'' }}">
+                {% else %}
                 {{ form.emp_code }}
+                {% endif %}
                 {% if form.emp_code.errors %}
-                <div class="text-danger">{{ form.emp_code.errors }}</div>
+                <div class="text-danger">{{ form.emp_code.errors.0 }}</div>
                 {% endif %}
             </div>
 
-            <!-- Category (required for JS toggle) -->
-            {% for field in form %}
-            {% if field.name == 'category' %}
+            <!-- Category -->
             <div class="col-md-6 mb-3">
-                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                <div class="text-danger">{{ field.errors }}</div>
+                <label class="form-label">Employee Category <span style="color:red">*</span></label>
+                {% if readonly %}
+                <input type="text" class="form-control" value="{{ form.category.value|default_if_none:'' }}" readonly>
+                <input type="hidden" name="category" value="{{ form.category.value|default_if_none:'' }}">
+                {% else %}
+                {{ form.category }}
+                {% endif %}
+                {% if form.category.errors %}
+                <div class="text-danger">{{ form.category.errors.0 }}</div>
                 {% endif %}
             </div>
-            {% endif %}
-            {% endfor %}
 
             <!-- Designation -->
             <div class="col-md-6 mb-3" id="designation-wrapper">
-                <label class="form-label" for="{{ form.designation.id_for_label }}">{{ form.designation.label }}</label>
+                <label class="form-label">Employee Designation <span style="color:red">*</span></label>
+                {% if readonly %}
+                <input type="text" class="form-control" value="{{ form.designation.value|default_if_none:'' }}" readonly>
+                <input type="hidden" name="designation" value="{{ form.designation.value|default_if_none:'' }}">
+                {% else %}
                 {{ form.designation }}
-                {% if form.designation.errors %}
-                <div class="text-danger">{{ form.designation.errors }}</div>
                 {% endif %}
             </div>
-            <!--<div class="col-md-6 mb-3" id="role-in-subject-wrapper">
-                <label class="form-label" for="{{ form.role_in_subject.id_for_label }}">{{ form.role_in_subject.label }}</label>
-                {{ form.role_in_subject }}
-                {% if form.role_in_subject.errors %}
-                <div class="text-danger">{{ form.role_in_subject.errors }}</div>
-                {% endif %}
-            </div>-->
+
             <!-- Role -->
             <div class="col-md-6 mb-3" id="role-wrapper">
-                <label class="form-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+                <label class="form-label">Employee Role</label>
+                {% if readonly %}
+                <input type="text" class="form-control" value="{{ form.role.value|default_if_none:'' }}" readonly>
+                <input type="hidden" name="role" value="{{ form.role.value|default_if_none:'' }}">
+                {% else %}
                 {{ form.role }}
-                {% if form.role.errors %}
-                <div class="text-danger">{{ form.role.errors }}</div>
                 {% endif %}
             </div>
 
-            <!-- All Other Fields -->
+            <!-- Other Fields -->
             {% for field in form %}
-            {% if field.name not in excluded_fields %}
-
+            {% if field.name not in 'emp_code category designation role' %}
             <div class="col-md-6 mb-3">
-                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <label class="form-label">
+                    {{ field.label }}
+                    {% if field.name in 'name email phone employment_type' %}
+                    <span style="color:red">*</span>
+                    {% endif %}
+                </label>
+                {% if readonly %}
+                <input type="text" class="form-control" value="{{ field.value|default_if_none:'' }}" readonly>
+                <input type="hidden" name="{{ field.name }}" value="{{ field.value|default_if_none:'' }}">
+                {% else %}
                 {{ field }}
+                {% endif %}
+                {% if field.name == 'phone' %}
+                <div id="phone-error" class="error-message">Enter valid 10-digit phone number starting with 6-9</div>
+                {% endif %}
+
                 {% if field.errors %}
-                <div class="text-danger">{{ field.errors }}</div>
+                <div class="text-danger small">{{ field.errors|striptags }}</div>
                 {% endif %}
             </div>
             {% endif %}
             {% endfor %}
         </div>
 
-        <button type="submit" class="btn btn-save">Save</button>
+        <!-- Subject Assignments -->
+        <div id="subject-assignment-wrapper">
+            {% for row in selected_assignments %}
+            <div class="subject-assignment-row row mb-2">
+                <input type="hidden" name="assignment_id[]" value="{{ row.id }}">
+                <div class="col-md-4">
+                    <label class="form-label">Combination</label>
+                    {% if readonly %}
+                    <input type="text" class="form-control" value="{{ row.course_name }}" readonly>
+                    <input type="hidden" name="course[]" value="{{ row.course_id }}">
+                    {% else %}
+                    <select class="form-control course-select" name="course[]" required>
+                        <option value="">Select Combination</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}" {% if course.id == row.course_id %}selected{% endif %}>{{ course.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sem / Year </label>
+                    {% if readonly %}
+                    <input type="text" class="form-control" value="{{ row.semester_name }}" readonly>
+                    <input type="hidden" name="semester[]" value="{{ row.semester }}">
+                    {% else %}
+                    <select class="form-control semester-select" name="semester[]" required>
+                        <option value="">Select Semester</option>
+                        {% if row.semester %}
+                        <option value="{{ row.semester }}" selected>{{ row.semester }}</option>
+                        {% endif %}
+                    </select>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Subject</label>
+                    {% if readonly %}
+                    <input type="text" class="form-control" value="{{ row.subject_name }}" readonly>
+                    <input type="hidden" name="subject_id[]" value="{{ row.subject_id }}">
+                    {% else %}
+                    <select name="subject_id[]" class="form-select subject-select" required>
+                        <option value="">Select Subject</option>
+                        {% if row.subject_id %}
+                        <option value="{{ row.subject_id }}" selected>{{ row.subject_name }}</option>
+                        {% endif %}
+                    </select>
+                    {% endif %}
+                </div>
+                {% if not readonly %}
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger btn-sm remove-row">&times;</button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not readonly %}
+        <div class="mb-3" id="assign-subject-btn-container">
+            <button type="button" class="btn btn-outline-primary btn-sm" style="background: #800000; color: #fff; border: #800000; font-size: 12px;" id="add-row-btn">+ Assign Subject</button>
+        </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <!-- Back Button (always shown) -->
+            <a href="{% url 'employee_list' %}" class="btn btn-secondary btn-sm" style=" background: #800000; font-size: 12px; padding: 1px 5px;"> Back</a>
+
+            <!-- Save/Update Button (only if editable) -->
+            {% if not readonly %}
+            <button type="submit" class="btn btn-save">{{ button_label }}</button>
+            {% endif %}
+        </div>
+
     </form>
 </div>
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+    {{ form.non_field_errors.0 }}
+</div>
+{% endif %}
 
+<!-- Hidden Assignment Template -->
+<div class="subject-assignment-template d-none">
+    <div class="subject-assignment-row row mb-2">
+        <div class="col-md-4">
+            <label class="form-label">Combination <span style="color:red">*</span></label>
+            <select class="form-control course-select" name="course[]" required>
+                <option value="">Select Combination</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}">{{ course.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Sem / Year  <span style="color:red">*</span></label>
+            <select class="form-control semester-select" name="semester[]" required>
+                <option value="">Select Semester</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Subject <span style="color:red">*</span></label>
+            <select name="subject_id[]" class="form-select subject-select" required>
+                <option value="">Select Subject</option>
+            </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="button" class="btn btn-danger btn-sm remove-row" style="padding: 0px 7px; margin-bottom: 8px;">&times;</button>
+        </div>
+    </div>
+</div>
+
+<!-- Duplicate Confirmation Popup -->
+<div id="overlay" style="display: none;
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background: rgba(0, 0, 0, 0.5);
+     z-index: 1000;"></div>
+
+<div id="confirm-popup" style="display: none;
+     position: fixed;
+     top: 50%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     background: white;
+     padding: 20px;
+     border-radius: 8px;
+     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+     z-index: 1001;
+     text-align: center;">
+    <p id="confirm-popup-message" style="margin-bottom: 12px;"></p>
+    <button id="confirm-no" style="padding: 6px 12px; border: 1px solid #800000; color: #800000; background: none; border-radius: 4px;">ok</button>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const phoneInput = document.getElementById('id_phone');
+        const errorMsg = document.getElementById('phone-error');
 
-    document.addEventListener("DOMContentLoaded", function () {
-
-        const categoryField = document.getElementById("{{ form.category.id_for_label }}");
-
-        const designationWrapper = document.getElementById("designation-wrapper");
-
-        const roleWrapper = document.getElementById("role-wrapper");
-
-        const roleInSubjectWrapper = document.getElementById("role-in-subject-wrapper");
-
-        function toggleFields() {
-
-            const isNonTeaching = categoryField.value === "Non-Teaching Staff";
-
-            // Toggle visibility
-
-            designationWrapper.style.display = isNonTeaching ? "none" : "";
-
-            roleWrapper.style.display = isNonTeaching ? "none" : "";
-
-            if (roleInSubjectWrapper) {
-
-                roleInSubjectWrapper.style.display = isNonTeaching ? "none" : "";
-
+        // Block non-numeric input
+        phoneInput.addEventListener('keypress', function (e) {
+            const charCode = e.charCode ? e.charCode : e.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                e.preventDefault(); // Prevent non-numeric input
             }
+        });
 
-            // Optionally, disable inputs inside the hidden fields
+        // Validate phone number format
+        phoneInput.addEventListener('input', function () {
+            const value = phoneInput.value.trim();
+            const isValid = /^[6-9]\d{9}$/.test(value);
 
-            const toggleInputs = (wrapper, disable) => {
-
-                if (wrapper) {
-
-                    const inputs = wrapper.querySelectorAll("input, select, textarea");
-
-                    inputs.forEach(input => input.disabled = disable);
-
-                }
-
-            };
-
-            toggleInputs(designationWrapper, isNonTeaching);
-
-            toggleInputs(roleWrapper, isNonTeaching);
-
-            toggleInputs(roleInSubjectWrapper, isNonTeaching);
-
-        }
-
-        categoryField.addEventListener("change", toggleFields);
-
-        toggleFields(); // Call once on load
-
+            if (!isValid && value !== '') {
+                phoneInput.classList.add('error-border');
+                errorMsg.style.display = 'block';
+            } else {
+                phoneInput.classList.remove('error-border');
+                errorMsg.style.display = 'none';
+            }
+        });
     });
 </script>
 
+
+
+{% if readonly %}
+<script>
+    $(function () {
+        $('form :input').prop('readonly', true).prop('disabled', true);
+        $('form input[type=hidden], form button, form select, form textarea').prop('disabled', false);
+    });
+</script>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(function () {
+        const categoryField = $("#{{ form.category.id_for_label }}");
+        const designationWrapper = $("#designation-wrapper");
+        const roleWrapper = $("#role-wrapper");
+
+        function toggleFields() {
+            const isNonTeaching = categoryField.val() === "Non-Teaching Staff";
+            designationWrapper.toggle(!isNonTeaching);
+            roleWrapper.toggle(!isNonTeaching);
+            designationWrapper.find("input, select, textarea").prop("disabled", isNonTeaching);
+            roleWrapper.find("input, select, textarea").prop("disabled", isNonTeaching);
+            $('#assign-subject-btn-container').toggle(!isNonTeaching);
+        }
+
+        categoryField.on("change", toggleFields);
+        toggleFields();
+
+        function setupDependentDropdowns(wrapper, preset = {}) {
+            const courseSelect = wrapper.find(".course-select");
+            const semesterSelect = wrapper.find(".semester-select");
+            const subjectSelect = wrapper.find(".subject-select");
+
+            function loadSemesters(courseId, selectedSemester = null) {
+                const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+                semesterSelect.html('<option value="">Loading...</option>');
+                subjectSelect.html('<option value="">Select Subject</option>');
+
+                $.post("{% url 'get_semesters_by_course' %}", {
+                    course_id: courseId,
+                    csrfmiddlewaretoken: csrfToken
+                }, function (data) {
+                    let options = '<option value="">Select Semester</option>';
+                    data.semesters.forEach(sem => {
+                        options += `<option value="${sem.number}" ${sem.number == selectedSemester ? 'selected' : ''}>${sem.name}</option>`;
+                    });
+                    semesterSelect.html(options);
+
+                    if (selectedSemester) {
+                        loadSubjects(courseId, selectedSemester, preset.subject_id);
+                    }
+                });
+            }
+
+            function loadSubjects(courseId, semester, selectedSubject = null) {
+                const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+                subjectSelect.html('<option value="">Loading...</option>');
+
+                $.post("{% url 'get_subjects_by_course_and_semester' %}", {
+                    course_id: courseId,
+                    semester: semester,
+                    csrfmiddlewaretoken: csrfToken
+                }, function (data) {
+                    let options = '<option value="">Select Subject</option>';
+                    data.subjects.forEach(sub => {
+                        options += `<option value="${sub.id}" ${sub.id == selectedSubject ? 'selected' : ''}>${sub.name}</option>`;
+                    });
+                    subjectSelect.html(options);
+                });
+            }
+
+            courseSelect.on("change", function () {
+                const courseId = $(this).val();
+                if (courseId) loadSemesters(courseId);
+            });
+
+            semesterSelect.on("change", function () {
+                const courseId = courseSelect.val();
+                const semester = semesterSelect.val();
+                if (courseId && semester) loadSubjects(courseId, semester);
+            });
+
+            if (preset.course_id) {
+                courseSelect.val(preset.course_id);
+                loadSemesters(preset.course_id, preset.semester);
+            }
+        }
+
+        $('#subject-assignment-wrapper .subject-assignment-row').each(function () {
+            const wrapper = $(this);
+            const course_id = wrapper.find('.course-select').val();
+            const semester = wrapper.find('.semester-select option[selected]').val() || wrapper.find('.semester-select').val();
+            const subject_id = wrapper.find('.subject-select option[selected]').val() || wrapper.find('.subject-select').val();
+
+            if (course_id) {
+                setupDependentDropdowns(wrapper, {
+                    course_id: course_id,
+                    semester: semester,
+                    subject_id: subject_id
+                });
+            }
+        });
+
+        $('#add-row-btn').on("click", function () {
+            const newRow = $('.subject-assignment-template .subject-assignment-row').clone();
+            newRow.find("select").val('');
+            $('#subject-assignment-wrapper').append(newRow);
+            setupDependentDropdowns(newRow);
+        });
+
+        $(document).on('click', '.remove-row', function () {
+            $(this).closest('.subject-assignment-row').remove();
+        });
+    });
+</script>
+<script>
+    $(function () {
+        let formSubmissionBlocked = false;
+
+        $('form').on('submit', function (e) {
+            if (formSubmissionBlocked) {
+                e.preventDefault();
+                return false;
+            }
+
+            let combinationSet = new Set();
+            let duplicateFound = false;
+
+            $('.subject-assignment-row').each(function () {
+                const course = $(this).find('.course-select').val();
+                const semester = $(this).find('.semester-select').val();
+                const subject = $(this).find('.subject-select').val();
+
+                if (course && semester && subject) {
+                    const key = `${course}-${semester}-${subject}`;
+                    if (combinationSet.has(key)) {
+                        duplicateFound = true;
+                        $(this).find('select').addClass('error-border');
+                    } else {
+                        combinationSet.add(key);
+                        $(this).find('select').removeClass('error-border');
+                    }
+                }
+            });
+
+            if (duplicateFound) {
+                e.preventDefault(); // Block form submission
+                formSubmissionBlocked = true;
+
+                $('#confirm-popup-message').html(`<b>Duplicate subject assignments detected.`);
+                $('#confirm-popup').show();
+                $('#overlay').show();
+            }
+        });
+
+        $('#confirm-yes').on('click', function () {
+            $('#confirm-popup').hide();
+            $('#overlay').hide();
+            formSubmissionBlocked = false;
+            $('form').submit(); // Continue with form submission
+        });
+
+        $('#confirm-no').on('click', function () {
+            $('#confirm-popup').hide();
+            $('#overlay').hide();
+            formSubmissionBlocked = false;
+        });
+    });
+</script>
 
 
 {% endblock %}

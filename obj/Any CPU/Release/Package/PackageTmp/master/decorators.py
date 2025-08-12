@@ -1,27 +1,36 @@
-
-from django.shortcuts import redirect
 from functools import wraps
-from .models import User  # Change 'your_app' to the actual app name
+from django.core.exceptions import PermissionDenied
+from .models import UserCustom, UserPermission
 
-def check_form_access(permission_name):
+def role_permission_required(form_name, action='view'):
+    """
+    Decorator to enforce user permission on views without redirect.
+    Raises 403 if permission is not granted.
+    """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             user_id = request.session.get('user_id')
-
             if not user_id:
-                return redirect('login')  # Redirect to login if not authenticated
+                raise PermissionDenied("Login required.")
 
-            user = User.objects.filter(id=user_id).first()
-            if not user:
-                return redirect('login')
+            try:
+                user = UserCustom.objects.get(id=user_id)
+            except UserCustom.DoesNotExist:
+                raise PermissionDenied("Invalid user.")
 
-            # Allow access if the user has all-access or specific permission
-            if getattr(user, f'can_access_{permission_name}', False) or user.can_access_all:
+            # Allow full access to admins
+            if user.username.lower() in ['naveen', 'ambreesh']:
                 return view_func(request, *args, **kwargs)
-            else:
-                return redirect('no_permission')  # You can create a "403" template
+
+            try:
+                perm = UserPermission.objects.get(user=user, form_name=form_name)
+                if getattr(perm, f'can_{action}', False):
+                    return view_func(request, *args, **kwargs)
+            except UserPermission.DoesNotExist:
+                pass
+
+            raise PermissionDenied("Access denied.")
+
         return _wrapped_view
     return decorator
-
-

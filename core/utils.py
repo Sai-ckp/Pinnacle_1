@@ -17,7 +17,7 @@ def get_logged_in_user(request):
             return None
     return None
 
-def log_activity(user, action, instance):
+def log_activity(user, action, instance,message=None):
     """
     Logs user activity in RecentActivity table.
     :param user: UserCustom instance or None
@@ -40,7 +40,8 @@ def log_activity(user, action, instance):
         user=user_for_log,
         action=action,
         model_name=instance.__class__.__name__,
-        object_id=instance.pk,
+       object_id=instance.pk if instance else None,
+
         timestamp__gte=window
     ).exists():
         return
@@ -55,6 +56,7 @@ def log_activity(user, action, instance):
         user=user_for_log,
         action=action,
         model_name=instance.__class__.__name__,
-        object_id=instance.pk,
+        object_id=instance.pk if instance else None,
+
         object_repr=object_repr
     )

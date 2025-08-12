@@ -1,4 +1,4 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 {% block title %}Master{% endblock %}
 {% block content %}
 
@@ -7,6 +7,13 @@
 
     <!-- Master Dashboard Buttons -->
     <div class="d-flex flex-wrap gap-3 mb-4">
+
+        {% if form_permissions.academic_year.add %}
+        <a href="{% url 'academic_year_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-calendar-event me-2"></i> Batch
+        </a>
+        {% endif %}
+
         {% if form_permissions.course_type.add %}
         <!-- Course Type -->
         <a href="{% url 'course_type_list' %}" class="btn btn-maroon px-4 py-3">
@@ -22,13 +29,6 @@
         </a>
         {% endif %}
 
-        <!-- Semester -->
-        {% if form_permissions.semester_form.add %}
-        <a href="{% url 'semester_form_list' %}" class="btn btn-maroon px-4 py-3">
-            <i class="bi bi-calendar-range me-2"></i> Academic Cycles
-            <!-- Alternate FA: <i class="fas fa-calendar-alt me-2"></i> -->
-        </a>
-        {% endif %}
 
         {% if form_permissions.subject_form.add %}
 
@@ -37,18 +37,50 @@
             <i class="bi bi-journal-bookmark me-2"></i> Subjects
             <!-- Alternate FA: <i class="fas fa-book-open me-2"></i> -->
         </a>
+
+
         {% endif %}
 
         {% if form_permissions.transport_form.add %}
 
-        <a href="{% url 'transport_form_list' %}" class="btn btn-maroon px-4 py-3">
+        <a href="{% url 'master_transport_list' %}" class="btn btn-maroon px-4 py-3">
             <i class="bi bi-bus-front-fill me-2"></i> Transport
 
             <!-- Alternate FA: <i class="fas fa-book-open me-2"></i> -->
         </a>
         {% endif %}
 
+        {% if form_permissions.fee_type.add %}
+
+        <a href="{% url 'fee_type_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-cash-coin me-2"></i> Fee Types
+        </a>
+        {% endif %}
+
+        <!-- Subject -->
+        <a href="{% url 'event_type_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-journal-bookmark me-2"></i> Event Types
+            <!-- Alternate FA: <i class="fas fa-book-open me-2"></i> -->
+        </a>
+
+        <a href="{% url 'content_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-journal-bookmark me-2"></i> Content
+        </a>
+
+        <a href="{% url 'chapter_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-journal-bookmark me-2"></i> Chapter
+        </a>
+
+        <a href="{% url 'category_list' %}" class="btn btn-maroon px-4 py-3">
+            <i class="bi bi-journal-bookmark me-2"></i> Book Categories
+        </a>
+        <a href="{% url 'exam_type_list' %}"
+           class="btn btn-maroon px-4 py-3 {% if 'exam_type_list' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fa-solid fa-clipboard-list me-2"></i> Exam Types
+        </a>
+
     </div>
+
 
 
     <!-- Loaded form content will appear here -->

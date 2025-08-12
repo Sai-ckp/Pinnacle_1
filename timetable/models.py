@@ -1,7 +1,7 @@
 from django.db import models
 from django.db import models
 from django.utils import timezone
-from master.models import Subject,Employee,Semester
+from master.models import Subject,Employee,CourseType,AcademicYear,Course
 
 
 # Create your models here.
@@ -19,11 +19,15 @@ class TimetableEntry(models.Model):
     ]
     day = models.CharField(max_length=10, choices=DAYS_OF_WEEK)
     time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    course_type = models.ForeignKey(CourseType, on_delete=models.CASCADE)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+
+    semester_number = models.PositiveIntegerField()
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     faculty = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     room = models.CharField(max_length=20)
-    def __str__(self): return f"{self.semester} - {self.day} - {self.time_slot}"
+    def __str__(self): return f"{self.semester_number} - {self.day} - {self.time_slot}"
 
 
 class DailySubstitution(models.Model):

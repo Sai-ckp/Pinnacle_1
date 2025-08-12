@@ -1,22 +1,13 @@
-﻿from django.shortcuts import render,redirect
-
-# Create your views here.
-from django.shortcuts import render, get_object_or_404
-from master.models import  Semester,  Employee, Subject,Course,CourseType
-from .models import   TimetableEntry,  TimeSlot
-from .forms import TimeSlotForm,TimetableEntryForm
-
-
-
-
-
+﻿
 from django.shortcuts import render, get_object_or_404
 from master.models import Semester, Employee, Subject, Course, CourseType
 from .models import TimetableEntry, TimeSlot
 from .forms import TimeSlotForm, TimetableEntryForm
 from datetime import datetime
 import sys
+from master.decorators import custom_login_required
 
+@custom_login_required
 def timetable_dashboard(request):
     # Active Programs: all CourseTypes
     program_qs = CourseType.objects.all()
@@ -91,104 +82,136 @@ from datetime import timedelta
 from django.utils import timezone
 from .models import DailySubstitution  # Ensure this import is present
 
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta
+from .models import TimetableEntry, DailySubstitution
+from master.models import Course, CourseType
+from attendence.models import attendance
+
 def get_date_for_weekday(base_date, target_weekday):
-    # Get the target date for a given weekday name, relative to base_date
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
     if target_weekday not in days:
         return base_date
-    current_weekday = base_date.weekday()  # Monday = 0
+    current_weekday = base_date.weekday()  # 0 = Monday
     target_weekday_index = days.index(target_weekday)
     delta = target_weekday_index - current_weekday
     return base_date + timedelta(days=delta)
 
+
+
+
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.shortcuts import render
+from .models import TimetableEntry, TimeSlot, DailySubstitution
+from master.models import Course, Semester
+from core.utils import get_logged_in_user, log_activity
+from attendence.models import attendance
+
+@custom_login_required
 def daily_timetable(request):
     week_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    today = timezone.now()
+    today_day = today.strftime('%A')
+    if today_day not in week_days:
+        today_day = 'Monday'
 
-    # Get today's weekday name; fallback to Friday if weekend
-    today_day = timezone.now().strftime('%A')
-    if today_day in ['Saturday', 'Sunday']:
-        today_day = 'Friday'
+    raw_date = request.GET.get('date')
+    selected_date = parse_date(raw_date) if raw_date else today.date()
 
-    today_date = timezone.localdate()
-    selected_day = request.GET.get('day', today_day)
+    selected_day = request.GET.get('day') or today_day
+    course_type_id = request.GET.get('course_type')
+    academic_year_id = request.GET.get('academic_year')
+    course_id = request.GET.get('course')
+    semester_number = request.GET.get('semester')
 
-    # Default values
-    DEFAULT_COURSE_TYPE_NAME = "PUC"
-    DEFAULT_COURSE_NAME = "SEBA"
-    DEFAULT_SEMESTER_NUMBER = 1
+    # Filter courses and semesters dynamically
+    course_type = CourseType.objects.filter(id=course_type_id).first() if course_type_id else None
+    academic_year = AcademicYear.objects.filter(id=academic_year_id).first() if academic_year_id else None
 
-    # Resolve defaults
-    default_course_type = CourseType.objects.filter(name__icontains=DEFAULT_COURSE_TYPE_NAME).first()
-    default_course = Course.objects.filter(name__iexact=DEFAULT_COURSE_NAME).first()
-    default_semester = Semester.objects.filter(course=default_course, number=DEFAULT_SEMESTER_NUMBER).first() if default_course else None
-
-    # Get values from request or fallback
-    course_type = request.GET.get('course_type', default_course_type.name if default_course_type else '')
-    course_id = request.GET.get('course', str(default_course.id) if default_course else '')
-    semester_id = request.GET.get('semester', str(default_semester.id) if default_semester else '')
-
-    # Build filters
-    filters = {}
-    if semester_id:
-        filters['semester_id'] = semester_id
-    if course_id:
-        filters['subject__course_id'] = course_id
+    filtered_courses = Course.objects.filter(is_active=True)
     if course_type:
-        filters['subject__course__course_type__name__iexact'] = course_type
-    if selected_day:
-        filters['day__iexact'] = selected_day
+        filtered_courses = filtered_courses.filter(course_type=course_type)
+    if academic_year:
+        filtered_courses = filtered_courses.filter(academic_year=academic_year)
 
-    # Get actual date for the selected weekday
-    target_date = get_date_for_weekday(today_date, selected_day)
+    filtered_semesters = Semester.objects.filter(course_id=course_id) if course_id else Semester.objects.none()
 
-    # Query timetable entries
-    entries = TimetableEntry.objects.filter(**filters).select_related(
-        'faculty', 'subject', 'subject__course', 'semester'
-    ).order_by('time_slot__start_time')
+    # Default course and semester if not provided
+    if not course_id:
+        first_course = filtered_courses.first()
+        if first_course:
+            course_id = str(first_course.id)
 
-    for entry in entries:
-        # Check for substitution for this entry on target_date
-        substitution = DailySubstitution.objects.filter(
-            timetable_entry=entry,
-            date=target_date
-        ).select_related('substitute_faculty', 'updated_subject').first()
+    if not semester_number:
+        first_sem = Semester.objects.filter(course_id=course_id).first()
+        if first_sem:
+            semester_number = str(first_sem.number)
 
-        if substitution:
-            entry.faculty = substitution.substitute_faculty
-            entry.subject = substitution.updated_subject or entry.subject
-            entry.is_substituted = True
-            entry.substitution_id = substitution.id
-        else:
-            entry.is_substituted = False
-            entry.substitution_id = None
+    filters = {'day__iexact': selected_day}
+    if course_id:
+        filters['course_id'] = course_id
+    if semester_number:
+        filters['semester_number'] = semester_number
 
-        # Fetch attendance
-        if entry.faculty:
-            att = attendance.objects.filter(employee=entry.faculty, date=target_date).first()
-            entry.attendance_status = att.status if att else 'Absent'
-        else:
-            entry.attendance_status = 'Absent'
+    time_slots = TimeSlot.objects.all().order_by('start_time')
+    entries = TimetableEntry.objects.filter(**filters).select_related('faculty', 'subject', 'time_slot')
 
-    # Dropdown options
-    course_types = CourseType.objects.all()
-    courses = Course.objects.filter(course_type__name__iexact=course_type) if course_type else Course.objects.all()
-    semesters = Semester.objects.filter(
-        id__in=TimetableEntry.objects.filter(subject__course_id=course_id).values_list('semester_id', flat=True).distinct()
-    ) if course_id else Semester.objects.all()
+    timetable = {}
+    for slot in time_slots:
+        entry = entries.filter(time_slot=slot).first()
+        if entry:
+            substitution = DailySubstitution.objects.filter(
+                timetable_entry=entry,
+                date=selected_date
+            ).select_related('substitute_faculty', 'updated_subject').first()
+
+            if substitution:
+                entry.faculty = substitution.substitute_faculty
+                entry.subject = substitution.updated_subject
+                entry.is_substituted = True
+                entry.substitution_id = substitution.id
+            else:
+                entry.is_substituted = False
+
+            att = attendance.objects.filter(employee=entry.faculty, date=selected_date).first()
+            entry.attendance_status = att.status if att else "N/A"
+
+        timetable[slot] = entry
+
+    # Log viewing
+    user = get_logged_in_user(request)
+    if user:
+        course_name = Course.objects.filter(id=course_id).first()
+        log_activity(
+            user=request.user,
+            action='viewed',
+            instance=None,
+            message=f"Viewed daily timetable for {selected_day} - {course_name.name if course_name else 'Unknown Course'} - Semester {semester_number}"
+        )
 
     return render(request, 'timetable/daily.html', {
-        'semesters': semesters,
-        'courses': courses,
-        'course_types': course_types,
-        'week_days': week_days,
-        'entries': entries,
-        'selected_semester': Semester.objects.filter(id=semester_id).first() if semester_id else None,
-        'selected_day': selected_day,
-        'selected_semester_id': semester_id,
+        'program_types': CourseType.objects.all(),
+        'academic_years': AcademicYear.objects.all(),
+        'courses': filtered_courses,
+        'semesters': filtered_semesters,
+        'selected_course_type_id': course_type_id,
+        'selected_academic_year_id': academic_year_id,
         'selected_course_id': course_id,
-        'selected_course_type': course_type,
-        'selected_date': target_date,
+        'selected_semester_number': semester_number,
+        'selected_day': selected_day,
+        'today_day': today_day,
+        'week_days': week_days,
+        'selected_date': selected_date,
+        'time_slots': time_slots,
+        'timetable': timetable,
+        'entries': entries,
     })
+
+
+
+
 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import TimetableEntry, Employee, DailySubstitution, Subject
@@ -199,10 +222,13 @@ from datetime import datetime
 from attendence.models import attendance  
 from core.utils import get_logged_in_user,log_activity
 
+from django.contrib import messages  # ✅ Add this import at the top if not already
+
+@custom_login_required
 def timetable_form_edit(request, entry_id):
     entry = get_object_or_404(TimetableEntry, id=entry_id)
     
-    # Get the date (ensure it's in correct format)
+    # Get the date
     raw_date = request.GET.get('date')
     date = parse_date(raw_date) if raw_date else datetime.today().date()
 
@@ -211,28 +237,24 @@ def timetable_form_edit(request, entry_id):
     entry_start = timeslot.start_time
     entry_end = timeslot.end_time
 
-    # Get eligible faculties
+    # Eligible faculties
     eligible_faculties = Employee.objects.filter(role__in=['Primary', 'Secondary'])
 
-    # Get busy faculty IDs who have overlapping timetable entries
+    # Busy faculties
     busy_faculties = TimetableEntry.objects.filter(
         day=day,
         time_slot__start_time__lt=entry_end,
         time_slot__end_time__gt=entry_start,
     ).values_list('faculty_id', flat=True)
 
-    # Filter to get free ones
     free_faculties = eligible_faculties.exclude(id__in=busy_faculties)
 
-    # 🔍 Filter by present status on the selected date
- 
-
+    # Present faculties
     present_faculty_ids = attendance.objects.filter(
         date=date,
         status__in=['Present', 'Late']
     ).values_list('employee_id', flat=True)
 
-    # Final filtered faculties: free and present
     available_faculties = free_faculties.filter(id__in=present_faculty_ids)
 
     if request.method == 'POST':
@@ -243,17 +265,22 @@ def timetable_form_edit(request, entry_id):
         subject = get_object_or_404(Subject, id=subject_id)
 
         substitution_obj, created = DailySubstitution.objects.update_or_create(
-        timetable_entry=entry,
-        date=date,
-        defaults={
-        'substitute_faculty': faculty,
-        'updated_subject': subject
-    }
-)
+            timetable_entry=entry,
+            date=date,
+            defaults={
+                'substitute_faculty': faculty,
+                'updated_subject': subject
+            }
+        )
 
         user = get_logged_in_user(request)
         log_activity(user, 'assigned', substitution_obj)
 
+        # ✅ Snackbar success message
+        messages.success(
+            request,
+            f"Substitution assigned to {faculty.name} for {subject.name} on {date.strftime('%d-%b-%Y')}."
+        )
 
         return redirect('daily_timetable')
 
@@ -264,9 +291,12 @@ def timetable_form_edit(request, entry_id):
         'date': date,
     }
     return render(request, 'timetable/substitute_timetable_entry.html', context)
+
+
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import DailySubstitution
 
+@custom_login_required
 def timetable_form_delete(request, substitution_id):
     substitution = get_object_or_404(DailySubstitution, id=substitution_id)
     substitution.delete()
@@ -278,6 +308,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.dateparse import parse_date
 from datetime import datetime
 
+@custom_login_required
 def timetable_form_view(request, entry_id):
     entry = get_object_or_404(TimetableEntry, id=entry_id)
 
@@ -301,7 +332,55 @@ def timetable_form_view(request, entry_id):
 
 
 
-
+from django.http import JsonResponse
+from master.models import Course
+ 
+@custom_login_required
+def get_semesters_by_course(request):
+    if request.method == "POST":
+        course_id = request.POST.get("course_id")
+ 
+        if not course_id or not course_id.isdigit():
+            return JsonResponse({'error': 'Invalid course ID'}, status=400)
+ 
+        try:
+            course = Course.objects.get(id=int(course_id))
+            semester_list = []
+ 
+            course_type_name = course.course_type.name.strip().lower()
+            course_name = course.name
+ 
+            # Debug logging
+            print(f"Course selected: {course_name} (Type: {course_type_name})")
+ 
+            # PU or similar types use duration_years
+            if "pu" in course_type_name:
+                total = course.duration_years or 0
+                for i in range(1, total + 1):
+                    semester_list.append({
+                        'number': i,
+                        'name': f"{course_name} Year {i}"
+                    })
+            else:
+                total = course.total_semesters or 0
+                for i in range(1, total + 1):
+                    semester_list.append({
+                        'number': i,
+                        'name': f"{course_name} Semester {i}"
+                    })
+ 
+            if not semester_list:
+                semester_list.append({
+                    'number': 0,
+                    'name': "NOT APPLICABLE"
+                })
+ 
+            return JsonResponse({'semesters': semester_list})
+ 
+        except Course.DoesNotExist:
+            return JsonResponse({'error': 'Course not found'}, status=404)
+ 
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 
 
@@ -310,8 +389,9 @@ def timetable_form_view(request, entry_id):
 from django.shortcuts import render
 from datetime import date, timedelta
 from .models import TimetableEntry, TimeSlot
-from master.models import Semester, Course, CourseType
-from attendence.models import attendance  # import your attendance model
+from master.models import Course
+from attendence.models import attendance
+
 
 def get_date_for_weekday(base_date, target_weekday):
     week_day_map = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -320,77 +400,107 @@ def get_date_for_weekday(base_date, target_weekday):
     delta = target_index - base_weekday
     return base_date + timedelta(days=delta)
 
+
+from django.shortcuts import render
+from datetime import date
+from .models import TimetableEntry
+from master.models import Course, Semester
+from attendence.models import attendance
+from core.utils import log_activity 
+
+@custom_login_required
 def weekly_timetable_view(request, course_id=None, semester_number=None):
-    # 👇 Default values (customize if needed)
-    DEFAULT_COURSE_TYPE_NAME = "PUC"
-    DEFAULT_COURSE_NAME = "SEBA"
-    DEFAULT_SEMESTER_NUMBER = 1
-
-    # Get values from request or fallback to parameters
-    selected_course_type = request.GET.get('course_type')
-    selected_course = request.GET.get('course') or course_id
-    selected_semester = request.GET.get('semester') or semester_number
-
-    # 👇 Use defaults if none selected
-    if not selected_course_type or not selected_course or not selected_semester:
-        default_course_type = CourseType.objects.filter(name__icontains=DEFAULT_COURSE_TYPE_NAME).first()
-        if default_course_type:
-            selected_course_type = str(default_course_type.id)
-
-            default_course = Course.objects.filter(course_type=default_course_type, name__icontains=DEFAULT_COURSE_NAME).first()
-            if default_course:
-                selected_course = str(default_course.id)
-
-                default_semester = Semester.objects.filter(course=default_course, number=DEFAULT_SEMESTER_NUMBER).first()
-                if default_semester:
-                    selected_semester = str(default_semester.number)
-
-    # Convert selected values to integers
-    selected_course_type_id = int(selected_course_type) if selected_course_type else None
-    selected_course_id = int(selected_course) if selected_course else None
-    selected_semester_number = int(selected_semester) if selected_semester else None
-
-    # Load data for filters and timetable
-    course_types = CourseType.objects.all()
-    courses = Course.objects.filter(course_type_id=selected_course_type_id) if selected_course_type_id else Course.objects.none()
-    semesters = Semester.objects.filter(course_id=selected_course_id) if selected_course_id else Semester.objects.none()
-
-    semester = Semester.objects.filter(course_id=selected_course_id, number=selected_semester_number).first()
+    from datetime import date
+    from django.db.models import Q
+    from attendence.models import attendance
+    from timetable.models import TimetableEntry, TimeSlot
+    from master.models import CourseType, AcademicYear, Course, Semester
 
     week_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-    timetable = {}
-    time_slots = []
     today = date.today()
 
-    if semester:
-        for day in week_days:
-            entries = list(TimetableEntry.objects.filter(semester=semester, day=day).order_by('time_slot__start_time'))
-            target_date = get_date_for_weekday(today, day)
+    # Step 1: Get selected filters from GET or fallback to URL kwargs
+    selected_program_type = request.GET.get('course_type', '')
+    selected_academic_year = request.GET.get('academic_year', '')
+    selected_course_id = request.GET.get('course') or (str(course_id) if course_id else '')
+    selected_semester_number = request.GET.get('semester') or (str(semester_number) if semester_number else '')
 
+    # Step 2: Initial querysets
+    program_types = CourseType.objects.all()
+    academic_years = AcademicYear.objects.all()
+    courses = Course.objects.filter(is_active=True)
+    semesters = Semester.objects.none()
+
+    # Step 3: Apply dynamic filtering
+    if selected_program_type:
+        courses = courses.filter(course_type_id=selected_program_type)
+        academic_year_ids = courses.values_list('academic_year_id', flat=True).distinct()
+        academic_years = AcademicYear.objects.filter(id__in=academic_year_ids)
+
+    if selected_academic_year:
+        courses = courses.filter(academic_year_id=selected_academic_year)
+
+    if selected_course_id:
+        semesters = Semester.objects.filter(course_id=selected_course_id)
+
+    # Step 4: Auto-select defaults if not provided
+    if not selected_course_id and courses.exists():
+        selected_course = courses.first()
+        selected_course_id = str(selected_course.id)
+        semesters = Semester.objects.filter(course=selected_course)
+
+    if not selected_semester_number and semesters.exists():
+        selected_semester_number = str(semesters.first().number)
+
+    # Step 5: Fetch timetable
+    timetable = {}
+    time_slots_set = set()
+
+    if selected_course_id and selected_semester_number:
+        for day in week_days:
+            entries = list(TimetableEntry.objects.filter(
+                course_id=selected_course_id,
+                semester_number=selected_semester_number,
+                day=day
+            ).select_related('time_slot', 'subject', 'faculty').order_by('time_slot__start_time'))
+
+            target_date = get_date_for_weekday(today, day)
             for entry in entries:
-                att = None
                 if entry.faculty:
                     att = attendance.objects.filter(employee=entry.faculty, date=target_date).first()
                     entry.attendance_status = att.status if att else 'Absent'
                 else:
                     entry.attendance_status = 'Absent'
-            timetable[day] = entries
 
-        time_slot_set = {entry.time_slot for entries in timetable.values() for entry in entries}
-        time_slots = sorted(time_slot_set, key=lambda ts: ts.start_time)
+            timetable[day] = entries
+            for entry in entries:
+                time_slots_set.add(entry.time_slot)
+
+    time_slots = sorted(time_slots_set, key=lambda ts: ts.start_time)
+    selected_course_name = Course.objects.filter(id=selected_course_id).first()
+
+    log_activity(
+        user=request.user,
+        action='viewed',
+        instance=None,
+        message=f"Viewed weekly timetable - Course: {selected_course_name.name if selected_course_name else 'Unknown'} - Semester: {selected_semester_number}"
+    )
 
     return render(request, 'timetable/weekly.html', {
-        'course_types': course_types,
+        'program_types': program_types,
+        'academic_years': academic_years,
         'courses': courses,
         'semesters': semesters,
-        'selected_course_type': selected_course_type,
-        'selected_course': selected_course,
-        'selected_semester': selected_semester,
-        'semester': semester,
+        'selected_program_type': selected_program_type,
+        'selected_academic_year': selected_academic_year,
+        'selected_course_id': selected_course_id,
+        'selected_semester_number': selected_semester_number,
         'week_days': week_days,
         'timetable': timetable,
         'time_slots': time_slots,
     })
+
+
 
 
 # def weekly_timetable_view(request, course_id, semester_number):
@@ -405,6 +515,7 @@ def weekly_timetable_view(request, course_id=None, semester_number=None):
 #     })
 
 
+@custom_login_required
 def faculty_timetable_view(request, faculty_id):
     faculty = get_object_or_404(Employee, id=faculty_id)
     entries = TimetableEntry.objects.filter(faculty=faculty).order_by('day', 'time_slot')
@@ -413,117 +524,265 @@ def faculty_timetable_view(request, faculty_id):
     })
 
 
+
 from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.urls import reverse
+
 from .forms import TimetableEntryForm
 from .models import TimetableEntry
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import TimetableEntry
-from .forms import TimetableEntryForm
-
-from django.shortcuts import get_object_or_404
+from master.models import Semester, Course, Subject, Employee, EmployeeSubjectAssignment
+from core.utils import get_logged_in_user, log_activity
 
 
+@custom_login_required
 def timetable_form_add(request):
     if request.method == 'POST':
         form = TimetableEntryForm(request.POST)
-        if form.is_valid():
-            semester = form.cleaned_data.get('semester')
-            day = form.cleaned_data.get('day')
-            time_slot = form.cleaned_data.get('time_slot')
 
-            # Check for existing entry for same day, semester, time_slot
+        # --- Dynamically populate semester choices ---
+        course_id = request.POST.get('course')
+        if course_id:
+            try:
+                course = Course.objects.get(id=course_id)
+                course_type_name = course.course_type.name.strip().lower()
+                semester_list = []
+
+                if course_type_name == "puc regular":
+                    total = course.duration_years or 0
+                    for i in range(1, total + 1):
+                        semester_list.append((str(i), f"{course.name} {i}"))
+                else:
+                    total = course.total_semesters or 0
+                    for i in range(1, total + 1):
+                        semester_list.append((str(i), f"{course.name} {i}"))
+
+                if not semester_list:
+                    semester_list = [('0', "NOT APPLICABLE")]
+
+                form.fields['semester_number'].choices = semester_list
+
+            except Course.DoesNotExist:
+                pass
+
+        # --- Filter subjects based on selected course and semester ---
+        semester_number = request.POST.get('semester_number')
+        subject_id = request.POST.get('subject')
+        if course_id and semester_number:
+            subjects = Subject.objects.filter(
+                course_id=course_id,
+                semester=semester_number
+            ).order_by('name')
+            form.fields['subject'].queryset = subjects
+
+        # --- Filter faculty based on subject assignment ---
+        if course_id and semester_number and subject_id:
+            assigned_faculty_qs = EmployeeSubjectAssignment.objects.filter(
+                course_id=course_id,
+                semester=semester_number,
+                subject_id=subject_id
+            ).select_related('employee')
+
+            faculty_ids = [a.employee.id for a in assigned_faculty_qs]
+            faculty_queryset = Employee.objects.filter(id__in=faculty_ids)
+
+            form.fields['faculty'].queryset = faculty_queryset
+
+            # ✅ Preselect the first faculty if none selected
+            if not request.POST.get('faculty') and faculty_queryset.exists():
+                form.initial['faculty'] = faculty_queryset.first().id
+
+        # --- Save logic ---
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+            day = cleaned_data['day']
+            time_slot = cleaned_data['time_slot']
+            course = cleaned_data['course']
+            semester_number = cleaned_data['semester_number']
+
             existing_entry = TimetableEntry.objects.filter(
-                semester=semester,
                 day=day,
-                time_slot=time_slot
+                time_slot=time_slot,
+                course=course,
+                semester_number=semester_number
             ).first()
-            user = get_logged_in_user(request)
+
             if existing_entry:
-                form = TimetableEntryForm(request.POST, instance=existing_entry)
-                saved_entry = form.save()
-                log_activity(user, 'edited', saved_entry)
+                existing_entry.subject = cleaned_data['subject']
+                existing_entry.faculty = cleaned_data['faculty']
+                existing_entry.room = cleaned_data['room']
+                existing_entry.save()
+
+                user = get_logged_in_user(request)
+                log_activity(
+                    user=request.user,
+                    action='updated',
+                    instance=existing_entry
+                )
+
+                messages.success(request, "Existing timetable entry updated successfully.")
             else:
-                saved_entry = form.save()
+                saved_entry = form.save(commit=False)
+                user = get_logged_in_user(request)
+                saved_entry.save()
                 log_activity(user, 'created', saved_entry)
 
-            return redirect('weekly_timetable', course_id=semester.course.id, semester_number=semester.number)
+                messages.success(request, "Timetable entry saved successfully.")
+
+            # ✅ Redirect to weekly timetable for same course and semester, with filters as query params
+            course_type_id = course.course_type.id
+            batch_id = course.batch.id if hasattr(course, 'batch') else ''
+
+            return redirect(
+                f"{reverse('weekly_timetable', kwargs={'course_id': course.id, 'semester_number': semester_number})}"
+                f"?course_type={course.course_type.id}&academic_year={(course.batch.id if hasattr(course, 'batch') else '')}"
+            )
+
+
         else:
-            print("Form errors:", form.errors)
+            messages.error(request, "Form submission failed. Please correct the highlighted errors.")
+
     else:
         form = TimetableEntryForm()
 
     return render(request, 'timetable/add_entry.html', {'form': form})
 
+from django.http import JsonResponse
+from .models import Course, AcademicYear
+
+@custom_login_required
+def get_courses_and_years_by_program_type(request):
+    program_type_id = request.GET.get('program_type_id')
+
+    if not program_type_id:
+        return JsonResponse({'courses': [], 'academic_years': []})
+
+    # Get all academic years linked with this CourseType
+    academic_years = AcademicYear.objects.filter(
+        id__in=Course.objects.filter(course_type_id=program_type_id)
+                              .values_list('academic_year_id', flat=True)
+                              .distinct()
+    ).values('id', 'year')
+
+    # Get all courses for this CourseType
+    courses = Course.objects.filter(course_type_id=program_type_id) \
+                            .values('id', 'name', 'academic_year_id')
+
+    return JsonResponse({
+        'courses': list(courses),
+        'academic_years': list(academic_years)
+    })
+
+
+
+from django.views.decorators.csrf import csrf_exempt
+
+@custom_login_required
+@csrf_exempt
+def get_subjects_by_course_and_semester(request):
+    if request.method == 'POST':
+        course_id = request.POST.get('course_id')
+        semester = str(request.POST.get('semester')).strip()  # 🔁 Ensure string comparison
+
+        print(f"🔵 View called\nCourse ID: {course_id}\nSemester: {semester} (type: {type(semester)})")
+
+        subjects = Subject.objects.filter(course_id=course_id, semester=semester)
+
+        print(f"Subjects found: {subjects}")
+        print(f"SQL Query: {subjects.query}")
+
+        subject_data = [{'id': subject.id, 'name': subject.name} for subject in subjects]
+        return JsonResponse({'subjects': subject_data})
+
+
+# from django.http import JsonResponse
+# from .models import Subject
 
 
 from django.http import JsonResponse
-from .models import Subject
+from master.models import Subject, EmployeeSubjectAssignment
 
+@custom_login_required
 def get_faculty_by_subject(request):
+    if request.method != "GET":
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+
     subject_id = request.GET.get('subject_id')
-    if subject_id:
-        try:
-            subject = Subject.objects.get(id=subject_id)
-            faculty = subject.faculty  # assuming `Subject` has a FK to Faculty
-            return JsonResponse({'faculty_name': faculty.name, 'faculty_id': faculty.id})
-        except Subject.DoesNotExist:
-            return JsonResponse({'error': 'Subject not found'}, status=404)
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    if not subject_id:
+        return JsonResponse({'error': 'Subject ID is required'}, status=400)
 
+    try:
+        assignments = EmployeeSubjectAssignment.objects.filter(subject_id=subject_id).select_related('employee')
 
+        faculty_list = []
+        for assignment in assignments:
+            employee = assignment.employee
+            name_with_role = f"{employee.name} ({employee.role})" if employee.role else employee.name
+            faculty_list.append({
+                'id': employee.id,
+                'name': name_with_role
+            })
 
+        default_faculty = assignments.first().employee.id if assignments.exists() else None
+
+        return JsonResponse({
+            'faculty': faculty_list,
+            'default': default_faculty
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 from django.shortcuts import render
 from django.db.models import Count
 from timetable.models import TimetableEntry
 from master.models import Course
-
+ 
+ 
+@custom_login_required
 def faculty_classes_table(request):
     courses = Course.objects.all()
-
-    # Default SEBA course id
-    try:
-        seba_course = Course.objects.filter(name__iexact='SEBA').first()
-        seba_course_id = seba_course.id
-    except Course.DoesNotExist:
-        seba_course_id = None
-
     course_param = request.GET.get('course')
-    
-    if course_param == "":
-        # All selected
-        selected_course_id = None
-    elif course_param:
-        try:
-            selected_course_id = int(course_param)
-        except ValueError:
-            selected_course_id = seba_course_id
-    else:
-        # No GET param -> default to SEBA
-        selected_course_id = seba_course_id
-
-    print("Selected Course ID:", selected_course_id)  # For debug
-
-    # Base query
-    faculty_subject_class_counts = TimetableEntry.objects.values(
+    semester_param = request.GET.get('semester')
+ 
+    selected_course_id = int(course_param) if course_param and course_param.isdigit() else None
+    selected_semester = int(semester_param) if semester_param and semester_param.isdigit() else None
+ 
+    faculty_subject_class_counts = TimetableEntry.objects.filter(faculty__isnull=False)
+ 
+    semesters = []
+    if selected_course_id:
+       faculty_subject_class_counts = faculty_subject_class_counts.filter(subject__course__id=selected_course_id)
+ 
+    course = Course.objects.filter(id=selected_course_id).first()
+    if course:
+        course_type_name = course.course_type.name.strip().lower()
+        if "pu" in course_type_name:
+            total = course.duration_years or 0
+            semesters = [{'number': i, 'name': f'{course.name}  {i}'} for i in range(1, total + 1)]
+        else:
+            total = course.total_semesters or 0
+            semesters = [{'number': i, 'name': f'{course.name}  {i}'} for i in range(1, total + 1)]
+ 
+ 
+ 
+    if selected_semester:
+        faculty_subject_class_counts = faculty_subject_class_counts.filter(semester_number=selected_semester)
+ 
+    faculty_subject_class_counts = faculty_subject_class_counts.values(
         'faculty__id',
         'faculty__name',
         'subject__id',
         'subject__name',
-        'subject__course__id',
         'subject__course__name'
-    ).annotate(class_count=Count('id')).filter(faculty__isnull=False)
-
-    # Filter only if specific course is selected
-    if selected_course_id:
-        faculty_subject_class_counts = faculty_subject_class_counts.filter(subject__course__id=selected_course_id)
-
-    faculty_subject_class_counts = faculty_subject_class_counts.order_by('faculty__name', 'subject__name')
-
+    ).annotate(class_count=Count('id')).order_by('faculty__name', 'subject__name')
+ 
     return render(request, 'timetable/faculty_classes_table.html', {
         'faculty_subject_class_counts': faculty_subject_class_counts,
         'courses': courses,
-        'selected_course_id': selected_course_id
+        'semesters': semesters,
+        'selected_course_id': selected_course_id,
+        'selected_semester': selected_semester
     })
+
 

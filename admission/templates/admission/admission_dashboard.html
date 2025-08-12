@@ -1,4 +1,4 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 {% block title %}Admission {% endblock %}
 {% block content %}
 
@@ -6,7 +6,7 @@
     <h2 class="fw-bold text-primary mb-4 text-center"> Admission </h2>
 
     <!-- 🔽 Filter Dropdown -->
-    <div class="mb-4 d-flex justify-content-end">
+    <!--<div class="mb-4 d-flex justify-content-end">
         <div class="dropdown">
             <button class="btn btn-outline-secondary px-4 py-2 dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-funnel"></i> Filter
@@ -18,7 +18,69 @@
                 <li><a class="dropdown-item {% if active_filter == 'all' %}active{% endif %}" href="?filter=all">All</a></li>
             </ul>
         </div>
+    </div>-->
+
+
+
+    <div class="d-flex justify-content-end mb-2" style="margin-top: -10px;">
+        <form method="post" enctype="multipart/form-data" id="uploadForm" class="d-flex align-items-center gap-2" style="max-width: 320px;">
+            {% csrf_token %}
+            <input type="file" name="import_file" id="import_file" accept=".xlsx,.xls,.pdf" required class="form-control form-control-sm custom-file-sm">
+            <button type="submit" class="btn btn-outline-primary btn-sm" style="height: 32px; padding: 4px 12px; font-size: 12px; background: #800000; color: white; border-color: #800000;">Upload</button>
+        </form>
     </div>
+
+
+    <!-- ✅ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const form = document.getElementById('uploadForm');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            Swal.fire({
+                title: 'Uploading...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            fetch("{% url 'bulk_import_admissions' %}", {
+                method: 'POST',
+                body: formData,
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        let html = `<b>${data.message}</b>`;
+
+                        if (data.error_count > 0) {
+                            html += `<br><br><b>⚠️ ${data.error_count} Record(s) Skipped:</b><ul>`;
+                            html += data.errors.map(e => `<li>${e}</li>`).join('');
+                            if (data.error_count > 10) {
+                                html += `<li>...and ${data.error_count - 10} more.</li>`;
+                            }
+                            html += `</ul>`;
+                        }
+
+                        Swal.fire({
+                            icon: data.error_count > 0 ? 'warning' : 'success',
+                            title: 'Upload Complete',
+                            html: html,
+                            width: 600
+                        });
+                    } else {
+                        Swal.fire('❌ Upload Failed', data.error || 'Unknown error occurred.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    Swal.fire('❌ Upload Failed', 'Something went wrong during upload.', 'error');
+                });
+        });
+    </script>
 
     <div class="row mb-5">
         <div class="row mb-5">
@@ -27,9 +89,9 @@
                     <div class="card-body text-center">
                         <h6 class="text-muted">Total PU Admissions <i class="bi bi-person-lines-fill"></i></h6>
                         <h3 class="fw-bold">{{ total_pu_admissions }}</h3>
-                        <h6 class="text-mute">
+                        <!--<h6 class="text-mute">
                             {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                        </h6>
+                        </h6>-->
                     </div>
                 </div>
             </div>
@@ -39,9 +101,9 @@
                     <div class="card-body text-center">
                         <h6 class="text-muted">Total Degree Admissions <i class="bi bi-mortarboard"></i></h6>
                         <h3 class="fw-bold">{{ total_degree_admissions }}</h3>
-                        <h6 class="text-mute">
+                        <!--<h6 class="text-mute">
                             {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                        </h6>
+                        </h6>-->
                     </div>
                 </div>
             </div>
@@ -54,9 +116,9 @@
                             Confirmed Admissions <i class="fas fa-user-check me-1" style="color: #800000;"></i>
                         </h6>
                         <h3 class="fw-bold">{{ confirmed_admissions }}</h3>
-                        <h6 class="text-mute">
+                        <!--<h6 class="text-mute">
                             {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                        </h6>
+                        </h6>-->
                     </div>
                 </div>
             </div>
@@ -69,9 +131,9 @@
                             Pending Review<i class="fas fa-hourglass-half me-1" style="color: #800000;"></i>
                         </h6>
                         <h3 class="fw-bold">{{ pending_review }}</h3>
-                        <h6 class="text-mute">
+                        <!--<h6 class="text-mute">
                             {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
-                        </h6>
+                        </h6>-->
                     </div>
                 </div>
             </div>
@@ -156,7 +218,7 @@
 <!-- Bootstrap CSS & Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>-->
 
 <!-- JavaScript -->
 <script>
@@ -304,6 +366,27 @@
         border-radius: 6px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
     }
+
+    .upload-form-wrapper {
+        margin-top: -10px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+        .upload-form-wrapper form {
+            max-width: 320px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-form-wrapper button {
+            height: 32px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
 
     #form-container {
         margin-top: 30px; /* ✔️ Positive margin adds spacing below buttons */

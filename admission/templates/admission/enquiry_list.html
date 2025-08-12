@@ -1,45 +1,56 @@
-﻿{% extends 'master/layout.html' %}
+﻿{% extends 'layout.html' %}
 
-{% block title %} Enquiries List{% endblock %}
+{% block title %}Enquiries List{% endblock %}
 
 {% block content %}
 <style>
-
     body {
         background-color: #f0f2f5;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin-left: 91px;
-    }
-
-    h3.mb-4 {
-        text-align: center;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 24px;
-        font-size: 22px;
+        margin: 0;
+        padding: 0;
     }
 
     .container {
-        background-color: #ffffff;
-        padding: 19px;
-        margin-top: -62px;
+        margin-left: 200px; /* space for sidebar */
+        padding: 30px;
+        max-width: calc(100% - 200px);
+        background: #fff;
         border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-        margin-left: -88px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 20px;
+        box-sizing: border-box;
     }
+
+    .header-flex {
+        display: flex;
+        justify-content: center; /* center title */
+        align-items: center;
+        position: relative; /* for button positioning */
+        margin-bottom: 20px;
+    }
+
+        .header-flex h2 {
+            flex-grow: 1;
+            margin: 0;
+            font-weight: 700;
+            font-size: 22px;
+            color: #800000;
+            text-align: center;
+        }
 
     table {
         width: 100%;
         font-size: 12px;
         border-collapse: collapse;
-        margin-top: 33px;
+        margin-top: 10px;
     }
 
     th, td {
-        vertical-align: middle !important;
+        padding: 1px;
         text-align: center;
-        padding: 5px;
         border: 1px solid #dee2e6;
+        vertical-align: middle !important;
         font-size: 9px;
     }
 
@@ -52,407 +63,352 @@
         background-color: #f8f9fa;
     }
 
-    tr:hover {
+    /* tr:hover {
         background-color: #e9ecef;
-    }
-
-    .form-select-sm {
-        border-radius: 4px;
-        font-size: 9px;
-        padding: 2px 6px;
-        background-color: #800000;
-        color: white;
-        border: none;
-    }
-
-    select.form-select-sm:focus {
-        border-color: #0f6bc6;
-        box-shadow: 0 0 0 0.2rem rgba(15, 107, 198, 0.25);
-        outline: none;
-    }
-
-    .text-center {
-        font-style: italic;
-        color: #888;
-    }
-
-    .alert {
-        background-color: #f8d7da;
-        color: #721c24;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid #f5c6cb;
-        font-size: 14px;
-        margin-top: 24px;
-    }
+    }*/
 
     .icon-btn {
-        width: 19px;
-        height: 17px;
+        border: 1px solid #dee2e6;
+        background-color: #800000;
+        color: #fff;
+        padding: 4px 7px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        padding: 0;
+        font-size: 11px;
+        text-decoration: none;
     }
+
+        .icon-btn:hover {
+            background-color: #a10000;
+            color: white;
+            text-decoration: none;
+        }
 
         .icon-btn i {
             font-size: 11px;
+            color: white;
         }
 
-    /* Specific colors per action */
-
-    .btn-view {
-        background-color: #e2e6ea;
-        color: #800000;
-    }
-
-    .btn-call {
-        background-color: #d4edda;
-        color: #800000;
-    }
-
-    .btn-whatsapp {
-        background-color: #25D366;
-        color: #800000;
-    }
-
-    .btn-convert {
-        background-color: #800000;
-        color: #800000;
-    }
-
-    popup {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        z-index: 1001;
-        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-        display: none;
-        width: 300px;
-        text-align: center;
-    }
-
+    /* Confirm popup */
     #overlay {
         position: fixed;
         top: 0;
         left: 0;
-        height: 100vh;
         width: 100vw;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
         display: none;
+        z-index: 1000;
     }
 
-    #confirm-popup-message {
-        margin-bottom: 15px;
-        font-size: 13px;
-        color: #800000;
+    #confirm-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        display: none;
+        z-index: 1001;
+        text-align: center;
     }
 
-    /*   #confirm-yes,
-    #confirm-no {
+    #confirm-yes, #confirm-no {
         margin: 0 5px;
         padding: 6px 12px;
-        border: none;
         font-size: 12px;
         border-radius: 4px;
         cursor: pointer;
-    }
-
-    #confirm-yes {
-        background-color: #800000;
-        color: white;
-    }
-
-    #confirm-no {
-        background-color: #e0e0e0;
-    }*/
-    #confirm-yes,
-    #confirm-no {
-        margin: 0 5px;
-        padding: 6px 12px;
-        border: 2px solid #800000;
-        font-size: 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        background-color: transparent;
+        background: transparent;
         color: #800000;
         font-weight: 600;
-        transition: all 0.2s ease-in-out;
+        border: 2px solid #800000;
+        transition: all 0.2s ease;
     }
 
-        #confirm-yes:hover {
+        #confirm-yes:hover, #confirm-no:hover {
             background-color: #800000;
-            color: #fff;
+            color: white;
         }
 
-        #confirm-no:hover {
-            background-color: #800000;
-            color: #fff;
-        }
+    .content {
+        margin-left: 0px;
+        padding: 8px 26px 40px;
+        min-height: 100vh;
+    }
+
+    .search-input {
+        position: absolute;
+        left: 0;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 220px;
+    }
 </style>
 
-
 <div class="container mt-4">
-    <h2 class="mb-4" style=" color: #800000; margin-left: 452px; margin-top: 10px; ">Enquiries List</h2>
+    <div class="header-flex">
+        <input type="text" id="enquirySearch" class="search-input" placeholder="Search Enquiries...">
+        <h2>Enquiries List</h2>
+    </div>
 
-    <!-- Success and error messages block -->
-    {% if messages %}
-    <ul class="messages">
 
-        {% for message in messages %}
-        <li class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
 
-            {{ message }}
-        </li>
 
-        {% endfor %}
-    </ul>
-
-    {% endif %}
-
-    <table class="table table-bordered table-striped table-hover mt-4">
+    <table class="table table-bordered table-striped table-hover">
         <thead>
             <tr>
                 <th>Sl No</th>
                 <th>Enquiry No</th>
-                <th class="narrow-column">Student Name</th>
+                <th>Student Name</th>
                 <th>Follow-up Date</th>
                 <th>Phone</th>
                 <th>Course</th>
-                <th class="narrow-column">Created By</th>
+                <th>Created By</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody>
-
             {% csrf_token %}
-
             {% for enquiry in enquiries %}
             <tr>
                 <td>{{ forloop.counter }}</td>
                 <td>{{ enquiry.enquiry_no }}</td>
-                <td class="narrow-column">{{ enquiry.student_name }}</td>
+                <td>{{ enquiry.student_name }}</td>
                 <td>
-
                     {% if enquiry.latest_followup_date %}
-
                     {{ enquiry.latest_followup_date|date:"Y-m-d H:i" }}
-
                     {% else %}
-
                     N/A
-
                     {% endif %}
                 </td>
                 <td>{{ enquiry.parent_phone }}</td>
                 <td>{{ enquiry.course.name }}</td>
-                <td class="narrow-column">{{ enquiry.created_by_username }}</td>
+                <td>{{ enquiry.created_by_username }}</td>
                 <td>
-
                     {% if enquiry.is_converted %}
                     <span style="color: green; font-weight: bold;">Converted</span>
-
                     {% else %}
-
                     {% if enquiry.followup_status == 'Pending Follow-up' %}
                     <span style="color: red; font-weight: bold;">{{ enquiry.followup_status }}</span>
-
                     {% elif enquiry.followup_status == 'Follow-up Scheduled' %}
                     <span style="color: orange; font-weight: bold;">{{ enquiry.followup_status }}</span>
-
                     {% elif enquiry.followup_status == 'Follow-up Required' %}
-                    <a href="{% url 'schedule_follow_up_form_add' %}?enquiry_no={{ enquiry.enquiry_no }}&student_name={{ enquiry.student_name }}"
-                       style="color: blue; font-weight: bold;">
-
+                    <a href="{% url 'schedule_follow_up_form_add' %}?enquiry_no={{ enquiry.enquiry_no }}&student_name={{ enquiry.student_name }}" style="color: blue; font-weight: bold;">
                         {{ enquiry.followup_status }}
                     </a>
-
                     {% endif %}
-
                     {% endif %}
                 </td>
                 <td>
-                    <div style="display: flex; gap: 6px;">
-                        <!-- View -->
+                    <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
                         {% if form_permissions.enquiry_form.view %}
-                        <a href="{% url 'enquiry_form_view' enquiry.enquiry_no %}" class="icon-btn" title="View" style="background-color: #800000;">
-                            <i class="fas fa-eye" style="color: #ffffff;"></i>
+                        <a href="{% url 'enquiry_form_view' enquiry.enquiry_no %}" class="icon-btn" title="View">
+                            <i class="fas fa-eye"></i>
                         </a>
                         {% endif %}
-                        <!-- Call -->
-                        {% if form_permissions.enquiry_form.edit %}
-                        <a href="{% url 'enquiry_form_edit' enquiry.enquiry_no %}" class="icon-btn" title="Edit" style="background-color: #800000;">
-                            <i class="fas fa-edit" style="color: #ffffff;"></i>
+                        {% if form_permissions.enquiry_form.edit and not enquiry.is_converted %}
+                        <a href="{% url 'enquiry_form_edit' enquiry.enquiry_no %}" class="icon-btn" title="Edit">
+                            <i class="fas fa-edit"></i>
                         </a>
                         {% endif %}
-
                         {% if form_permissions.enquiry_form.delete %}
-                        <form id="enquiry-delete-form-{{ enquiry.enquiry_no }}"
-                              method="POST"
-                              action="{% url 'enquiry_form_delete' enquiry.enquiry_no %}"
-                              style="display: none;">
+                        <form id="enquiry-delete-form-{{ enquiry.enquiry_no }}" method="POST" action="{% url 'enquiry_form_delete' enquiry.enquiry_no %}" style="display: none;">
                             {% csrf_token %}
                         </form>
-
-
-                        <a href="#" class="icon-btn" title="Delete" style="background-color: #800000;"
-                           onclick="confirmEnquiryDelete('{{ enquiry.enquiry_no }}')">
-                            <i class="fas fa-trash-alt" style="color: #ffffff;"></i>
+                        <a href="#" class="icon-btn" title="Delete" onclick="confirmEnquiryDelete('{{ enquiry.enquiry_no }}')">
+                            <i class="fas fa-trash-alt"></i>
                         </a>
                         {% endif %}
-
-                        <a href="tel:{{ enquiry.parent_phone }}" class="icon-btn" title="Call" style="background-color: #800000;">
-                            <i class="fas fa-phone-alt" style="color: #ffffff;"></i>
+                        <a href="tel:{{ enquiry.parent_phone }}" class="icon-btn" title="Call">
+                            <i class="fas fa-phone-alt"></i>
                         </a>
-
-                        <!-- WhatsApp -->
-                        <button type="button"
-                                class="icon-btn send-whatsapp-btn"
-                                style="background-color: #800000;"
-                                data-enquiry="{{ enquiry.enquiry_no }}"
-                                title="Send WhatsApp">
-                            <i class="fab fa-whatsapp" style="color: #ffffff;"></i>
+                        <button type="button" class="icon-btn send-whatsapp-btn" data-enquiry="{{ enquiry.enquiry_no }}" title="Send WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
                         </button>
-
-                        <!-- Convert -->
                         {% if not enquiry.is_converted %}
                         <form method="post" action="{% url 'convert_enquiry' enquiry.enquiry_no %}">
-
                             {% csrf_token %}
-                            <button type="submit" class="icon-btn" style="background-color: #800000;" title="Convert to Admission">
-                                <i class="fas fa-user-check" style="color: #ffffff;"></i>
+                            <button type="submit" class="icon-btn" title="Convert to Admission">
+                                <i class="fas fa-user-check"></i>
                             </button>
                         </form>
-
                         {% endif %}
                     </div>
                 </td>
-
             </tr>
-
             {% empty %}
             <tr>
-                <td colspan="9" class="text-center alert">No enquiries found.</td>
+                <td colspan="9" class="text-center text-muted">No enquiries found.</td>
             </tr>
-
             {% endfor %}
         </tbody>
     </table>
 </div>
-<div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; opacity:0.5; z-index:1000;"></div>
 
-<div id="confirm-popup" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%, -50%);
-    background:#fff; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.5); z-index:1001;">
-    <p id="confirm-popup-message"></p>
+<div id="overlay"></div>
+<div id="confirm-popup">
+    <p id="confirm-popup-message" style="margin-bottom:8px;"></p>
     <button id="confirm-yes">Yes</button>
     <button id="confirm-no">No</button>
 </div>
+
 <script>
-
     document.addEventListener("DOMContentLoaded", function () {
-
         const buttons = document.querySelectorAll(".send-whatsapp-btn");
-
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
         buttons.forEach(function (button) {
-
             button.addEventListener("click", function () {
-
                 const enquiryNo = button.getAttribute("data-enquiry");
-
                 button.disabled = true;
-
-                button.textContent = "Sending...";
-
+                button.innerHTML = "Sending...";
                 fetch(`/send-whatsapp-message/${enquiryNo}/`, {
-
                     method: "POST",
-
                     headers: {
-
                         "Content-Type": "application/json",
-
                         "X-CSRFToken": csrfToken
-
                     }
-
                 })
-
                     .then(response => response.json())
-
                     .then(data => {
-
                         if (data.status === "success") {
-
                             alert("✅ " + data.message + "\nTxn ID: " + (data.transaction_id || 'N/A'));
-
-                            button.textContent = "✅";
-
+                            button.innerHTML = "✅";
                             button.style.backgroundColor = "gray";
-
                         } else {
-
                             alert("❌ " + data.message);
-
                             button.disabled = false;
-
-                            button.textContent = "Send WhatsApp";
-
+                            button.innerHTML = '<i class="fab fa-whatsapp"></i>';
                         }
-
                     })
-
                     .catch(error => {
-
                         console.error("Error:", error);
-
                         alert("Something went wrong.");
-
                         button.disabled = false;
-
-                        button.textContent = "Send WhatsApp";
-
+                        button.innerHTML = '<i class="fab fa-whatsapp"></i>';
                     });
-
             });
-
         });
-
     });
 
     let deleteEnquiryId = null;
-
     function confirmEnquiryDelete(enquiryNo) {
         deleteEnquiryId = enquiryNo;
         document.getElementById("confirm-popup").style.display = "block";
         document.getElementById("overlay").style.display = "block";
-        document.getElementById("confirm-popup-message").innerHTML =
-            `Are you sure you want to delete enquiry <b>${enquiryNo}</b>?`;
+        document.getElementById("confirm-popup-message").innerHTML = `Are you sure you want to delete enquiry <b>${enquiryNo}</b>?`;
     }
-
     document.getElementById("confirm-yes").addEventListener("click", function () {
         if (deleteEnquiryId) {
             document.getElementById(`enquiry-delete-form-${deleteEnquiryId}`).submit();
         }
     });
-
     document.getElementById("confirm-no").addEventListener("click", function () {
         document.getElementById("confirm-popup").style.display = "none";
         document.getElementById("overlay").style.display = "none";
         deleteEnquiryId = null;
     });
-
 </script>
 
-{% endblock %}
+<script>
+    document.getElementById("enquirySearch").addEventListener("input", function () {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll("table tbody tr");
 
+        rows.forEach(row => {
+            // Skip empty row message
+            if (row.querySelector("td")?.getAttribute("colspan")) return;
+
+            const enquiryNo = row.cells[1]?.textContent.toLowerCase() || '';
+            const studentName = row.cells[2]?.textContent.toLowerCase() || '';
+            const phone = row.cells[4]?.textContent.toLowerCase() || '';
+            const course = row.cells[5]?.textContent.toLowerCase() || '';
+            const createdBy = row.cells[6]?.textContent.toLowerCase() || '';
+
+            const match = enquiryNo.includes(filter)
+                || studentName.includes(filter)
+                || phone.includes(filter)
+                || course.includes(filter)
+                || createdBy.includes(filter);
+
+            row.style.display = match ? '' : 'none';
+        });
+    });
+</script>
+<div id="snackbar"></div>
+
+<script>
+    function showSnackbar(message) {
+        const snackbar = document.getElementById("snackbar");
+        snackbar.textContent = message;
+        snackbar.className = "show";
+        setTimeout(() => {
+            snackbar.className = snackbar.className.replace("show", "");
+        }, 3000);
+    }
+
+    // Django message support
+    {% if messages %}
+        {% for message in messages %}
+            showSnackbar("{{ message|escapejs }}");
+        {% endfor %}
+    {% endif %}
+</script>
+
+<style>
+    #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #800000;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 14px 24px;
+        position: fixed;
+        z-index: 9999;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        font-size: 14px;
+    }
+
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.4s, fadeout 0.4s 2.6s;
+        }
+
+    @keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
+    }
+</style>
+{% endblock %}

@@ -20,65 +20,14 @@ class UserCustom(models.Model):
     def __str__(self):
         return self.username
 
-class UserPermission(models.Model):
-    user = models.ForeignKey(UserCustom, on_delete=models.CASCADE)
-    form_name = models.CharField(max_length=150)
+from django.db import models
 
-    can_view = models.BooleanField(default=False)
-    can_add = models.BooleanField(default=False)
-    can_edit = models.BooleanField(default=False)
-    can_delete = models.BooleanField(default=False)
-    can_access = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('user', 'form_name')
+class AcademicYear(models.Model):
+    year = models.CharField(max_length=9, unique=True)  # Format: "2024-2025"
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.form_name}"
-
-
-
-class Employee(models.Model):
-    DESIGNATION_CHOICES = [
-        ('Professor', 'Professor'),
-        ('Associate Professor', 'Associate Professor'),
-        ('Assistant Professor', 'Assistant Professor'),
-    ]
-
-    EMPLOYMENT_TYPE = [
-        ('Full-time', 'Full-time'),
-        ('Part-time', 'Part-time'),
-    ]
-
-    CATEGORY_CHOICES = [
-        ('Teaching Staff', 'Teaching Staff'),
-        ('Non-Teaching Staff', 'Non-Teaching Staff'),
-    ]
-    ROLE_CHOICES = [
-        ('Primary', 'Primary'),
-        ('Secondary', 'Secondary'),
-    ]
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES,  blank=True,  # <-- Make it optional
-    null=True )  # New field
-    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES) 
-    emp_code = models.CharField(max_length=10, unique=True)
-    name = models.CharField(max_length=100)
-    designation = models.CharField(
-    max_length=50,
-    choices=DESIGNATION_CHOICES,
-    blank=True,  # <-- Make it optional
-    null=True    # <-- Optional in DB too (for MySQL)
-)
-
-    department = models.CharField(max_length=100)
-    email = models.EmailField()
-    phone = models.CharField(max_length=15)
-    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE)
-    courses_taught = models.PositiveIntegerField(default=0)
-    created_at = models.DateField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
+        return self.year
 
 
 class ExcelUpload(models.Model):
@@ -150,19 +99,22 @@ class Student(models.Model):
 
 
 
-
+from master.models import AcademicYear
  # or wherever your Course model is defined
 class Subject(models.Model):
     name = models.CharField(max_length=100)
     subject_code = models.CharField(max_length=20, null=True, blank=True)
     credit = models.PositiveIntegerField(null=True, blank=True)
     course = models.ForeignKey('master.Course', on_delete=models.CASCADE)
-    semester_number = models.PositiveIntegerField()
-    faculty = models.ForeignKey('master.Employee', on_delete=models.SET_NULL, null=True, blank=True) # adjust if needed
+    semester = models.PositiveIntegerField() 
     is_active = models.BooleanField(default=True)  # ✅ Add this field
+    academic_year = models.ForeignKey(AcademicYear,on_delete=models.SET_NULL,null=True,blank=True)
+    program_type = models.ForeignKey('master.CourseType', on_delete=models.CASCADE, null=True, blank=True)  # ✅ Fixed  # ✅ add this
+
 
     def __str__(self):
-        return f"{self.name} (Sem {self.semester_number})"
+        return f"{self.name} {self.semester}"
+
        
 # class Subject(models.Model):
 #     name = models.CharField(max_length=100)
@@ -199,27 +151,29 @@ class Semester(models.Model):
 class CourseType(models.Model):
     id = models.AutoField(primary_key=True)  # AutoIncrement field, UNSIGNED is not explicitly specified in Django
     name = models.CharField(max_length=100)
-
+    academic_year = models.ForeignKey(AcademicYear,on_delete=models.SET_NULL,null=True,blank=True)
     def __str__(self):
         return self.name
 
 
 from django.db import models
-
+from master.models import AcademicYear
 class Course(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     duration_years = models.PositiveIntegerField()
-    total_semesters = models.PositiveIntegerField()
+    total_semesters = models.IntegerField(null=True, blank=True)
     course_type = models.ForeignKey(
         'CourseType',
         on_delete=models.CASCADE,
         related_name='courses'
     )
     is_active = models.BooleanField(default=True)  # NEW FIELD
+    academic_year = models.ForeignKey(AcademicYear,on_delete=models.SET_NULL,null=True,blank=True)
 
     def __str__(self):
         return self.name
+
 
 class Transport(models.Model):
     route_name = models.CharField(max_length=100)
@@ -231,71 +185,66 @@ class Transport(models.Model):
     def __str__(self):
         return f"{self.bus_no} - {self.route_name}"
 
+from admission.models import PUAdmission, DegreeAdmission
+
 class StudentDatabase(models.Model):
-    admission_no = models.CharField(max_length=20)
+    pu_admission = models.ForeignKey(PUAdmission, on_delete=models.CASCADE, null=True, blank=True, related_name='student_pu_admissions')
+    degree_admission = models.ForeignKey(DegreeAdmission, on_delete=models.CASCADE, null=True, blank=True, related_name='student_degree_admissions')
     student_name = models.CharField(max_length=100)
-    course = models.CharField(max_length=100)
-    quota_type = models.CharField(max_length=20)
-    status = models.CharField(max_length=20)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='student_database')
+    quota_type = models.CharField(max_length=20, blank=True, null=True)
+   
     student_userid = models.CharField(max_length=50, blank=True, null=True)
     # New fields:
     student_phone_no = models.CharField(max_length=15, blank=True, null=True)  # Match admission model
-    parent_name = models.CharField(max_length=100, blank=True, null=True)
+    father_name = models.CharField(max_length=100, blank=True, null=True)
     course_type = models.ForeignKey(CourseType, on_delete=models.SET_NULL, null=True, blank=True, related_name='student_database_entries')
+    academic_year = models.CharField(max_length=9)  # E.g., "2025–2026"
+    current_year = models.IntegerField(null=True, blank=True)  # For PU
+    semester = models.IntegerField(null=True, blank=True)  # For Degree
+
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Graduated', 'Graduated'),
+        ('Dropped', 'Dropped'),
+        ('Transferred', 'Transferred'),
+        ('Suspended', 'Suspended'),
+        ('Inactive', 'Inactive'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active')
     class Meta:
         db_table = 'master_student_database'
 
     def __str__(self):
-        return f"{self.admission_no} - {self.student_name}"
+        return f"{self.get_admission_no()} - {self.student_name}"
+
+    def get_admission_no(self):
+        if self.pu_admission:
+            return self.pu_admission.admission_no
+        elif self.degree_admission:
+            return self.degree_admission.admission_no
+        return "Unlinked"
 
 
-# models.py
 
-from django.db import models
+class EventType(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    is_active = models.BooleanField(default=True)
+    def __str__(self):
+        return self.name
 
-EVENT_TYPES = [
-    ('deadline', 'Deadline'),
-    ('registration', 'Registration'),
-    ('event', 'Event'),
-    ('meeting', 'Meeting'),
-    ('cultural', 'Cultural Event'),
-    ('fest', 'Fest'),
-]
 
 class AcademicEvent(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     date = models.DateField()
     time = models.TimeField(null=True, blank=True)
-    event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
-    
+    event_type = models.ForeignKey(EventType, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} - {self.date}"
-
-from django.db import models
-
-EVENT_TYPES = [
-    ('deadline', 'Deadline'),
-    ('registration', 'Registration'),
-    ('event', 'Event'),
-    ('meeting', 'Meeting'),
-    ('cultural', 'Cultural Event'),
-    ('fest', 'Fest'),
-]
-
-class AcademicEvent(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    date = models.DateField()
-    time = models.TimeField(null=True, blank=True)
-    event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.title} - {self.date}"
-
 
 
 
@@ -324,3 +273,205 @@ class SentMessageContact(models.Model):
 
     def __str__(self):
         return f"{self.phone} - {self.status}"
+
+
+class UserPermission(models.Model):
+    user = models.ForeignKey(UserCustom, on_delete=models.CASCADE)
+    form_name = models.CharField(max_length=150)
+
+    can_view = models.BooleanField(default=False)
+    can_add = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+    can_delete = models.BooleanField(default=False)
+    can_access = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'form_name')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.form_name}"
+
+
+
+
+class Employee(models.Model):
+    DESIGNATION_CHOICES = [
+        ('Professor', 'Professor'),
+        ('Associate Professor', 'Associate Professor'),
+        ('Assistant', 'Assistant'),
+    ]
+
+    EMPLOYMENT_TYPE = [
+        ('Full-time', 'Full-time'),
+        ('Part-time', 'Part-time'),
+    ]
+
+    CATEGORY_CHOICES = [
+        ('Teaching Staff', 'Teaching Staff'),
+        ('Non-Teaching Staff', 'Non-Teaching Staff'),
+    ]
+    ROLE_CHOICES = [
+        ('Primary', 'Primary'),
+        ('Secondary', 'Secondary'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES,  blank=True,  # <-- Make it optional
+    null=True )  # New field
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES) 
+    emp_code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=100)
+    designation = models.CharField(
+    max_length=50,
+    choices=DESIGNATION_CHOICES,
+    blank=True,  # <-- Make it optional
+    null=True    # <-- Optional in DB too (for MySQL)
+)
+
+   
+    email = models.EmailField()
+    phone = models.CharField(max_length=10)
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE)
+   
+    created_at = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+from django.db import models
+from .models import Course, Subject
+from .models import Employee  # or wherever your Employee model is
+
+class EmployeeSubjectAssignment(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='subject_assignments')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    semester = models.IntegerField()
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('employee', 'course', 'semester', 'subject')
+
+    def __str__(self):
+        return f"{self.name} ({self.role})" if self.role else self.name
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"To: {self.user.username} - {self.message[:30]}"
+
+
+
+    
+from django.db import models
+from master.models import AcademicYear, CourseType, Course
+
+class FeeMaster(models.Model):
+    fee_name = models.CharField(max_length=100)
+    fee_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    program_type = models.ForeignKey(CourseType, on_delete=models.CASCADE)
+    combination = models.ForeignKey(Course, on_delete=models.CASCADE)
+    due_date = models.DateField()
+    # ➡️ Added academic year field:
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.fee_name} ({self.program_type.name} - {self.combination.name} - {self.academic_year.year})"
+
+    
+class PromotionHistory(models.Model):
+    admission_no = models.CharField(max_length=50)
+    academic_year = models.CharField(max_length=9)
+    promotion_cycle = models.CharField(max_length=9) # "2025–2026"
+    from_year = models.IntegerField(null=True, blank=True)
+    to_year = models.IntegerField(null=True, blank=True)
+    from_semester = models.IntegerField(null=True, blank=True)
+    to_semester = models.IntegerField(null=True, blank=True)
+    promotion_date = models.DateField(null=True, blank=True)
+    student_userid = models.CharField(max_length=50, null=True, blank=True) 
+    student_name = models.CharField(max_length=100)
+    class Meta:
+        db_table = 'student_promotion_history'
+
+    def __str__(self):
+        return f"{self.admission_no} promoted in {self.academic_year}"
+
+
+class FeeType(models.Model):
+    name = models.CharField(max_length=50, unique=True)  # e.g. Tuition, Hostel
+    is_optional = models.BooleanField(default=False)      # Hostel, Transport
+    is_deductible = models.BooleanField(default=False)    # For Scholarship
+ 
+    def __str__(self):
+        return self.name
+
+class Chapter(models.Model):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='chapters')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=1)  # For sorting chapters
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.subject.name}"
+
+
+class Content(models.Model):
+    CONTENT_TYPE_CHOICES = [
+        ('PDF', 'PDF'),
+        ('Video', 'Video'),
+        ('Text', 'Text'),
+        ('Assignment', 'Assignment'),
+        ('Link', 'Link'),
+    ]
+
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='contents')
+    title = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=20, choices=CONTENT_TYPE_CHOICES)
+    file = models.FileField(upload_to='lms_content/', blank=True, null=True)  # For PDF or Video
+    text = models.TextField(blank=True, null=True)  # For textual content
+    external_link = models.URLField(blank=True, null=True)  # For YouTube or other resources
+    is_visible = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.content_type})"
+
+
+#lib
+
+from django.db import models
+from django.utils.text import slugify
+
+class BookCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(unique=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
+
+#exam type
+
+from django.db import models
+
+class ExamType(models.Model):
+    title = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

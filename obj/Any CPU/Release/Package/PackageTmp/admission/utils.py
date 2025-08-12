@@ -48,3 +48,61 @@ def generate_student_credentials(existing_userids=None):
     # Generate a random password
     password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     return userid, password
+
+
+
+import requests
+from django.conf import settings
+
+def send_msgkart_template(recipient_number, param_list):
+    payload = {
+        "message": {
+            "messageType": "template",
+            "name": "enquiry_confirmation",  # This must match your approved MsgKart template name
+            "language": "en_US",
+            "components": [
+                {
+                    "componentType": "body",
+                    "parameters": [{"type": "text", "text": str(p)} for p in param_list]
+                }
+            ]
+        },
+        "subscribers": [
+            {
+                "subscriberId": recipient_number.replace("+", ""),  # Remove '+' if present
+                "variables": param_list
+            }
+        ],
+        "phoneNumberId": settings.MSGKART_PHONE_ID
+    }
+
+    url = f"{settings.MSGKART_BASE_URL}/api/v2/message/{settings.MSGKART_ACCOUNT_ID}/template?apikey={settings.MSGKART_API_KEY}"
+    headers = {'Content-Type': 'application/json'}
+    
+    response = requests.post(url, json=payload, headers=headers)
+    print("MsgKart response:", response.text)
+    return response
+
+
+# utils.py
+from datetime import datetime
+from .models import PUAdmission, DegreeAdmission
+ 
+def generate_next_receipt_no_shared():
+    prefix = "PSCM"
+    pu_receipt = PUAdmission.objects.filter(receipt_no__startswith=prefix).order_by('-receipt_no').first()
+    deg_receipt = DegreeAdmission.objects.filter(receipt_no__startswith=prefix).order_by('-receipt_no').first()
+ 
+    receipts = [r for r in [pu_receipt, deg_receipt] if r and r.receipt_no]
+ 
+    if receipts:
+        latest = max(receipts, key=lambda r: int(r.receipt_no.split('-')[1]))
+        try:
+            current_inc = int(latest.receipt_no.split('-')[1])
+        except (IndexError, ValueError):
+            current_inc = 0
+    else:
+        current_inc = 0
+ 
+    next_inc = current_inc + 1
+    return f"{prefix}-{next_inc:03d}", latest.receipt_no if receipts else None

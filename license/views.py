@@ -1,9 +1,11 @@
 ﻿from django.shortcuts import render
 from datetime import datetime, date
 import logging
+from master.decorators import custom_login_required
 
 logger = logging.getLogger(__name__)
 
+@custom_login_required
 def home_view(request):
     license_end_date = request.session.get('license_end_date')
     is_expiring_soon = False
@@ -38,6 +40,7 @@ def home_view(request):
 
     return render(request, 'license/home.html', context)
 
+@custom_login_required
 def activate_license(request):
     if request.method == 'POST':
         license_key = request.POST['license_key']
@@ -64,16 +67,19 @@ def activate_license(request):
 
 
 
-
+@custom_login_required
 def license_terms_view(request):
     return render(request, 'license/license_terms.html')
 
+@custom_login_required
 def privacy_policy_view(request):
     return render(request, 'license/privacy_policy.html')
 
+@custom_login_required
 def terms_and_conditions_view(request):
     return render(request, 'license/terms_and_conditions.html')
 
+@custom_login_required
 def create_license_view(request):
     if request.method == 'POST':
         license = License.objects.create(
@@ -89,12 +95,14 @@ def create_license_view(request):
 
 
 # In views.py
+@custom_login_required
 def license_check(request):
     return render(request, 'license/license_check_view.html')
 
 from datetime import datetime, time
 from django.utils import timezone
 
+@custom_login_required
 def __call__(self, request):
     license = get_license()  # however you're loading it
     if license and license.end_date:
@@ -122,6 +130,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
 from license.models import License  # adjust this based on your License model path
 
+@custom_login_required
 @user_passes_test(lambda u: u.is_superuser)  # Only allow admins to access this view
 def extend_license_view(request, license_id):
     license = get_object_or_404(License, id=license_id)
@@ -144,6 +153,7 @@ def extend_license_view(request, license_id):
 
 from datetime import date, timedelta
 
+@custom_login_required
 def check_license_expiry(request):
     # Assuming the license is associated with the user
     license = License.objects.filter(client_name=request.user.username).first()
@@ -155,7 +165,7 @@ def check_license_expiry(request):
             request.session['license_expiring'] = False
     return render(request, 'home.html')
 
-
+@custom_login_required
 def is_valid(self):
     from django.utils import timezone
     current_date = timezone.localdate()
@@ -178,8 +188,9 @@ from datetime import date
  
 HARDCODED_KEY = "CKP-2025 v1.0.0"
 START_DATE = date(2025, 6, 5)
-END_DATE = date(2025, 7, 10)
+END_DATE = date(2025, 8, 30)
  
+@custom_login_required
 def license_check_view(request):
     current_date = date.today()
  

@@ -1,4 +1,4 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 {% block title %}Student Fee Payment List{% endblock %}
 
 {% block content %}
@@ -23,7 +23,7 @@
     h2 {
         text-align: center;
         font-size: 22px;
-        font-weight: bold;
+        font-weight: 700;
         color: #800000;
         margin-bottom: 20px;
         margin-top: -10px;
@@ -33,7 +33,7 @@
         border: 1px solid #ccc;
         background-color: #800000;
         border-radius: 5px;
-        padding: 2px 9px;       
+        padding: 2px 9px;
         display: inline-block;
         float: right;
         margin-bottom: 15px;
@@ -42,7 +42,7 @@
         .box-link a {
             color: #fff;
             text-decoration: none;
-            font-size: 10px;
+            font-size: 13px;
         }
 
     .search-bar {
@@ -62,8 +62,8 @@
         .search-bar button {
             padding: 10px 61px;
             font-size: 12px;
-            border-radius: 5px !important;
-            border: 1px solid #6c757d !important;
+            border-radius: 5px;
+            border: 1px solid #6c757d;
             background-color: white;
             color: black;
             transition: background-color 0.3s ease;
@@ -82,14 +82,14 @@
     }
 
     th, td {
-        padding: 6px 8px;
+        padding: 2px 5px;
         border: 1px solid #dee2e6;
         text-align: center;
         vertical-align: middle;
     }
 
     th {
-        background-color: #800000;
+        background: linear-gradient(135deg, #8B0000, #800000);
         color: white;
         font-size: 11px;
     }
@@ -98,24 +98,43 @@
         background-color: #f8f9fa;
     }
 
-    tr:hover {
+   /* tr:hover {
         background-color: #f1f1f1;
+    }*/
+
+    .icon-btn {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        padding: 3px 5px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: inline-block;
+        text-decoration: none;
     }
+
+        .icon-btn i {
+            font-size: 11px;
+            color: #800000;
+        }
+
+        .icon-btn.text-danger i {
+            color: #b30000;
+        }
+
+        .icon-btn:hover {
+            background-color: #f3f3f3;
+        }
 
     .pagination {
         display: flex;
-        justify-content: flex-end; /* Aligns to the right */
+        justify-content: flex-end;
         align-items: center;
         margin-top: 15px;
         font-size: 11px;
         margin-right: 428px;
     }
-
-        .pagination span {
-            margin: 0 8px;
-            font-weight: bold;
-        }
-
 
         .pagination a {
             margin: 0 5px;
@@ -136,27 +155,61 @@
             font-weight: bold;
         }
 
-    .action-btn {
-        font-size: 9px;
-        padding: 3px 8px;
-        border: none;
-        background-color: #800000;
-        color: white;
-        border-radius: 4px;
-        margin: 0 2px;
-        text-decoration: none;
-        display: inline-block;
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        z-index: 1000;
     }
 
-        .action-btn:hover {
-            background-color: #a52a2a;
+    #confirm-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        display: none;
+        z-index: 1001;
+        text-align: center;
+    }
+
+    #confirm-popup-message {
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+
+    #confirm-yes, #confirm-no {
+        margin: 0 5px;
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        background: transparent;
+        color: #800000;
+        font-weight: 600;
+        border: 2px solid #800000;
+        transition: all 0.2s ease;
+    }
+
+        #confirm-yes:hover, #confirm-no:hover {
+            background-color: #800000;
+            color: white;
         }
 
+
     .content {
-        padding: 33px 26px 40px;
+        padding: 33px 0px 40px;
         margin-left: 200px;
     }
 </style>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 
@@ -191,18 +244,27 @@
                 <td>{{ student.course }}</td>
                 <td>
                     {% if form_permissions.student_fee_form.edit %}
-                    <a href="{% url 'student_fee_form_edit' student.admission_no %}" class="action-btn"><i class="fas fa-edit" style="color: #ffffff;"></i></a>
+                    <a href="{% url 'student_fee_form_edit' student.admission_no %}" class="icon-btn" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
                     {% endif %}
 
                     {% if form_permissions.student_fee_form.delete %}
-                    <a href="{% url 'student_fee_form_delete' student.admission_no %}" class="action-btn" title="delete">
+                    <form id="student-delete-form-{{ student.admission_no }}" method="POST" action="{% url 'student_fee_form_delete' student.admission_no %}" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                    <a href="#" class="icon-btn" title="Delete"
+                       onclick="confirmStudentDelete('{{ student.admission_no }}', '{{ student.name }}')">
                         <i class="fas fa-trash-alt"></i>
                     </a>
+
                     {% endif %}
-                    <a href="{% url 'generate_fee_receipt_pdf' student.id %}" target="_blank" class="action-btn" title="Print Receipt">
-                        <i class="fas fa-print"></i>  Print Receipt
+
+                    <a href="{% url 'generate_fee_receipt_pdf' student.id %}" target="_blank" class="icon-btn" title="Print Receipt">
+                        <i class="fas fa-print"></i>
                     </a>
                 </td>
+
             </tr>
             {% empty %}
             <tr>
@@ -226,5 +288,38 @@
     </div>
 
 </div>
+
+
+<div id="overlay" style="display:none;"></div>
+<div id="confirm-popup" style="display:none;">
+    <p id="confirm-popup-message"></p>
+    <button id="confirm-yes">Yes</button>
+    <button id="confirm-no">No</button>
+</div>
+
+
+<script>
+    let deleteAdmissionNo = null;
+
+    function confirmStudentDelete(admissionNo, studentName) {
+        deleteAdmissionNo = admissionNo;
+        document.getElementById('confirm-popup-message').innerHTML = `Are you sure you want to delete <b>${studentName}</b>?`;
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('confirm-popup').style.display = 'block';
+    }
+
+    document.getElementById('confirm-yes').addEventListener('click', () => {
+        if (deleteAdmissionNo) {
+            document.getElementById(`student-delete-form-${deleteAdmissionNo}`).submit();
+        }
+    });
+
+    document.getElementById('confirm-no').addEventListener('click', () => {
+        document.getElementById('confirm-popup').style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+        deleteAdmissionNo = null;
+    });
+</script>
+
 
 {% endblock %}

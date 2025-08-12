@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import posixpath
-from telnetlib import LOGOUT
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,7 +30,7 @@ DEBUG = True
 
 
 
-ALLOWED_HOSTS = ['192.168.1.143', 'localhost', '127.0.0.1', '106.51.140.161']
+ALLOWED_HOSTS = ['192.168.10.182', 'localhost', '127.0.0.1', '122.166.213.68']
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -48,6 +48,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'student_alerts_app',
+    'core',
+     'fees'
+   
+
 ]
 
 # Middleware framework
@@ -75,7 +79,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'master', 'admission','templates')], 
+        'DIRS': [os.path.join(BASE_DIR, 'student_alerts_app','templates')], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -83,7 +87,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'master.context_processors.permissions_context',
+                'master.context_processors.user_form_permissions',
             ],
         },
     },
@@ -95,7 +99,7 @@ WSGI_APPLICATION = 'student_alerts_app.wsgi.application'
 DATABASES = {
      'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'institute_db',  # Replace with your actual database name
+        'NAME': 'institute_db1',  # Replace with your actual database name
         'USER': 'root',     # Replace with your MySQL username
         'PASSWORD': 'root',  # Replace with your MySQL password
         'HOST': 'localhost',           # Keep as 'localhost' if running MySQL locally

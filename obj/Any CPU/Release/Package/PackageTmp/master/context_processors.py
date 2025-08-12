@@ -24,7 +24,7 @@ def user_form_permissions(request):
     if is_super:
         # Grant full access to all known forms
         all_forms = [
-           'employee_attendance_form','pu_admission_form','degree_admission_form','schedule_follow_up_form','enquiry_form','student_attendance_form','semester_form','student_fee_form']
+           'employee_attendance_form','pu_admission_form','degree_admission_form','schedule_follow_up_form','enquiry_form','student_attendance_form','semester_form','student_fee_form','timetable_form','communication_dashboard','calendar_form','student_database','employee_form','course_type','course_form','subject_form','transport_form','recent_activity_view']
 
         for form in all_forms:
             form_permissions[form] = {
@@ -32,6 +32,7 @@ def user_form_permissions(request):
                 'add': True,
                 'edit': True,
                 'delete': True,
+                 'access': True, 
             }
     else:
         # Load permissions from DB
@@ -42,6 +43,7 @@ def user_form_permissions(request):
                 'add': perm.can_add,
                 'edit': perm.can_edit,
                 'delete': perm.can_delete,
+                 'access': perm.can_access,
             }
 
     return {

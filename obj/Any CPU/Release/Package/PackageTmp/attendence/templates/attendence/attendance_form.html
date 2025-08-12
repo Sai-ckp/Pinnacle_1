@@ -1,6 +1,6 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 
-{% block title %}Attendance Entry{% endblock %}
+{% block title %}Staff Attendance Entry{% endblock %}
 
 {% block content %}
 <div style="width: 100vw; padding: 2rem;">
@@ -27,168 +27,262 @@
             {% csrf_token %}
 
             <div class="form-grid">
-                <!-- Employee Dropdown -->
+                <!-- Employee Field -->
                 <div class="form-group">
                     {{ form.employee.label_tag }}
+                    {% if mode == 'view' %}
+                    <input type="text" readonly value="{{ attendance.employee.name }}">
+                    {% else %}
                     {{ form.employee }}
+                    {% endif %}
                 </div>
 
-                <!-- Auto-filled Read-only Fields -->
+                <!-- Employee Code Auto-filled -->
                 <div class="form-group">
-                    <label for="emp_code">Employee Code</label>
-                    <input type="text" id="emp_code" readonly placeholder="Auto-filled">
-                </div>
-                <div class="form-group">
-                    <label for="department">Department</label>
-                    <input type="text" id="department" readonly placeholder="Auto-filled">
+                    <label for="emp_code">Employee ID</label>
+                    <input type="text" id="emp_code" readonly placeholder="Auto-filled"
+                           {% if attendance and attendance.employee %}
+                           value="{{ attendance.employee.emp_code }}"
+                           {% else %}
+                           value=""
+                           {% endif %}>
                 </div>
 
-                <!-- Date Field -->
+                <!-- Date -->
                 <div class="form-group">
                     {{ form.date.label_tag }}
                     {% if mode == 'view' %}
-                    <input type="date" value="{{ attendance.date|date:'Y-m-d' }}" readonly>
+                    <input type="date" readonly value="{{ attendance.date|date:'Y-m-d' }}">
                     {% else %}
                     {{ form.date }}
                     {% endif %}
                 </div>
 
-                <!-- Check-in Field -->
+                <!-- Check-in -->
                 <div class="form-group">
                     {{ form.check_in.label_tag }}
                     {% if mode == 'view' %}
-                    <input type="time" value="{{ attendance.check_in|time:'H:i' }}" readonly>
+                    <input type="time" readonly value="{{ attendance.check_in|time:'H:i' }}">
                     {% else %}
                     {{ form.check_in }}
                     {% endif %}
                 </div>
 
-                <!-- Check-out Field -->
+                <!-- Check-out -->
                 <div class="form-group">
                     {{ form.check_out.label_tag }}
                     {% if mode == 'view' %}
-                    <input type="time" value="{{ attendance.check_out|time:'H:i' }}" readonly>
+                    <input type="time" readonly value="{{ attendance.check_out|time:'H:i' }}">
                     {% else %}
                     {{ form.check_out }}
                     {% endif %}
                 </div>
+
+                <!-- Status -->
+                <!--<div class="form-group">
+                    {{ form.status.label_tag }}
+                    {% if mode == 'view' %}
+                    <input type="text" readonly value="{{ attendance.status }}">
+                    {% else %}
+                    {{ form.status }}
+                    {% endif %}
+                </div>-->
             </div>
 
-            {% if mode != 'view' %}
             <div class="form-actions">
+                <a href="{% url 'employee_attendance_list' %}" class="btn-back-link">Back</a>
+
+                {% if mode != 'view' %}
                 <button type="submit" class="btn">
                     {% if mode == 'edit' %}Update{% else %}Submit{% endif %}
                 </button>
+                {% endif %}
             </div>
-            {% endif %}
+
         </form>
     </div>
 </div>
 
 <style>
-        body {
-            background-color: #f0f2f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .form-card {
+        background: #fff;
+        padding: 40px 50px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: 700;
+        color: #800000;
+        margin-bottom: 30px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px 30px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 13px;
         }
 
-        .form-card {
-            background: #fff;
-            padding: 40px 50px;
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        .form-group input,
+        .form-group select {
+            padding: 8px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
         }
 
-        .form-title {
-            text-align: center;
-            font-size: 22px;
-            font-weight: 700;
-            color: #800000;
-            margin-bottom: 30px;
-        }
+    .form-actions {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px 30px;
-        }
+    .btn {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        background-color: #800000;
+        color: white;
+    }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
+    .btn-back-link {
+        background-color: #800000;
+        color: #fff;
+        border: 1px solid #800000;
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+    }
 
-            .form-group label {
-                font-weight: 500;
-                margin-bottom: 6px;
-                color: #333;
-                font-size: 13px;
-            }
-
-            .form-group input,
-            .form-group select {
-                padding: 8px 10px;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                font-size: 13px;
-            }
-
-        .form-actions {
-            margin-top: 30px;
-            text-align: right;
-        }
-
-        .btn {
-            font-size: 14px;
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
+        .btn-back-link:hover {
             background-color: #800000;
             color: white;
         }
 
-        /*    .btn-primary {
-            background-color: #0274ee;
-            color: white;
-        }
+    .alert {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
 
-            .btn-primary:hover {
-                background-color: #025fc1;
-            }
-    */
-        .alert {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #f5c6cb;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
+    .content {
+        margin-left: 200px;
+        padding: 14px 103px 40px;
+        min-height: 100vh;
+    }
 </style>
 
 <script>
-    function fetchDepartmentAndCode() {
-        var select = document.getElementById("id_employee");
-        var empId = select.value;
-        if (!empId) return;
+    function fetchEmployeeCode() {
+        const select = document.getElementById("id_employee");
+        const empId = select.value;
+        if (!empId) {
+            document.getElementById("emp_code").value = "";
+            return;
+        }
+
         fetch(`/api/employee/${empId}/`)
             .then(resp => resp.json())
             .then(data => {
-                document.getElementById("department").value = data.department;
-                document.getElementById("emp_code").value = data.emp_code;
+                if (data.emp_code) {
+                    document.getElementById("emp_code").value = data.emp_code;
+                } else {
+                    document.getElementById("emp_code").value = "";
+                }
             });
     }
 
     window.addEventListener("DOMContentLoaded", function () {
         const employeeSelect = document.getElementById("id_employee");
-        if (employeeSelect && (employeeSelect.value || '{{ mode }}' !== 'add')) {
-            fetchDepartmentAndCode();
+        if (employeeSelect && employeeSelect.value) {
+            fetchEmployeeCode();
         }
         if (employeeSelect) {
-            employeeSelect.addEventListener("change", fetchDepartmentAndCode);
+            employeeSelect.addEventListener("change", fetchEmployeeCode);
         }
+
+        setMaxDateTime();  // Also initialize date/time validation
     });
+
+    function setMaxDateTime() {
+        const now = new Date();
+
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+
+        const today = `${year}-${month}-${day}`;
+        const currentTime = `${hour}:${minute}`;
+
+        const dateInput = document.getElementById("id_date");
+        const checkInInput = document.getElementById("id_check_in");
+        const checkOutInput = document.getElementById("id_check_out");
+
+        if (dateInput) {
+            dateInput.max = today;
+
+            function updateTimeLimits() {
+                const selectedDate = dateInput.value;
+
+                if (selectedDate === today) {
+                    if (checkInInput) {
+                        checkInInput.max = currentTime;
+                        checkInInput.addEventListener("input", () => {
+                            if (checkInInput.value > currentTime) {
+                                checkInInput.value = currentTime;
+                            }
+                        });
+                    }
+                    if (checkOutInput) {
+                        checkOutInput.max = currentTime;
+                        checkOutInput.addEventListener("input", () => {
+                            if (checkOutInput.value > currentTime) {
+                                checkOutInput.value = currentTime;
+                            }
+                        });
+                    }
+                } else {
+                    if (checkInInput) checkInInput.removeAttribute("max");
+                    if (checkOutInput) checkOutInput.removeAttribute("max");
+                }
+            }
+
+            dateInput.addEventListener("change", updateTimeLimits);
+            updateTimeLimits(); // Run once on load
+        }
+    }
 </script>
+
 {% endblock %}

@@ -1,38 +1,41 @@
-﻿# views.py
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from .models import License
-from datetime import date
-from .forms import LicenseForm
-from django.contrib import messages
+﻿from django.shortcuts import render
+from datetime import datetime, date
+import logging
 
-# views.py
+logger = logging.getLogger(__name__)
 
 def home_view(request):
     license_end_date = request.session.get('license_end_date')
     is_expiring_soon = False
- 
+    license_expiring = False  # For modal
+
     if license_end_date:
-        # Assume license_end_date is a string like "2025-06-08"
         try:
-            end_date = date.fromisoformat(license_end_date)
+            # Try multiple date formats
+            try:
+                end_date = datetime.strptime(license_end_date, "%B %d, %Y").date()
+            except ValueError:
+                end_date = datetime.strptime(license_end_date, "%Y-%m-%d").date()
             today = date.today()
             delta = (end_date - today).days
- 
-            if 0 <= delta <= 7:  # License expires within 7 days
-                is_expiring_soon = True
-                request.session['license_expiring'] = True
-            else:
-                request.session['license_expiring'] = False
-        except Exception:
-            pass
+
+            # Expiring soon if license expires within the next 7 days (including today)
+            is_expiring_soon = 0 <= delta <= 7
+            license_expiring = is_expiring_soon
+        except Exception as e:
+            logger.warning(f"Invalid license_end_date: {license_end_date} ({e})")
+            is_expiring_soon = False
+            license_expiring = False
     else:
-        request.session['license_expiring'] = False
- 
+        is_expiring_soon = False
+        license_expiring = False
+
     context = {
         'license_end_date': license_end_date,
         'is_expiring_soon': is_expiring_soon,
+        'license_expiring': license_expiring,
     }
+
     return render(request, 'license/home.html', context)
 
 def activate_license(request):
@@ -74,7 +77,7 @@ def terms_and_conditions_view(request):
 def create_license_view(request):
     if request.method == 'POST':
         license = License.objects.create(
-            license_key='PNC-15-06-2025',
+            license_key='CKP-2025 v1.0.0',
             start_date=date(2025, 6, 5),
             end_date=date(2025, 6, 17),
             activated=True,  # Make sure this is set to True for testing
@@ -173,9 +176,9 @@ from .forms import LicenseForm
  
 from datetime import date
  
-HARDCODED_KEY = "PNC-15-06-2025"
+HARDCODED_KEY = "CKP-2025 v1.0.0"
 START_DATE = date(2025, 6, 5)
-END_DATE = date(2025, 6, 17)
+END_DATE = date(2025, 7, 30)
  
 def license_check_view(request):
     current_date = date.today()

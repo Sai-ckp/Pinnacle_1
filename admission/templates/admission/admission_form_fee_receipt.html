@@ -324,7 +324,7 @@
                 <div class="detail-item"><span class="detail-label">ID:</span><span class="detail-value">{{ admission.admission_no }}</span></div>
                 <div class="detail-item"><span class="detail-label">Name:</span><span class="detail-value">{{ admission.student_name }}</span></div>
                 <div class="detail-item"><span class="detail-label">Course:</span><span class="detail-value">{{ admission.course }}</span></div>
-                <div class="detail-item"><span class="detail-label">Year:</span><span class="detail-value">{{ admission.academic_year|default:"2024-25" }}</span></div>
+                <div class="detail-item"><span class="detail-label">Year:</span><span class="detail-value">{{ admission.academic_year|default:"2025-26" }}</span></div>
             </section>
             <section class="details-box" aria-labelledby="payment-details-title">
                 <h3 id="payment-details-title">Payment Details</h3>
@@ -351,10 +351,10 @@
                     <td>Application Fee </td>
                     <td>₹{{ admission.application_fee|default:"0.00" }}</td>
                 </tr>
-                <tr>
+                <!--<tr>
                     <td>Tuition Advance Fee </td>
                     <td>₹{{  admission.tuition_advance_amount|default:"0.00" }}</td>
-                </tr>
+                </tr>-->
             </tbody>
         </table>
 

@@ -1,46 +1,145 @@
-{% extends 'master/layout.html' %}
-{% block title %}Admission Dashboard{% endblock %}
+{% extends 'layout.html' %}
+{% block title %}Admission {% endblock %}
 {% block content %}
 
 <div class="container py-5">
-    <h2 class="fw-bold text-primary mb-4 text-center"> Admission Dashboard</h2>
+    <h2 class="fw-bold text-primary mb-4 text-center"> Admission </h2>
+
+    <!-- 🔽 Filter Dropdown -->
+    <!--<div class="mb-4 d-flex justify-content-end">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary px-4 py-2 dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+            <ul class="dropdown-menu" style=" width: 100%;     font-size: 10px;" aria-labelledby="filterDropdown">
+                <li><a class="dropdown-item {% if active_filter == 'day' %}active{% endif %}" href="?filter=day">Per Day</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'week' %}active{% endif %}" href="?filter=week">Per Week</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'month' %}active{% endif %}" href="?filter=month">Per Month</a></li>
+                <li><a class="dropdown-item {% if active_filter == 'all' %}active{% endif %}" href="?filter=all">All</a></li>
+            </ul>
+        </div>
+    </div>-->
+
+
+
+    <div class="d-flex justify-content-end mb-2" style="margin-top: -10px;">
+        <form method="post" enctype="multipart/form-data" id="uploadForm" class="d-flex align-items-center gap-2" style="max-width: 320px;">
+            {% csrf_token %}
+            <input type="file" name="import_file" id="import_file" accept=".xlsx,.xls,.pdf" required class="form-control form-control-sm custom-file-sm">
+            <button type="submit" class="btn btn-outline-primary btn-sm" style="height: 32px; padding: 4px 12px; font-size: 12px; background: #800000; color: white; border-color: #800000;">Upload</button>
+        </form>
+    </div>
+
+
+    <!-- ✅ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const form = document.getElementById('uploadForm');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            Swal.fire({
+                title: 'Uploading...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            fetch("{% url 'bulk_import_admissions' %}", {
+                method: 'POST',
+                body: formData,
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        let html = `<b>${data.message}</b>`;
+
+                        if (data.error_count > 0) {
+                            html += `<br><br><b>⚠️ ${data.error_count} Record(s) Skipped:</b><ul>`;
+                            html += data.errors.map(e => `<li>${e}</li>`).join('');
+                            if (data.error_count > 10) {
+                                html += `<li>...and ${data.error_count - 10} more.</li>`;
+                            }
+                            html += `</ul>`;
+                        }
+
+                        Swal.fire({
+                            icon: data.error_count > 0 ? 'warning' : 'success',
+                            title: 'Upload Complete',
+                            html: html,
+                            width: 600
+                        });
+                    } else {
+                        Swal.fire('❌ Upload Failed', data.error || 'Unknown error occurred.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    Swal.fire('❌ Upload Failed', 'Something went wrong during upload.', 'error');
+                });
+        });
+    </script>
 
     <div class="row mb-5">
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Direct PU Admissions <i class="bi bi-person-lines-fill"></i></h6>
-                    <h3 class="fw-bold">{{ total_pu_admissions }}</h3>
+        <div class="row mb-5">
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Total PU Admissions <i class="bi bi-person-lines-fill"></i></h6>
+                        <h3 class="fw-bold">{{ total_pu_admissions }}</h3>
+                        <!--<h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>-->
+                    </div>
                 </div>
             </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Total Degree Admissions <i class="bi bi-mortarboard"></i></h6>
+                        <h3 class="fw-bold">{{ total_degree_admissions }}</h3>
+                        <!--<h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>-->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmed Admissions Card -->
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">
+                            Confirmed Admissions <i class="fas fa-user-check me-1" style="color: #800000;"></i>
+                        </h6>
+                        <h3 class="fw-bold">{{ confirmed_admissions }}</h3>
+                        <!--<h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>-->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Review Card -->
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">
+                            Pending Review<i class="fas fa-hourglass-half me-1" style="color: #800000;"></i>
+                        </h6>
+                        <h3 class="fw-bold">{{ pending_review }}</h3>
+                        <!--<h6 class="text-mute">
+                            {% if active_filter == 'day' %}Today{% elif active_filter == 'week' %}This Week{% elif active_filter == 'month' %}This Month{% else %}All Time{% endif %}
+                        </h6>-->
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Direct Degree Admissions <i class="bi bi-mortarboard"></i></h6>
-                    <h3 class="fw-bold">{{ total_degree_admissions }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">PU Enquiries Converted <i class="bi bi-check2-circle"></i></h6>
-                    <h3 class="fw-bold">{{ pu_converted_enquiries }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h6 class="text-muted">Degree Enquiries Converted <i class="bi bi-check2-circle"></i></h6>
-                    <h3 class="fw-bold">{{ degree_converted_enquiries }}</h3>
-                </div>
-            </div>
-        </div>
     </div>
 
 
@@ -49,7 +148,7 @@
         <!-- Application Form Button -->
         <div class="d-flex flex-column align-items-start position-relative">
             <button id="toggle-applications" class="btn btn-maroon px-4 py-3">
-                <i class="bi bi-journal-text me-2"></i> Application Form
+                <i class="bi bi-journal-text me-2"></i>Direct Admission
             </button>
             <div id="application-buttons" class="d-none flex-column custom-dropdown">
                 <!-- Redirecting buttons for forms -->
@@ -57,7 +156,7 @@
                     <i class="bi bi-file-earmark-text me-2"></i> PU Application Form
                 </a>
                 <a href="{% url 'degree_admission_form' %}" class="btn btn-maroon px-4 py-3">
-                    <i class="bi bi-journal-plus me-2"></i> Degree Application Form
+                    <i class="bi bi-journal-plus me-2"></i> BCOM Application Form
                 </a>
             </div>
         </div>
@@ -68,12 +167,18 @@
                 <i class="bi bi-card-list me-2"></i> Application List
             </button>
             <div id="list-buttons" class="d-none flex-column custom-dropdown">
-                <button class="btn btn-maroon px-4 py-3 load-form" data-url="{% url 'admission_list' %}">
+                <!--<button class="btn btn-maroon px-4 py-3 load-form" data-url="{% url 'admission_list' %}">
                     <i class="bi bi-list-ul me-2"></i> PU Application List
-                </button>
-                <button class="btn btn-maroon px-4 py-3 load-form" data-url="{% url 'degree_admission_list' %}">
+                </button>-->
+                <a href="{% url 'admission_list' %}" class="btn btn-maroon px-4 py-3">
+                    <i class="bi bi-list-ul me-2"></i> PU Application List
+                </a>
+                <a href="{% url 'degree_admission_list' %}" class="btn btn-maroon px-4 py-3">
+                    <i class="bi bi-list-ul me-2"></i> BCOM Application List
+                </a>
+                <!--<button class="btn btn-maroon px-4 py-3 load-form" data-url="{% url 'degree_admission_list' %}">
                     <i class="bi bi-card-list me-2"></i> Degree Application List
-                </button>
+                </button>-->
             </div>
         </div>
 
@@ -113,6 +218,7 @@
 <!-- Bootstrap CSS & Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>-->
 
 <!-- JavaScript -->
 <script>
@@ -173,10 +279,12 @@
         padding: 0px;
         font-size: 9px;
     }
+
     .text-white {
         --bs-text-opacity: 1;
         color: #020d17 !important;
     }
+
     .p-3 {
         padding: 3px !important;
     }
@@ -189,17 +297,22 @@
     h2 {
         font-size: 22px;
         text-align: center;
-
     }
 
     .text-muted {
         --bs-text-opacity: 1;
         color: #8b0000 !important;
     }
+
+    .gap-3 {
+        gap: 5rem !important;
+    }
+
     .fw-bold {
         color: #800000;
         font-size: 28px;
     }
+
     .btn-maroon {
         color: #800000;
         border: 2px solid #800000;
@@ -210,15 +323,40 @@
             background-color: #800000;
             color: #fff;
         }
-  /*  .btn:hover {
+    /*  .btn:hover {
         transform: translateY(-2px);
     }*/
 
-    .card-body {
-        flex: 1 1 auto;
-        padding: 1px;
-        color: var(--bs-card-color);
+    .card {
+        border-radius: 12px;
+        transition: transform 0.2s ease-in-out;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+    .card-body {
+        padding: 1px;
+        text-align: center;
+    }
+
+    .card h6 {
+        color: #8b0000;
+        font-size: 14px;
+        margin-bottom: 12px;
+        margin-top: 12px;
+    }
+
+    .card h3 {
+        color: #800000;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+
     .custom-dropdown {
         position: absolute;
         top: 100%;
@@ -228,6 +366,27 @@
         border-radius: 6px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
     }
+
+    .upload-form-wrapper {
+        margin-top: -10px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+        .upload-form-wrapper form {
+            max-width: 320px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-form-wrapper button {
+            height: 32px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
 
     #form-container {
         margin-top: 30px; /* ✔️ Positive margin adds spacing below buttons */
@@ -239,6 +398,13 @@
         clear: both; /* Prevents float overlap */
     }
 
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-top: 20px;
+        padding-bottom: 10px;
+    }
 
     table {
         caption-side: bottom;
@@ -307,13 +473,13 @@
         font-size: 14px;
     }
 
-     th {
+    th {
         border-color: inherit;
         border-style: solid;
         border-width: 0;
         padding: 1px;
         font-size: 12px;
-     }
+    }
 
     td {
         border-color: inherit;
@@ -322,6 +488,7 @@
         padding: 1px;
         font-size: 9px;
     }
+
     .mb-5 {
         margin-bottom: 2rem !important;
     }
@@ -348,10 +515,16 @@
         margin-top: 40px;
         padding-bottom: 20px;
     }
+
     .container {
         padding-bottom: 100px;
     }
 
+    .dropdown-item.active {
+        color: var(--bs-dropdown-link-active-color);
+        text-decoration: none;
+        background-color: #800000;
+    }
 </style>
 
 {% endblock %}

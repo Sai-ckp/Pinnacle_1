@@ -3,9 +3,17 @@ from django import forms
 from django.core.exceptions import ValidationError
 from .models import PUAdmission, CourseType, Course
 from master.models import Transport
-
+from django.db.models import Q
+from transport.models import MasterTransport
 class PUAdmissionForm(forms.ModelForm):
     education_boards = forms.ChoiceField(choices=PUAdmission.BOARD_CHOICES,widget=forms.Select,required=False)
+
+    admission_source = forms.ChoiceField(
+     choices=PUAdmission._meta.get_field('admission_source').choices,
+     required=False,
+     widget=forms.Select(attrs={'class': 'form-select'})
+ )
+
 
     class Meta:
         model = PUAdmission
@@ -28,7 +36,7 @@ class PUAdmissionForm(forms.ModelForm):
             'course_type': forms.Select(attrs={'class': 'form-select'}),
             'admitted_to': forms.Select(attrs={'class': 'form-select'}),
             'transport': forms.Select(attrs={'class': 'form-select'}),
-            'parent_mobile_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'father_mobile_no': forms.TextInput(attrs={'class': 'form-control'}),
             'mother_phone_no': forms.TextInput(attrs={'class': 'form-control'}),
             'student_phone_no': forms.TextInput(attrs={'class': 'form-control'}),
             'emergency_contact': forms.TextInput(attrs={'class': 'form-control'}),
@@ -108,47 +116,93 @@ class PUAdmissionForm(forms.ModelForm):
             'converstion_fee': forms.TextInput(attrs={'class': 'form-control'}),
             'enquiry_no': forms.TextInput(attrs={'class': 'form-control'}),
             'student_name': forms.TextInput(attrs={'class': 'form-control capitalize-on-input'}),
-            'parent_name': forms.TextInput(attrs={'class': 'form-control capitalize-on-input'}),
+            'father_name': forms.TextInput(attrs={'class': 'form-control capitalize-on-input'}),
             'medium': forms.TextInput(attrs={'class': 'form-control'}),
             'second_language': forms.TextInput(attrs={'class': 'form-control'}),
             'first_language': forms.TextInput(attrs={'class': 'form-control'}),
+            # 'academic_year': forms.Select(attrs={'class': 'form-select'}),
+
         }
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Show all Course Types
         self.fields['course_type'].queryset = CourseType.objects.all()
 
-        # Filter course based on selected course_type
+        # Set default course_type if not provided
+        default_course_type = CourseType.objects.filter(
+            Q(name__icontains="School of Commerce") |
+            Q(name__icontains="Commerce") |
+            Q(name__icontains="BCom")
+        ).first()
+
+        if (
+            default_course_type
+            and not self.data
+            and not self.initial.get('course_type')
+            and not (self.instance.pk and self.instance.course_type)
+        ):
+            self.fields['course_type'].initial = default_course_type
+
+        # Filter Courses based on form input or instance/initial values
         if 'course_type' in self.data:
             try:
                 course_type_id = int(self.data.get('course_type'))
-                self.fields['course'].queryset = Course.objects.filter(course_type_id=course_type_id).order_by('name')
+                filtered_courses = Course.objects.filter(course_type_id=course_type_id).order_by('name')
             except (ValueError, TypeError):
-                self.fields['course'].queryset = Course.objects.none()
+                filtered_courses = Course.objects.none()
+        elif self.initial.get('course_type'):
+            course_type_id = self.initial.get('course_type')
+            filtered_courses = Course.objects.filter(course_type_id=course_type_id).order_by('name')
         elif self.instance.pk and self.instance.course_type:
-            self.fields['course'].queryset = Course.objects.filter(course_type=self.instance.course_type).order_by('name')
+            filtered_courses = Course.objects.filter(course_type=self.instance.course_type).order_by('name')
+        elif default_course_type:
+            filtered_courses = Course.objects.filter(course_type=default_course_type).order_by('name')
         else:
-            self.fields['course'].queryset = Course.objects.none()
+            filtered_courses = Course.objects.none()
 
-        self.fields['transport'].queryset = Transport.objects.all()
+        # Set filtered course queryset
+        self.fields['course'].queryset = filtered_courses
 
+        # Set admitted_to queryset based on course_type (same filtering as 'course')
         if 'admitted_to' in self.fields:
-            self.fields['admitted_to'].queryset = Course.objects.all()
+            self.fields['admitted_to'].queryset = filtered_courses
 
-        # Add form-control and capitalize class to selected fields
+        # Set transport queryset
+        self.fields['transport'].queryset = MasterTransport.objects.all()
+
+
+        required_fields = [
+            'mother_name', 'father_name', 'student_phone_no', 
+            'current_address', 'category', 'caste', 'payment_mode','student_declaration_date','student_declaration_place'
+        ]
+        for field_name in required_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
+
+
+        # Add form-control and capitalize-on-input class to specific fields
         fields_to_capitalize = [
-            'student_name', 'parent_name', 'religion', 'nationality', 'permanent_address', 'current_address'
+            'student_name', 'father_name', 'religion',
+            'nationality', 'permanent_address', 'current_address'
         ]
         for field in fields_to_capitalize:
             if field in self.fields:
                 self.fields[field].widget.attrs.update({'class': 'form-control capitalize-on-input'})
 
+
     def clean_student_name(self):
         name = self.cleaned_data.get('student_name', '')
-        if not re.match(r'^[A-Z\s]+$', name):
+        name = name.upper()
+
+        if not re.match(r'^[A-Z ]+$', name):
             raise ValidationError("Name must contain only capital letters and spaces. Numbers and lowercase letters are not allowed.")
+
         return name
+
+
 
    
 
@@ -156,18 +210,31 @@ from django import forms
 from .models import DegreeAdmission
 from master.models import CourseType, Course
 from django.core.exceptions import ValidationError
-
-
+from django.db.models import Q
 from django import forms
 from .models import DegreeAdmission  # Make sure this import is corr
+from transport.models import MasterTransport
+from django import forms
+from django.core.exceptions import ValidationError
+from django.db.models import Q
+from .models import DegreeAdmission, CourseType, Course
 
 class DegreeAdmissionForm(forms.ModelForm):
-    education_boards = forms.ChoiceField(choices=DegreeAdmission.BOARD_CHOICES,widget=forms.Select,required=False)
+    education_boards = forms.ChoiceField(
+        choices=DegreeAdmission.BOARD_CHOICES,
+        widget=forms.Select,
+        required=False
+    )
+
+    admission_source = forms.ChoiceField(
+        choices=DegreeAdmission._meta.get_field('admission_source').choices,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 
     class Meta:
         model = DegreeAdmission
-        # Remove doc_* fields from exclude, or just use 'fields = "__all__"'
-        exclude = ['status', 'final_fee_after_advance']  # Do NOT list doc_* fields here
+        exclude = ['status', 'final_fee_after_advance']
         widgets = {
             'dob': forms.DateInput(attrs={'type': 'date'}),
             'admission_date': forms.DateInput(attrs={'type': 'date'}),
@@ -180,41 +247,85 @@ class DegreeAdmissionForm(forms.ModelForm):
             'gender': forms.Select(),
             'blood_group': forms.Select(),
             'quota_type': forms.Select(),
+            'payment_mode': forms.Select(attrs={'class': 'form-select'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'permanent_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'current_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'co_curricular_activities': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'student_address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
         }
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(DegreeAdmissionForm, self).__init__(*args, **kwargs)
 
-        # Apply 'form-control' to all except FileInputs and Checkbox widgets
+        # Set required for selected fields
+        required_fields = [
+            'father_name', 'mother_name', 'student_phone_no',
+            'permanent_address', 'category', 'caste', 'payment_mode','student_declaration_date','student_declaration_place'
+        ]
+        for field in required_fields:
+            if field in self.fields:
+                self.fields[field].required = True
+
+        # Add Bootstrap classes
         for field_name, field in self.fields.items():
-            if not isinstance(
-                field.widget, (forms.FileInput, forms.CheckboxSelectMultiple, forms.CheckboxInput)
-            ):
-                current_class = field.widget.attrs.get('class', '')
-                if 'form-control' not in current_class:
-                    field.widget.attrs['class'] = f"{current_class} form-control".strip()
+            if not isinstance(field.widget, (forms.FileInput, forms.CheckboxInput, forms.CheckboxSelectMultiple)):
+                css_class = field.widget.attrs.get('class', '')
+                field.widget.attrs['class'] = f'{css_class} form-control'.strip()
 
-        # Dynamic course filtering based on course_type
-        if 'course_type' in self.fields:
-            self.fields['course_type'].queryset = CourseType.objects.all()
+        # Populate transport
+        self.fields['transport'].queryset = MasterTransport.objects.all()
 
+        # Capitalize input fields
+        capitalize_fields = [
+            'student_name', 'father_name', 'mother_name', 'religion',
+            'nationality', 'permanent_address', 'current_address',
+        ]
+        for field in capitalize_fields:
+            if field in self.fields:
+                old_class = self.fields[field].widget.attrs.get('class', '')
+                self.fields[field].widget.attrs['class'] = f'{old_class} capitalize-on-input'.strip()
+
+        # Set default course_type
+        default_course_type = CourseType.objects.filter(
+            Q(name__icontains="Commerce") |
+            Q(name__icontains="School of Commerce") |
+            Q(name__icontains="BCom")
+        ).first()
+
+        if (
+            default_course_type and
+            not self.data and
+            not self.initial.get('course_type') and
+            not (self.instance.pk and self.instance.course_type)
+        ):
+            self.fields['course_type'].initial = default_course_type
+
+        # Determine course_type_id
+        course_type_id = None
         if 'course_type' in self.data:
             try:
                 course_type_id = int(self.data.get('course_type'))
-                self.fields['course'].queryset = Course.objects.filter(course_type_id=course_type_id).order_by('name')
             except (ValueError, TypeError):
-                self.fields['course'].queryset = Course.objects.none()
-        elif self.instance.pk and getattr(self.instance, 'course_type', None):
-            self.fields['course'].queryset = Course.objects.filter(course_type=self.instance.course_type).order_by('name')
+                pass
+        elif self.initial.get('course_type'):
+            course_type_id = self.initial.get('course_type')
+        elif self.instance.pk and self.instance.course_type:
+            course_type_id = self.instance.course_type.id
+        elif default_course_type:
+            course_type_id = default_course_type.id
+
+        # Filter course and admitted_to
+        if course_type_id:
+            filtered_courses = Course.objects.filter(course_type_id=course_type_id).order_by('name')
+            self.fields['course'].queryset = filtered_courses
+            self.fields['admitted_to'].queryset = filtered_courses
         else:
             self.fields['course'].queryset = Course.objects.none()
+            self.fields['admitted_to'].queryset = Course.objects.none()
 
-        # Add frontend validation for phone fields
-        phone_fields = ['parent_phone_no', 'student_phone_no', 'emergency_contact']
+        # Phone validations
+        phone_fields = ['father_mobile_no', 'student_phone_no', 'emergency_contact']
         for field_name in phone_fields:
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs.update({
@@ -223,26 +334,7 @@ class DegreeAdmissionForm(forms.ModelForm):
                     'title': 'Enter a valid 10-digit phone number',
                 })
 
-        # Add capitalization to selected fields
-        fields_to_capitalize = [
-            'student_name', 'parent_name', 'religion', 'nationality', 'permanent_address', 'current_address'
-        ]
-        for field in fields_to_capitalize:
-            if field in self.fields:
-                existing_class = self.fields[field].widget.attrs.get('class', '')
-                if 'capitalize-on-input' not in existing_class:
-                    self.fields[field].widget.attrs['class'] = f"{existing_class} capitalize-on-input".strip()
-
-    # Server-side validation for phone numbers
-    def clean_parent_phone_no(self):
-        return self._validate_phone_number('parent_phone_no')
-
-    def clean_student_phone_no(self):
-        return self._validate_phone_number('student_phone_no')
-
-    def clean_emergency_contact(self):
-        return self._validate_phone_number('emergency_contact')
-
+    # Clean methods
     def _validate_phone_number(self, field_name):
         phone = self.cleaned_data.get(field_name)
         if phone:
@@ -252,10 +344,32 @@ class DegreeAdmissionForm(forms.ModelForm):
             return phone_str
         return phone
 
+    def clean_father_mobile_no(self):
+        return self._validate_phone_number('father_mobile_no')
+
+    def clean_student_phone_no(self):
+        return self._validate_phone_number('student_phone_no')
+
+    def clean_emergency_contact(self):
+        return self._validate_phone_number('emergency_contact')
+
+    def clean_father_name(self):
+        father_name = self.cleaned_data.get('father_name')
+        if not father_name:
+            raise ValidationError("Father name is required.")
+        return father_name
+
+    def clean_mother_name(self):
+        mother_name = self.cleaned_data.get('mother_name')
+        if not mother_name:
+            raise ValidationError("Mother name is required.")
+        return mother_name
 
 
 
-from .models import Enquiry1, Course, CourseType
+
+
+from .models import Enquiry1, Course, CourseType,AcademicYear
 from django.utils import timezone
 
 class Enquiry1Form(forms.ModelForm):
@@ -264,78 +378,122 @@ class Enquiry1Form(forms.ModelForm):
         initial=timezone.now().date(),
         widget=forms.DateInput(attrs={'type': 'date'})
     )
+ 
     class Meta:
         model = Enquiry1
-
         fields = [
             'enquiry_no', 'student_name', 'gender', 'parent_relation', 'parent_name', 'parent_phone',
             'permanent_address', 'current_address', 'city', 'pincode', 'state',
-            'course_type', 'course', 'percentage_10th', 'percentage_12th','guardian_relation',
-            'email', 'source', 'other_source','enquiry_date'
+            'course_type', 'course', 'percentage_10th', 'percentage_12th', 'guardian_relation',
+            'email', 'source', 'other_source', 'enquiry_date',
         ]
         widgets = {
             'source': forms.Select(attrs={'onchange': 'toggleOtherSource(this)'}),
             'permanent_address': forms.Textarea(attrs={'rows': 2, 'cols': 40}),
             'current_address': forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-
-            # 'other_source': forms.TextInput(attrs={'id': 'other_source_input', 'style': 'display:none;'}),
         }
-
+        labels = {
+            'parent_relation': 'Relation',
+        }
+ 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+ 
         self.fields['enquiry_no'].widget.attrs['readonly'] = True
-        course_type_id = 1
-        self.fields['course'].queryset = Course.objects.filter(course_type_id=course_type_id).order_by('name')
-
-
-
-
-
-
-
-
-
+ 
+        # Filter course types that start with 'puc'
+        course_type_qs = CourseType.objects.filter(name__istartswith='puc')
+        self.fields['course_type'].queryset = course_type_qs
+ 
+        # Use first matching course type as default fallback
+        default_course_type = course_type_qs.first() if course_type_qs.exists() else None
+ 
+        if 'course_type' in self.data:
+            try:
+                selected_id = int(self.data.get('course_type'))
+                self.fields['course'].queryset = Course.objects.filter(course_type_id=selected_id).order_by('name')
+            except (ValueError, TypeError):
+                self.fields['course'].queryset = Course.objects.none()
+        elif self.instance.pk and self.instance.course_type_id:
+            try:
+                self.fields['course'].queryset = Course.objects.filter(
+                    course_type_id=self.instance.course_type_id
+                ).order_by('name')
+            except CourseType.DoesNotExist:
+                self.fields['course'].queryset = Course.objects.none()
+        elif default_course_type:
+            self.fields['course'].queryset = Course.objects.filter(course_type=default_course_type).order_by('name')
+        else:
+            self.fields['course'].queryset = Course.objects.none()
+ 
+ 
+ 
 from django import forms
-from .models import Enquiry2, Course, CourseType
+from django.utils import timezone
+from django.db.models import Q
+from .models import Enquiry2
+from master.models import CourseType, Course  # Adjust if models are in different app
+ 
 class Enquiry2Form(forms.ModelForm):
     enquiry_date = forms.DateField(
         label="Enquiry Date",
         initial=timezone.now().date(),
         widget=forms.DateInput(attrs={'type': 'date'})
     )
+ 
     class Meta:
         model = Enquiry2
         fields = [
             'enquiry_no', 'student_name', 'gender', 'parent_relation', 'parent_name', 'parent_phone',
             'permanent_address', 'current_address', 'city', 'pincode', 'state',
-            'course_type', 'course', 'percentage_10th', 'percentage_12th','guardian_relation',
-            'email', 'source', 'other_source','enquiry_date'
+            'course_type', 'course', 'percentage_10th', 'percentage_12th', 'guardian_relation',
+            'email', 'source', 'other_source', 'enquiry_date', 
         ]
         widgets = {
             'source': forms.Select(attrs={'onchange': 'toggleOtherSource(this)'}),
-
-            'permanent_address': forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            'current_address': forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            # 'other_source': forms.TextInput(attrs={'id': 'other_source_input', 'style': 'display:none;'}),
+            'permanent_address': forms.Textarea(attrs={'rows': 2}),
+            'current_address': forms.Textarea(attrs={'rows': 2}),
         }
-
+        labels = {
+            'parent_relation': 'Relation',
+        }
+ 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['enquiry_no'].widget.attrs['readonly'] = True
+ 
+        # Filter course types
+        course_type_qs = CourseType.objects.filter(
+            Q(name__istartswith='school of commerce') | Q(name__istartswith='bcom regular')
+        )
+        self.fields['course_type'].queryset = course_type_qs
+ 
+        # Default to first available course_type in filtered list
+        default_course_type = course_type_qs.first() if course_type_qs.exists() else None
+ 
         if 'course_type' in self.data:
             try:
-                course_type_id = int(self.data.get('course_type'))
-                self.fields['course'].queryset = Course.objects.filter(course_type_id=course_type_id).order_by('name')
+                selected_id = int(self.data.get('course_type'))
+                self.fields['course'].queryset = Course.objects.filter(course_type_id=selected_id).order_by('name')
             except (ValueError, TypeError):
                 self.fields['course'].queryset = Course.objects.none()
-        elif self.instance.pk and self.instance.course_type:
-            self.fields['course'].queryset = Course.objects.filter(course_type=self.instance.course_type).order_by('name')
+        elif self.instance.pk and self.instance.course_type_id:
+            try:
+                self.fields['course'].queryset = Course.objects.filter(
+                    course_type_id=self.instance.course_type_id
+                ).order_by('name')
+            except CourseType.DoesNotExist:
+                self.fields['course'].queryset = Course.objects.none()
+        elif default_course_type:
+            self.fields['course'].queryset = Course.objects.filter(course_type=default_course_type).order_by('name')
         else:
             self.fields['course'].queryset = Course.objects.none()
+ 
 
 
 from django import forms
 from .models import FollowUp, Enquiry1, Enquiry2
+
+
 class FollowUpForm(forms.ModelForm):
     combined_enquiry = forms.ChoiceField(
         label='Enquiry',
@@ -351,13 +509,17 @@ class FollowUpForm(forms.ModelForm):
 
     class Meta:
         model = FollowUp
-        exclude = ['status']
+        exclude = ['status', 'pu_enquiry', 'degree_enquiry']
         widgets = {
             'follow_up_type': forms.Select(
                 choices=[('Call', 'Call'), ('Email', 'Email'), ('Visit', 'Visit')],
                 attrs={'class': 'form-control'}
             ),
-            'follow_up_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'follow_up_date': forms.DateTimeInput(attrs={
+                'type': 'datetime-local',
+                'class': 'form-control',
+                'min': timezone.now().strftime('%Y-%m-%dT%H:%M')
+            }),
             'priority': forms.Select(
                 choices=[('', 'Select priority'), ('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')],
                 attrs={'class': 'form-control'}
@@ -376,19 +538,23 @@ class FollowUpForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Prepare PU and Degree Enquiry choices
-        pu_converted_nos = PUAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values_list('enquiry_no', flat=True)
-        deg_converted_nos = DegreeAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values_list('enquiry_no', flat=True)
+        # Dynamically set enquiry choices
+        pu_converted = PUAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values_list('enquiry_no', flat=True)
+        deg_converted = DegreeAdmission.objects.exclude(enquiry_no__isnull=True).exclude(enquiry_no='').values_list('enquiry_no', flat=True)
 
-        pu_enquiries = Enquiry1.objects.exclude(enquiry_no__in=pu_converted_nos)
-        deg_enquiries = Enquiry2.objects.exclude(enquiry_no__in=deg_converted_nos)
+        pu_enquiries = Enquiry1.objects.exclude(enquiry_no__in=pu_converted)
+        deg_enquiries = Enquiry2.objects.exclude(enquiry_no__in=deg_converted)
 
-        pu_choices = [('pu_' + str(e.id), f"{e.enquiry_no}") for e in pu_enquiries]
-        deg_choices = [('deg_' + str(e.id), f"{e.enquiry_no}") for e in deg_enquiries]
+        pu_choices = [('pu_' + str(e.id), e.enquiry_no) for e in pu_enquiries]
+        deg_choices = [('deg_' + str(e.id), e.enquiry_no) for e in deg_enquiries]
 
         self.fields['combined_enquiry'].choices = pu_choices + deg_choices
 
-        # Set initial values if editing
+        if self.instance and self.instance.pk:
+# Editing mode: disable field
+          self.fields['combined_enquiry'].disabled = True
+
+        # Set initial values when editing
         if self.instance and (self.instance.pu_enquiry or self.instance.degree_enquiry):
             if self.instance.pu_enquiry:
                 self.fields['combined_enquiry'].initial = 'pu_' + str(self.instance.pu_enquiry.id)
@@ -399,38 +565,18 @@ class FollowUpForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
-        # Extract fields to validate
         combined_value = cleaned_data.get('combined_enquiry')
-        follow_up_type = cleaned_data.get('follow_up_type')
-        follow_up_date = cleaned_data.get('follow_up_date')
-        priority = cleaned_data.get('priority')
-        notes = cleaned_data.get('notes')
-        next_action_required = cleaned_data.get('next_action_required')
 
-        # Manual required field checks
-        missing_fields = []
         if not combined_value:
-            missing_fields.append("Enquiry")
-        if not follow_up_type:
-            missing_fields.append("Follow-up Type")
-        if not follow_up_date:
-            missing_fields.append("Follow-up Date")
-        if not priority:
-            missing_fields.append("Priority")
-        if not notes:
-            missing_fields.append("Notes")
-        if not next_action_required:
-            missing_fields.append("Next Action Required")
+            self.add_error('combined_enquiry', 'This field is required.')
+            return cleaned_data
 
-        if missing_fields:
-            raise forms.ValidationError(f"The following fields are required: {', '.join(missing_fields)}")
-
-        # Extract enquiry info if provided
-        if combined_value:
-            prefix, obj_id = combined_value.split('_', 1)
+        try:
+            prefix, obj_id = combined_value.split('_')
             cleaned_data['enquiry_type'] = prefix
             cleaned_data['enquiry_id'] = int(obj_id)
+        except ValueError:
+            self.add_error('combined_enquiry', 'Invalid enquiry format.')
 
         return cleaned_data
 
@@ -440,7 +586,6 @@ class FollowUpForm(forms.ModelForm):
         enquiry_type = self.cleaned_data.get('enquiry_type')
         enquiry_id = self.cleaned_data.get('enquiry_id')
 
-        # Set appropriate foreign key
         if enquiry_type == 'pu':
             instance.pu_enquiry = Enquiry1.objects.get(id=enquiry_id)
             instance.degree_enquiry = None
@@ -451,6 +596,7 @@ class FollowUpForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
 
 
 from django import forms
@@ -553,18 +699,95 @@ class StudentForm(forms.ModelForm):
 
 from django import forms
 from .models import ConfirmedAdmission
-
+ 
 class ConfirmedAdmissionForm(forms.ModelForm):
     class Meta:
         model = ConfirmedAdmission
         fields = [
-            'admission_no',
-            'student_name',
+            'pu_admission',
+            'degree_admission',
             'course',
-            'admission_date',
             'documents_complete',
-            'admission_type',
             'status',
             'student_userid',
             'student_password',
+            'tuition_advance_amount',
+            'student_name',
         ]
+
+
+        from django import forms
+from .models import StudentFeeCollection
+from .models import StudentFeeCollection
+
+class StudentFeeCollectionForm(forms.ModelForm):
+    class Meta:
+        model = StudentFeeCollection
+        fields = [
+            "admission_no",
+            "fee_type",
+            "amount",
+            "paid_amount",
+            "balance_amount",
+            
+            "payment_mode",
+            "payment_id",
+            "payment_date",
+            "status",
+        ]
+        widgets = {
+            "admission_no": forms.TextInput(attrs={"class": "form-control", "readonly": True}),
+            "fee_type": forms.Select(attrs={"class": "form-select", "readonly": True}),
+            "amount": forms.NumberInput(attrs={"class": "form-control", "readonly": True}),
+            "paid_amount": forms.NumberInput(attrs={"class": "form-control"}),
+            "balance_amount": forms.NumberInput(attrs={"class": "form-control", "readonly": True}),
+           
+            "payment_mode": forms.Select(
+                attrs={"class": "form-select"},
+                choices=[
+                    ("Cash", "Cash"),
+                    
+                    
+
+                     ("Online", "Online"),
+                    ("Bank Transfer", "Bank Transfer"),
+                ]
+            ),
+            "payment_id": forms.TextInput(attrs={"class": "form-control"}),
+            "payment_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "status": forms.Select(
+                attrs={"class": "form-select"},
+                choices=[
+                    ("Pending", "Pending"),
+                    ("Partial", "Partial"),
+                    ("Paid", "Paid"),
+                ]
+            ),
+        }
+
+    def clean_paid_amount(self):
+        paid_amount = self.cleaned_data.get("paid_amount")
+        amount = self.cleaned_data.get("amount")
+        if paid_amount and amount and paid_amount > amount:
+            raise forms.ValidationError("Paid amount cannot be greater than total amount.")
+        return paid_amount
+
+    def clean(self):
+        cleaned_data = super().clean()
+        paid_amount = cleaned_data.get("paid_amount") or 0
+        
+        amount = cleaned_data.get("amount") or 0
+
+        total_paid = paid_amount + discount
+        balance_amount = max(amount - total_paid, 0)
+        cleaned_data["balance_amount"] = balance_amount
+
+        if balance_amount == 0:
+            cleaned_data["status"] = "Paid"
+        elif paid_amount > 0:
+            cleaned_data["status"] = "Partial"
+        else:
+            cleaned_data["status"] = "Pending"
+
+        return cleaned_data
+

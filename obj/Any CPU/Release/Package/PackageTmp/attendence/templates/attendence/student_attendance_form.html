@@ -1,17 +1,17 @@
-{% extends 'master/layout.html' %}
+{% extends 'layout.html' %}
 {% block title %}Student Attendance Form{% endblock %}
 {% block content %}
 <style>
-   .form-section {
-    background: #fff;
-    padding: 31px;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    margin-top: 40px;
-    margin-left: 18px;
-    margin-right: 27px;
-    width: 904px;
-}
+    .form-section {
+        background: #fff;
+        padding: 31px;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        margin-top: 40px;
+        margin-left: 101px;
+        margin-right: 27px;
+        width: 904px;
+    }
 
     label {
         font-weight: 600;
@@ -52,7 +52,6 @@
         text-align: center;
         vertical-align: middle;
         word-wrap: break-word;
-        overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         max-width: 150px;
@@ -61,14 +60,12 @@
     td {
         border: 1px solid #dee2e6;
         text-align: center;
-        overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
     .table-responsive {
         margin-top: 20px;
-        overflow-x: hidden;
     }
 
     th {
@@ -81,22 +78,33 @@
     .btn-submit {
         background-color: #800000;
         color: white;
-        padding: 8px 9px;
+        padding: 7px 20px;
         border: none;
         border-radius: 6px;
         font-size: 12px;
         margin-top: 12px;
-        margin-left: 847px;
+        cursor: pointer;
     }
 
-    .btn-submit:hover {
-        background-color: #660000;
-    }
+        .btn-submit:hover {
+            background-color: #660000;
+        }
+
 
     .btn-container {
         display: flex;
         justify-content: flex-end;
     }
+
+    .btn-container-fixed {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        width: 100%;
+    }
+
+
 
     .firsts {
         display: flex;
@@ -104,7 +112,6 @@
         align-items: center;
         gap: 12px;
         margin: 20px;
-        overflow-x: auto;
     }
 
     .firsts select,
@@ -118,8 +125,9 @@
     }
 
     .content {
-        padding: 0px 26px 18px;
-        background-color: #EEE;
+        padding: 10px 26px 18px;
+        /* background-color: #EEE; */
+        margin-left: 128px;
         flex-grow: 1;
     }
 
@@ -147,38 +155,98 @@
     <form method="POST">
         {% csrf_token %}
         <div class="firsts">
-            <select name="course" id="course" onchange="document.getElementById('form_action').value='dropdown_change'; this.form.submit()">
+            <!-- Program Type -->
+            <select class="form-control" id="program_type" name="program_type"
+                    {% if form_mode == 'view' %}disabled{% endif %}
+                    onchange="this.form.submit()">
+                {% if not selected_program_type_id %}
+                    <option value="" selected>Select Program Type</option>
+                {% else %}
+                    <option value="">Select Program Type</option>
+                {% endif %}
+                {% for type in program_types %}
+                    <option value="{{ type.id }}" {% if type.id|stringformat:"s" == selected_program_type_id|stringformat:"s" %}selected{% endif %}>
+                        {{ type.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select class="form-control" id="academic_year" name="academic_year"
+                    {% if not selected_program_type_id or form_mode == 'view' %}disabled{% endif %}
+                    onchange="this.form.submit()">
+                <option value="">Select Academic Year</option>
+                {% for year in academic_years %}
+                    <option value="{{ year }}" {% if year == selected_academic_year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Course -->
+            <select name="course" id="course"
+                    onchange="document.getElementById('form_action').value='dropdown_change'; this.form.submit()"
+                    {% if not selected_program_type_id or form_mode == 'view' %}disabled{% endif %}>
                 <option value="">-- Select Course --</option>
                 {% for course in courses %}
-                    <option value="{{ course.id }}" {% if course.id == selected_course_id %}selected{% endif %}>{{ course.name }}</option>
+                <option value="{{ course.id }}" {% if course.id == selected_course_id %}selected{% endif %}>{{ course.name }}</option>
                 {% endfor %}
             </select>
 
-            <select name="subject" id="subject" onchange="document.getElementById('form_action').value='dropdown_change'; this.form.submit()" {% if not selected_course_id %}disabled{% endif %}>
+            <!-- Semester -->
+            <select name="semester" id="semester"
+                    onchange="document.getElementById('form_action').value='dropdown_change'; this.form.submit()"
+                    {% if not selected_course_id or form_mode == 'view' %}disabled{% endif %}>
+                <option value="">-- Select Cycle(Sem/Year) --</option>
+                {% for sem in semesters %}
+                <option value="{{ sem.id }}" {% if sem.id == selected_semester_id %}selected{% endif %}>{{ sem.name }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+        <div class="firsts">
+            <div class="form-group col-md-3">
+                <input type="date"
+                       name="attendance_date"
+                       id="attendance_date"
+                       value="{{ attendance_date|default:today|date:'Y-m-d' }}"
+                       max="{{ today|date:'Y-m-d' }}"
+                       class="form-control"
+                       {% if form_mode == 'view' %}readonly{% endif %}
+                       required
+                       onchange="document.getElementById('form_action').value='dropdown_change'; this.form.submit();">
+            </div>
+            <!-- Subject -->
+            <select name="subject" id="subject"
+                    onchange="document.getElementById('form_action').value='dropdown_change'; this.form.submit()"
+                    {% if not selected_semester_id or form_mode == 'view' %}disabled{% endif %}>
                 <option value="">-- Select Subject --</option>
                 {% for subject in subjects %}
-                    <option value="{{ subject.id }}" {% if subject.id == selected_subject_id %}selected{% endif %}>{{ subject.name }}</option>
+                <option value="{{ subject.id }}" {% if subject.id == selected_subject_id %}selected{% endif %}>{{ subject.name }}</option>
                 {% endfor %}
             </select>
 
-            <input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" required>
+            <!--<input type="date" name="attendance_date" value="{{ today|date:'Y-m-d' }}" {% if form_mode == 'view' %}readonly{% endif %} required>-->
             <input type="hidden" name="form_action" id="form_action" value="dropdown_change">
 
-            <label>Faculty Name:</label>
-            {% if selected_subject %}
-                <input type="text" name="faculty_name" value="{{ selected_subject.faculty }}" readonly style="background-color: #fff; border: 1px solid #ccc; border-radius: 4px; ">
-            {% else %}
-                <input type="text" name="faculty_name" value="" readonly style="background-color: #fff; border: 1px solid #ccc; border-radius: 4px; ">
-            {% endif %}
+            <!-- Time Slot -->
+            <div class="form-group">
+                <select name="timeslot" id="timeslot" class="form-control" onchange="document.getElementById('form_action').value='dropdown_change'; this.form.submit()" {% if not selected_subject_id or form_mode == 'view' %}disabled{% endif %} required>
+                    <option value="">--- Select Time Slot ---</option>
+                    {% for slot in time_slots %}
+                    <option value="{{ slot.id }}" {% if slot.id == selected_timeslot_id %}selected{% endif %}>{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Faculty -->
+            <input type="text" name="faculty_name" value="{{ faculty.name }}" readonly>
         </div>
 
-        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+        <div class="table-responsive" style="max-height: 500px;">
             <table class="table table-bordered table-striped table-hover mt-3">
                 <thead>
                     <tr>
                         <th>Sl No</th>
                         <th>Student Name</th>
-                        <th>Admission No</th>
+                        <!--<th>Admission No</th>-->
                         <th>Student UserID</th>
                         <th>Subject</th>
                         <th>Status</th>
@@ -188,40 +256,60 @@
                 </thead>
                 <tbody>
                     {% if student_subject_pairs %}
-                        {% for entry in student_subject_pairs %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ entry.student.student_name }}</td>
-                            <td>{{ entry.student.admission_no }}</td>
-                            <td>{{ entry.student.student_userid }}</td>
-                            <td>{{ entry.subject.name }}</td>
-                            <td>
-                                <div class="status-options">
-                                    <label><input type="radio" name="status_{{ entry.student.admission_no }}" value="present" required>P</label>
-                                    <label><input type="radio" name="status_{{ entry.student.admission_no }}" value="late">L</label>
-                                    <label><input type="radio" name="status_{{ entry.student.admission_no }}" value="absent">A</label>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" name="remarks_{{ entry.student.admission_no }}" placeholder="Optional" style="width: 100%; font-size: 12px; margin: 1px -82px 1px -74px; border: #fff; text-align: center;">
-                            </td>
-                            <td>{{ entry.attendance_percentage }}%</td>
-                        </tr>
-                        {% endfor %}
+                    {% for entry in student_subject_pairs %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ entry.student.student_name }}</td>
+                        <!--<td>{{ entry.student.admission_no }}</td>-->
+                        <td>{{ entry.student.student_userid }}</td>
+                        <td>{{ entry.subject.name }}</td>
+                        <td>
+                            {% if form_mode == 'view' %}
+                            {{ entry.existing_status|title }}
+                            {% else %}
+                            <div class="status-options">
+                                <label><input type="radio" name="status_{{ entry.student.id }}" value="present" {% if entry.existing_status == 'present' %}checked{% endif %}> P</label>
+                                <label><input type="radio" name="status_{{ entry.student.id }}" value="late" {% if entry.existing_status == 'late' %}checked{% endif %}> L</label>
+                                <label><input type="radio" name="status_{{ entry.student.id }}" value="absent" {% if entry.existing_status == 'absent' %}checked{% endif %}> A</label>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if form_mode == 'view' %}
+                            {{ entry.existing_remarks }}
+                            {% else %}
+                            <input type="text" name="remarks_{{ entry.student.id }}" value="{{ entry.existing_remarks }}" placeholder="Optional" style="width: 100%; font-size: 12px; text-align: center;">
+                            {% endif %}
+                        </td>
+                        <td>{{ entry.attendance_percentage }}%</td>
+                        <input type="hidden" name="student_ids[]" value="{{ entry.student.id }}">
+                    </tr>
+                    {% endfor %}
                     {% else %}
-                        <tr>
-                            <td colspan="7">Please select a course and subject to view student attendance form.</td>
-                        </tr>
+                    <tr>
+                        <td colspan="8">Please select a course and subject to view student attendance form.</td>
+                    </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
+        <div class="btn-container-fixed">
+            <a href="{% url 'student_attendance_list' %}" class="btn-submit">Back</a>
 
-        <button type="submit" class="btn-submit"
-                onclick="document.getElementById('form_action').value='submit_attendance'"
-                {% if not student_subject_pairs %}disabled{% endif %}>
-            Submit
-        </button>
+            {% if form_mode != 'view' %}
+            <button type="submit"
+                    class="btn-submit"
+                    onclick="document.getElementById('form_action').value='submit_attendance';"
+                    {% if not student_subject_pairs %}disabled{% endif %}>
+                {% if form_mode == 'edit' %}Update{% else %}Submit{% endif %}
+            </button>
+
+            {% endif %}
+        </div>
+
+
+
     </form>
 </div>
+
 {% endblock %}
