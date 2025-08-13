@@ -1011,14 +1011,14 @@ class Student(models.Model):
     tuition_due_date = models.DateField(null=True, blank=True)
 
     # ─────────── Transport Fee ───────────
-    transport_fee = models.CharField(max_length=100)
+    transport_fee = models.IntegerField(null=True, blank=True)
     transport_fee_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     transport_pending_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     transport_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     transport_due_date = models.DateField(null=True, blank=True)
 
     # ─────────── Hostel Fee ───────────
-    hostel_fee = models.CharField(max_length=100)
+    hostel_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     hostel_fee_paid = models.DecimalField(max_digits=10, decimal_places=2)
     hostel_pending_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     hostel_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -1085,14 +1085,15 @@ class StudentPaymentHistory(models.Model):
     tuition_due_date        = models.DateField(null=True, blank=True)
 
     # ─────────── Transport Fee ───────────
-    transport_fee           = models.CharField(max_length=100, null=True, blank=True)
+    transport_fee           = models.IntegerField(max_length=100, null=True, blank=True)
+
     transport_fee_paid      = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     transport_pending_fee   = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     transport_amount        = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     transport_due_date      = models.DateField(null=True, blank=True)
 
     # ─────────── Hostel Fee ───────────
-    hostel_fee              = models.CharField(max_length=100, null=True, blank=True)
+    hostel_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     hostel_fee_paid         = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     hostel_pending_fee      = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     hostel_amount           = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
