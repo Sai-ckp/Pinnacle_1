@@ -1,0 +1,9 @@
+.git
+.github
+*.log
+__pycache__/
+*.pyc
+node_modules/
+media/
+venv/
+.venv/
