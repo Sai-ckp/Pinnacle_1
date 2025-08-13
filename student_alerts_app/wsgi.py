@@ -17,13 +17,15 @@ https://docs.djangoproject.com/en/2.1/howto/deployment/wsgi/
 """
 
 import os
+
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault(
-    'DJANGO_SETTINGS_MODULE',
-    'student_alerts_app.settings')
+# Determine the settings module based on the environment variable
+# If 'WEB_HOSTNAME' is set, use the production settings; otherwise, use the default settings.
+settings_module = 'student_alerts_app.deployment' if 'ALLOWED_HOSTS' in os.environ else 'student_alerts_app.settings'
 
-# This application object is used by any WSGI server configured to use this
-# file. This includes Django's development server, if the WSGI_APPLICATION
-# setting points here.
+# Set the DJANGO_SETTINGS_MODULE environment variable
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
+
+
 application = get_wsgi_application()
