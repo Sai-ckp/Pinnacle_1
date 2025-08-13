@@ -53,20 +53,16 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # The connection string is typically set as an environment variable in Azure App Service for security reasons.
 # The connection string is expected to be in the format:
 # "dbname=your_db_name user=your_user password=your_password host=your_host port=your_port"
-connection_string = os.environ.get('AZURE_POSTGRESSQL_CONNECTIONSTRING', None)
-parameters = {param.split('=')[0]: param.split('=')[1] for param in connection_string.split(" ")}
-
-print(parameters)
 
 
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': parameters['DB_NAME'],
-        'USER': parameters['DB_USER'],
-        'PASSWORD': parameters['DB_PASSWORD'],
-        'HOST': parameters['DB_HOST'],
-        'PORT': parameters['DB_PORT'],
+        'NAME': os.getenv('DB_NAME', ''),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
