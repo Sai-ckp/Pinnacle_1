@@ -101,19 +101,16 @@ WSGI_APPLICATION = 'student_alerts_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 DATABASES = {
-     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'institute_db1',  # Replace with your actual database name
-        'USER': 'root',     # Replace with your MySQL username
-        'PASSWORD': 'root',  # Replace with your MySQL password
-        'HOST': 'localhost',           # Keep as 'localhost' if running MySQL locally
-        'PORT': '3306',                # Default MySQL port
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET NAMES 'utf8mb4'"
-        },
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'institute_db_pg',  # Replace with your actual PostgreSQL database name
+        'USER': 'postgres',       # Replace with your PostgreSQL username
+        'PASSWORD': 'root',  # Replace with your PostgreSQL password
+        'HOST': 'localhost',      # Use the appropriate host (e.g., localhost or a remote host)
+        'PORT': '5432',           # Default PostgreSQL port
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
