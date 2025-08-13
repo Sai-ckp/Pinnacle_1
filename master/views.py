@@ -1047,40 +1047,40 @@ def dashboard_view(request):
             degree_admission_qs = degree_admission_qs.filter(admission_date__gte=start_date)
 
     # Fees Section
-    total_declared_fee = total_collected_fee = total_pending_fees = Decimal('0.00')
-    if 'fees' in sections:
-        decimal_type = DecimalField(max_digits=12, decimal_places=2)
+    # total_declared_fee = total_collected_fee = total_pending_fees = Decimal('0.00')
+    # if 'fees' in sections:
+    #     decimal_type = DecimalField(max_digits=12, decimal_places=2)
 
-        declared_expr = ExpressionWrapper(
-            Coalesce(F('tuition_fee'), 0) +
-            Coalesce(F('transport_fee'), 0) +
-            Coalesce(F('hostel_fee'), 0) +
-            Coalesce(F('books_fee'), 0) +
-            Coalesce(F('uniform_fee'), 0) +
-            Coalesce(F('other_fee'), 0),
-            output_field=decimal_type
-        )
-        collected_expr = ExpressionWrapper(
-            Coalesce(F('tuition_fee_paid'), 0) +
-            Coalesce(F('transport_fee_paid'), 0) +
-            Coalesce(F('hostel_fee_paid'), 0) +
-            Coalesce(F('books_fee_paid'), 0) +
-            Coalesce(F('uniform_fee_paid'), 0) +
-            Coalesce(F('other_amount'), 0),
-            output_field=decimal_type
-        )
-        pending_expr = ExpressionWrapper(
-            Coalesce(F('tuition_pending_fee'), 0) +
-            Coalesce(F('transport_pending_fee'), 0) +
-            Coalesce(F('hostel_pending_fee'), 0) +
-            Coalesce(F('books_pending_fee'), 0) +
-            Coalesce(F('uniform_pending_fee'), 0),
-            output_field=decimal_type
-        )
+        # declared_expr = ExpressionWrapper(
+        #     Coalesce(F('tuition_fee'), 0) +
+        #     Coalesce(F('transport_fee'), 0) +
+        #     Coalesce(F('hostel_fee'), 0) +
+        #     Coalesce(F('books_fee'), 0) +
+        #     Coalesce(F('uniform_fee'), 0) +
+        #     Coalesce(F('other_fee'), 0),
+        #     output_field=decimal_type
+        # )
+        # collected_expr = ExpressionWrapper(
+        #     Coalesce(F('tuition_fee_paid'), 0) +
+        #     Coalesce(F('transport_fee_paid'), 0) +
+        #     Coalesce(F('hostel_fee_paid'), 0) +
+        #     Coalesce(F('books_fee_paid'), 0) +
+        #     Coalesce(F('uniform_fee_paid'), 0) +
+        #     Coalesce(F('other_amount'), 0),
+        #     output_field=decimal_type
+        # )
+        # pending_expr = ExpressionWrapper(
+        #     Coalesce(F('tuition_pending_fee'), 0) +
+        #     Coalesce(F('transport_pending_fee'), 0) +
+        #     Coalesce(F('hostel_pending_fee'), 0) +
+        #     Coalesce(F('books_pending_fee'), 0) +
+        #     Coalesce(F('uniform_pending_fee'), 0),
+        #     output_field=decimal_type
+        # )
 
-        total_declared_fee = student_qs.aggregate(total=Sum(declared_expr))['total'] or 0
-        total_collected_fee = student_qs.aggregate(total=Sum(collected_expr))['total'] or 0
-        total_pending_fees = student_qs.aggregate(total=Sum(pending_expr))['total'] or 0
+        # total_declared_fee = student_qs.aggregate(total=Sum(declared_expr))['total'] or 0
+        # total_collected_fee = student_qs.aggregate(total=Sum(collected_expr))['total'] or 0
+        # total_pending_fees = student_qs.aggregate(total=Sum(pending_expr))['total'] or 0
 
     if 'enquiries' in sections:
         enquiry1_qs = Enquiry1.objects.all()
