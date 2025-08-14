@@ -1138,9 +1138,12 @@ def generate_receipt(request, admission_no):
         today_discount = sum(e.applied_discount or Decimal('0.00') for e in entries if e.payment_date == today)
         # Correct - generator expression wrapped in parentheses
         has_today_activity = any(
-            e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0)
-            for e in entries
-            )
+    (
+        (e.payment_date == today) and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0)
+        for e in entries
+    )
+)
+
         if not has_today_activity:
              continue
 
@@ -1204,6 +1207,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
