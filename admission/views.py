@@ -2784,7 +2784,7 @@ def generate_qr_dynamic(request):
 #receipt
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
+# from weasyprint import HTML
 from .models import Student
 from decimal import Decimal
 
@@ -2796,6 +2796,12 @@ def safe_decimal(value):
         return Decimal(0)
  
 @custom_login_required
+try:
+    from weasyprint import HTML
+except Exception as e:
+    HTML = None
+    WEASYPRINT_ERROR = str(e)
+
 def generate_fee_receipt_pdf(request, student_id):
     student = Student.objects.get(id=student_id)
  
@@ -4950,5 +4956,6 @@ def generate_qr_dynamic(request):
 def student_fee_history(request, admission_no):
     history = StudentPaymentHistory.objects.filter(admission_no=admission_no).order_by('-payment_date')
     return render(request, "student_fee_history.html", {"history": history})
+
 
 
