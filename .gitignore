@@ -2,7 +2,8 @@
 __pycache__/
 *.py[cod]
 *.sqlite3
- 
+ obj/
+
 # Django secret settings
 *.env
 .env
@@ -18,4 +19,5 @@ settings_secret.py
 # OS files
 .DS_Store
 Thumbs.db
+
 
