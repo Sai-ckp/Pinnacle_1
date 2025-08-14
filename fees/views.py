@@ -1093,7 +1093,7 @@ def generate_receipt(request, admission_no):
             f"PDF generation is temporarily unavailable: {e}",
             status=503,
             content_type="text/plain",
-        
+        )
         
     # 🚨 LOG: Today's Fee Collections
     print("\n===== DEBUG: Today's Fee Collections =====")
@@ -1136,10 +1136,11 @@ def generate_receipt(request, admission_no):
     for fee_type, entries in fee_group_map.items():
         today_paid = sum(e.paid_amount or Decimal('0.00') for e in entries if e.payment_date == today)
         today_discount = sum(e.applied_discount or Decimal('0.00') for e in entries if e.payment_date == today)
-        has_today_activity = any(
-                e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0)
-                for e in entries
-            )
+        # Correct - generator expression wrapped in parentheses
+        has_today_activity = any((
+            e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0)
+            for e in entries
+            ))
         if not has_today_activity:
              continue
 
@@ -1203,6 +1204,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
