@@ -1136,44 +1136,42 @@ def generate_receipt(request, admission_no):
     for fee_type, entries in fee_group_map.items():
         today_paid = sum(e.paid_amount or Decimal('0.00') for e in entries if e.payment_date == today)
         today_discount = sum(e.applied_discount or Decimal('0.00') for e in entries if e.payment_date == today)
-        # Correct - generator expression wrapped in parentheses
+
     has_today_activity = any([
-    (e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0))
-    for e in entries
-])
+        (e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0))
+        for e in entries
+    ])
 
+    if not has_today_activity:
+        continue
 
-        if not has_today_activity:
-             continue
+    fee_name = fee_type.name
+    if fee_name[-1].isdigit():
+        prefix, number = fee_name[:-1], fee_name[-1]
+        display_name = f"{prefix} (Installment {number})"
+    else:
+        display_name = fee_name
 
+    amount = entries[0].amount
+    total_paid_for_type = sum(e.paid_amount or Decimal('0.00') for e in entries)
+    total_discount_for_type = sum(e.applied_discount or Decimal('0.00') for e in entries)
+    balance_amount = amount - total_paid_for_type - total_discount_for_type
 
+    print(f"Type: {display_name}, Amt: {amount}, Paid Today: {today_paid}, Discount Today: {today_discount}, Balance: {balance_amount}")
 
-        fee_name = fee_type.name
-        if fee_name[-1].isdigit():
-            prefix, number = fee_name[:-1], fee_name[-1]
-            display_name = f"{prefix} (Installment {number})"
-        else:
-            display_name = fee_name
+    grouped_fees.append({
+        'display_fee_type': display_name,
+        'amount': amount,
+        'paid_amount': today_paid,
+        'applied_discount': today_discount,
+        'balance_amount': balance_amount,
+        'due_date': entries[0].due_date
+    })
 
-        amount = entries[0].amount
-        total_paid_for_type = sum(e.paid_amount or Decimal('0.00') for e in entries)
-        total_discount_for_type = sum(e.applied_discount or Decimal('0.00') for e in entries)
-        balance_amount = amount - total_paid_for_type - total_discount_for_type
+    total_paid += today_paid
+    total_discount += today_discount
+    total_amount += amount
 
-        print(f"Type: {display_name}, Amt: {amount}, Paid Today: {today_paid}, Discount Today: {today_discount}, Balance: {balance_amount}")
-
-        grouped_fees.append({
-            'display_fee_type': display_name,
-            'amount': amount,
-            'paid_amount': today_paid,
-            'applied_discount': today_discount,
-            'balance_amount': balance_amount,
-            'due_date': entries[0].due_date
-        })
-
-        total_paid += today_paid
-        total_discount += today_discount
-        total_amount += amount
 
     student = {
         'admission_no': admission.admission_no,
@@ -1206,6 +1204,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
