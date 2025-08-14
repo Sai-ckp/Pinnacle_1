@@ -967,7 +967,7 @@ def generate_qr_dynamic(request):
 from decimal import Decimal
 from django.http import HttpResponse
 from django.template.loader import get_template
-from weasyprint import HTML
+# from weasyprint import HTML
 from fees.models import StudentFeeCollection
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -997,7 +997,7 @@ logger = logging.getLogger(__name__)
 from decimal import Decimal
 from django.http import HttpResponse
 from django.template.loader import get_template
-from weasyprint import HTML
+# from weasyprint import HTML
 from fees.models import StudentFeeCollection
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -1028,7 +1028,7 @@ from collections import defaultdict
 
 from django.template.loader import get_template
 
-from weasyprint import HTML
+# from weasyprint import HTML
 
 
 from django.utils.timezone import localdate
@@ -1051,7 +1051,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
 from django.template.loader import get_template
-from weasyprint import HTML
+# from weasyprint import HTML
 import re
 from urllib.parse import unquote
 
@@ -1083,6 +1083,17 @@ def generate_receipt(request, admission_no):
     fee_collections_today = all_fee_collections.filter(
         payment_date=today
     ).filter(Q(paid_amount__gt=0) | Q(applied_discount__gt=0))
+
+
+    try:
+        from weasyprint import HTML
+    except Exception as e:
+        # Fail graceful if native libs are missing
+        return HttpResponse(
+            f"PDF generation is temporarily unavailable: {e}",
+            status=503,
+            content_type="text/plain",
+        )
 
     # 🚨 LOG: Today's Fee Collections
     print("\n===== DEBUG: Today's Fee Collections =====")
@@ -1192,6 +1203,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
