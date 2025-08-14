@@ -1093,8 +1093,8 @@ def generate_receipt(request, admission_no):
             f"PDF generation is temporarily unavailable: {e}",
             status=503,
             content_type="text/plain",
-        )
-
+        
+        
     # 🚨 LOG: Today's Fee Collections
     print("\n===== DEBUG: Today's Fee Collections =====")
     for fee in fee_collections_today:
@@ -1203,6 +1203,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
