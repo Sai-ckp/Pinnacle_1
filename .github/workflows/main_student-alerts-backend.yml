@@ -5,6 +5,9 @@
 name: Build and deploy Python app to Azure Web App - student-alerts-backend
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -55,9 +58,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_287ED6A1127B41189D515A92FDB4CC86 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_240F8064CD00457F86779E8340CA967C }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6C3B72B8414F4009B00D711D4B2C8DEE }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E11CF977356E4275B1A0E76F440565B6 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_EB74495F648046539E0F1FC8C29139A8 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1AAB56412DB0442E9D023E56411CD0D1 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -65,5 +68,4 @@ jobs:
         with:
           app-name: 'student-alerts-backend'
           slot-name: 'Production'
-
           
