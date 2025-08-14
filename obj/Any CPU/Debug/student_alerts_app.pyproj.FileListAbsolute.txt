@@ -1,2 +1,0 @@
-C:\Users\Admin\Downloads\student_alerts_app zip 1\student_alerts_app\obj\Any CPU\Debug\student_alerts_app.pyproj.CoreCompileInputs.cache
-C:\Users\Admin\Downloads\student_alerts_app2\student_alerts_app\obj\Any CPU\Debug\student_alerts_app.pyproj.CoreCompileInputs.cache

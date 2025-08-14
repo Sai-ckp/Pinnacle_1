@@ -6,12 +6,16 @@ __pycache__/
 # Django secret settings
 *.env
 .env
+.venv/
+antenv/
 settings_secret.py
  
 # VS Code / IDE stuff
 .vscode/
 .idea/
- 
+.vs/
+
 # OS files
 .DS_Store
 Thumbs.db
+
