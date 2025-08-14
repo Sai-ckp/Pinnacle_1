@@ -3,33 +3,20 @@ from .settings import *
 from .settings import BASE_DIR
 
 # Allow all hosts: WEBSITE_HOSTNAME is set in Azure App Service
-ALLOWED_HOSTS = [os.environ['ALLOWED_HOSTS']]
+# Get the ALLOWED_HOSTS from environment variable, with fallback
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 
 # CSRF_TRUSTED_ORIGINS is required for Azure App Service to allow CSRF protection
 # CSRF stands for Cross-Site Request Forgery, a security vulnerability that allows 
 # an attacker to trick a user into submitting a request that they did not intend to make.
-CSRF_TRUSTED_ORIGINS = ['https://' + os.environ['ALLOWED_HOSTS']]
+CSRF_TRUSTED_ORIGINS = ['https://' + host for host in ALLOWED_HOSTS if host not in ['localhost', '127.0.0.1']]
 
 # DEBUG disabled for production. Because this is a production environment, 
-# it is important to disable DEBUG mode to prevent sensitive information from being exposed. Like below:
-# Using the URLconf defined in RecentCSCSTS.urls, Django tried these URL patterns, in this order:
-# admin/
-# accounts/ [name='home_page']
-# accounts/ home/ [name='home']
-# accounts/ signup/ [name='signup']
-# accounts/ register/ [name='signup']
+# it is important to disable DEBUG mode to prevent sensitive information from being exposed.
 DEBUG = False
 
 # whitenoise.middleware.WhiteNoiseMiddleware : This middleware is used for serving static files in production.
-# why these middlewares are used:
-# 1. SecurityMiddleware: Provides security enhancements.
-# When a client requests the homepage in a Django application using whitenoise, 
-# the static files (e.g., CSS, JavaScript, images) are not copied to the client on every request. 
-# Instead, whitenoise serves the static files from the STATIC_ROOT directory (e.g., staticfiles), 
-# where they were previously collected by running python manage.py collectstatic. 
-# These files are sent to the client’s browser only when referenced in the 
-# HTML (e.g., via <link> or <script> tags), and whitenoise optimizes delivery with compression and caching. 
-# Subsequent requests may use cached files in the browser, reducing server load.
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -41,21 +28,11 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware', 
 ]
 
-#whitenoise.storage.CompressedManifestStaticFilesStorage ?
-
+# Static files configuration
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-# Why is this connection string used?
-# The connection string is used to connect to the Azure PostgreSQL database.
-# It contains the necessary parameters such as database name, user, password, host, and port.
-# This allows the Django application to interact with the database for data storage and retrieval.
-# The connection string is typically set as an environment variable in Azure App Service for security reasons.
-# The connection string is expected to be in the format:
-# "dbname=your_db_name user=your_user password=your_password host=your_host port=your_port"
-
-
-
+# Database configuration for Azure PostgreSQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
