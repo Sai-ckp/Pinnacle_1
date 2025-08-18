@@ -27,3 +27,15 @@ path('transport/', include('transport.urls')),
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
+from django.http import JsonResponse
+
+def actuator_health(request):
+    return JsonResponse({"status": "UP"})
+
+urlpatterns += [
+    path('actuator/health/', actuator_health),
+]
+
