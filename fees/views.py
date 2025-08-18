@@ -1058,6 +1058,17 @@ from urllib.parse import unquote
 
 @custom_login_required
 def generate_receipt(request, admission_no):
+    from urllib.parse import unquote
+    from collections import defaultdict
+    import re
+    from decimal import Decimal
+    from django.db.models import Q
+    from django.db import transaction
+    from django.utils.timezone import localdate, now as timezone_now
+    from django.http import HttpResponse
+    from django.template.loader import get_template
+    from weasyprint import HTML
+
     admission_no = unquote(admission_no).split(" - ")[0].strip()
 
     # Fetch admission object
@@ -1084,17 +1095,16 @@ def generate_receipt(request, admission_no):
         payment_date=today
     ).filter(Q(paid_amount__gt=0) | Q(applied_discount__gt=0))
 
-
+    # Fail gracefully if PDF dependencies are missing
     try:
         from weasyprint import HTML
     except Exception as e:
-        # Fail graceful if native libs are missing
         return HttpResponse(
             f"PDF generation is temporarily unavailable: {e}",
             status=503,
             content_type="text/plain",
         )
-        
+
     # 🚨 LOG: Today's Fee Collections
     print("\n===== DEBUG: Today's Fee Collections =====")
     for fee in fee_collections_today:
@@ -1137,41 +1147,40 @@ def generate_receipt(request, admission_no):
         today_paid = sum(e.paid_amount or Decimal('0.00') for e in entries if e.payment_date == today)
         today_discount = sum(e.applied_discount or Decimal('0.00') for e in entries if e.payment_date == today)
 
-    has_today_activity = any([
-        (e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0))
-        for e in entries
-    ])
+        has_today_activity = any([
+            (e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0))
+            for e in entries
+        ])
 
-    if not has_today_activity:
-        continue
+        if not has_today_activity:
+            continue
 
-    fee_name = fee_type.name
-    if fee_name[-1].isdigit():
-        prefix, number = fee_name[:-1], fee_name[-1]
-        display_name = f"{prefix} (Installment {number})"
-    else:
-        display_name = fee_name
+        fee_name = fee_type.name
+        if fee_name[-1].isdigit():
+            prefix, number = fee_name[:-1], fee_name[-1]
+            display_name = f"{prefix} (Installment {number})"
+        else:
+            display_name = fee_name
 
-    amount = entries[0].amount
-    total_paid_for_type = sum(e.paid_amount or Decimal('0.00') for e in entries)
-    total_discount_for_type = sum(e.applied_discount or Decimal('0.00') for e in entries)
-    balance_amount = amount - total_paid_for_type - total_discount_for_type
+        amount = entries[0].amount
+        total_paid_for_type = sum(e.paid_amount or Decimal('0.00') for e in entries)
+        total_discount_for_type = sum(e.applied_discount or Decimal('0.00') for e in entries)
+        balance_amount = amount - total_paid_for_type - total_discount_for_type
 
-    print(f"Type: {display_name}, Amt: {amount}, Paid Today: {today_paid}, Discount Today: {today_discount}, Balance: {balance_amount}")
+        print(f"Type: {display_name}, Amt: {amount}, Paid Today: {today_paid}, Discount Today: {today_discount}, Balance: {balance_amount}")
 
-    grouped_fees.append({
-        'display_fee_type': display_name,
-        'amount': amount,
-        'paid_amount': today_paid,
-        'applied_discount': today_discount,
-        'balance_amount': balance_amount,
-        'due_date': entries[0].due_date
-    })
+        grouped_fees.append({
+            'display_fee_type': display_name,
+            'amount': amount,
+            'paid_amount': today_paid,
+            'applied_discount': today_discount,
+            'balance_amount': balance_amount,
+            'due_date': entries[0].due_date
+        })
 
-    total_paid += today_paid
-    total_discount += today_discount
-    total_amount += amount
-
+        total_paid += today_paid
+        total_discount += today_discount
+        total_amount += amount
 
     student = {
         'admission_no': admission.admission_no,
@@ -1204,6 +1213,8 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
+
 
 
 
