@@ -1,7 +1,7 @@
-# Base image with Python
+# Base image
 FROM python:3.9-slim
 
-# Install system dependencies required by WeasyPrint
+# Install system dependencies for WeasyPrint
 RUN apt-get update && apt-get install -y \
     build-essential \
     libffi-dev \
@@ -15,24 +15,29 @@ RUN apt-get update && apt-get install -y \
     libgobject-2.0-0 \
     fonts-liberation \
     fonts-dejavu-core \
+    shared-mime-info \  # Helps detect file types (needed for PDF)
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy your code
+# Copy code
 COPY . /app
 
-# Install dependencies
+# Install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Collect static files (optional)
-RUN python manage.py collectstatic --noinput
+# Ensure WeasyPrint's dependencies are resolvable
+RUN python -c "from weasyprint import HTML"
 
-# Expose port (same as Azure App Service)
+# Optional: Collect static files
+RUN python manage.py collectstatic --noinput || echo "No static files to collect"
+
+# Expose port
 EXPOSE 8000
 
-# Start your Django app with Gunicorn
+# Start app
 CMD ["gunicorn", "student_alerts_app.wsgi:application", "--bind", "0.0.0.0:8000"]
