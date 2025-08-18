@@ -1097,13 +1097,13 @@ def generate_receipt(request, admission_no):
     ).filter(Q(paid_amount__gt=0) | Q(applied_discount__gt=0))
 
     # Fail gracefully if PDF dependencies are missing
+    import logging
     try:
-        from weasyprint import HTML
+        from weasyprint import HTML, CSS
+        WEASYPRINT_OK = True
     except Exception as e:
-        return HttpResponse(
-            f"PDF generation is temporarily unavailable: {e}",
-            status=503,
-            content_type="text/plain",
+        WEASYPRINT_OK = False
+        logging.getLogger(__name__).exception("WeasyPrint unavailable: %s", e)
         )
 
     # 🚨 LOG: Today's Fee Collections
@@ -1214,6 +1214,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
