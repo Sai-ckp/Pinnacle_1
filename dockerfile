@@ -2,6 +2,10 @@
 FROM python:3.9-slim
 
 # Install system dependencies for WeasyPrint
+# Base image
+FROM python:3.9-slim
+
+# Install system dependencies for WeasyPrint
 RUN apt-get update && apt-get install -y \
     build-essential \
     libffi-dev \
@@ -19,6 +23,22 @@ RUN apt-get update && apt-get install -y \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy code
+COPY . /app
+
+# Install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Ensure WeasyPrint's dependencies are resolvable
+RUN python -c "from weasyprint import HTML"
+
+# Optional: Collect static files
+RUN python manage.py collectstatic --noinput || echo "No static files to collect"
 
 # Set working directory
 WORKDIR /app
