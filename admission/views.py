@@ -2781,30 +2781,41 @@ def generate_qr_dynamic(request):
     return HttpResponse(buffer.getvalue(), content_type="image/png")
 
 
-#receipt
+# receipt.py
+
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-# from weasyprint import HTML
 from .models import Student
 from decimal import Decimal
 
-@custom_login_required 
-def safe_decimal(value):
-    try:
-        return Decimal(str(value).strip()) if value not in [None, ''] else Decimal(0)
-    except:
-        return Decimal(0)
- 
-@custom_login_required
+# Optional: Gracefully import WeasyPrint
 try:
     from weasyprint import HTML
 except Exception as e:
     HTML = None
     WEASYPRINT_ERROR = str(e)
 
+
+# Utility to safely convert to Decimal
+def safe_decimal(value):
+    try:
+        return Decimal(str(value).strip()) if value not in [None, ''] else Decimal(0)
+    except:
+        return Decimal(0)
+
+
+# View to generate PDF receipt
+@custom_login_required
 def generate_fee_receipt_pdf(request, student_id):
     student = Student.objects.get(id=student_id)
- 
+
+    if HTML is None:
+        return HttpResponse(
+            f"PDF generation is temporarily unavailable: {WEASYPRINT_ERROR}",
+            status=503,
+            content_type="text/plain",
+        )
+
     student.total_fee = sum([
         safe_decimal(student.tuition_fee),
         safe_decimal(student.transport_fee),
@@ -2813,7 +2824,7 @@ def generate_fee_receipt_pdf(request, student_id):
         safe_decimal(student.uniform_fee),
         safe_decimal(student.other_fee)
     ])
- 
+
     student.total_paid = sum([
         safe_decimal(student.tuition_amount),
         safe_decimal(student.transport_amount),
@@ -2822,25 +2833,25 @@ def generate_fee_receipt_pdf(request, student_id):
         safe_decimal(student.uniform_amount),
         safe_decimal(student.other_amount)
     ])
- 
+
     student.total_pending = sum([
         safe_decimal(student.tuition_pending_fee),
         safe_decimal(student.transport_pending_fee),
         safe_decimal(student.hostel_pending_fee),
         safe_decimal(student.books_pending_fee),
-        safe_decimal(student.uniform_pending_fee)
+        safe_decimal(student.uniform_pending_fee),
+        safe_decimal(student.other_pending_fee)  # <-- added this if it exists
     ])
- 
+
     html_string = render_to_string('admission/student_receipt_pdf.html', {
         'student': student
     })
- 
+
     pdf_file = HTML(string=html_string).write_pdf()
- 
+
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename=receipt_{student.admission_no}.pdf'
     return response
-
 
 
 
@@ -4956,6 +4967,7 @@ def generate_qr_dynamic(request):
 def student_fee_history(request, admission_no):
     history = StudentPaymentHistory.objects.filter(admission_no=admission_no).order_by('-payment_date')
     return render(request, "student_fee_history.html", {"history": history})
+
 
 
 
