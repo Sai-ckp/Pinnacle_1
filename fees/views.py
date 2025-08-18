@@ -5,6 +5,7 @@ from django.forms import modelformset_factory
 from .models import FeeDeclaration
 from .forms import FeeDeclarationForm, FeeDeclarationDetailFormSet
 from django.contrib import messages
+from weasyprint import HTML
 
 from master.models import CourseType, AcademicYear, Course
 from .models import FeeDeclaration
@@ -1067,7 +1068,7 @@ def generate_receipt(request, admission_no):
     from django.utils.timezone import localdate, now as timezone_now
     from django.http import HttpResponse
     from django.template.loader import get_template
-    from weasyprint import HTML
+    
 
     admission_no = unquote(admission_no).split(" - ")[0].strip()
 
@@ -1213,6 +1214,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
