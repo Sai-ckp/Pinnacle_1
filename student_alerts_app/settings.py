@@ -153,7 +153,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'student_alerts_app.storage.CustomStaticFilesStorage'
+# Use Whitenoise Storage backend that skips decoding binaries
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 TIME_ZONE = 'Asia/Kolkata'
 USE_TZ = True
 
@@ -188,6 +189,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
