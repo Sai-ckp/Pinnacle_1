@@ -1068,7 +1068,7 @@ def generate_receipt(request, admission_no):
     from django.utils.timezone import localdate, now as timezone_now
     from django.http import HttpResponse
     from django.template.loader import get_template
-    
+    import logging
 
     admission_no = unquote(admission_no).split(" - ")[0].strip()
 
@@ -1097,14 +1097,12 @@ def generate_receipt(request, admission_no):
     ).filter(Q(paid_amount__gt=0) | Q(applied_discount__gt=0))
 
     # Fail gracefully if PDF dependencies are missing
-    import logging
     try:
         from weasyprint import HTML, CSS
         WEASYPRINT_OK = True
     except Exception as e:
         WEASYPRINT_OK = False
         logging.getLogger(__name__).exception("WeasyPrint unavailable: %s", e)
-        
 
     # 🚨 LOG: Today's Fee Collections
     print("\n===== DEBUG: Today's Fee Collections =====")
@@ -1148,13 +1146,13 @@ def generate_receipt(request, admission_no):
         today_paid = sum(e.paid_amount or Decimal('0.00') for e in entries if e.payment_date == today)
         today_discount = sum(e.applied_discount or Decimal('0.00') for e in entries if e.payment_date == today)
 
-    has_today_activity = any(
-        (e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0))
-        for e in entries
-    )
+        has_today_activity = any(
+            (e.payment_date == today and ((e.paid_amount or 0) > 0 or (e.applied_discount or 0) > 0))
+            for e in entries
+        )
 
-    if not has_today_activity:
-        continue
+        if not has_today_activity:
+            continue
 
         fee_name = fee_type.name
         if fee_name[-1].isdigit():
@@ -1214,6 +1212,8 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
+
 
 
 
