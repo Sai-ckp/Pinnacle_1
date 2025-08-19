@@ -1104,7 +1104,7 @@ def generate_receipt(request, admission_no):
     except Exception as e:
         WEASYPRINT_OK = False
         logging.getLogger(__name__).exception("WeasyPrint unavailable: %s", e)
-        )
+        
 
     # 🚨 LOG: Today's Fee Collections
     print("\n===== DEBUG: Today's Fee Collections =====")
@@ -1214,6 +1214,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
