@@ -5,7 +5,7 @@ from django.forms import modelformset_factory
 from .models import FeeDeclaration
 from .forms import FeeDeclarationForm, FeeDeclarationDetailFormSet
 from django.contrib import messages
-from weasyprint import HTML
+from io import BytesIO
 
 from master.models import CourseType, AcademicYear, Course
 from .models import FeeDeclaration
@@ -1063,7 +1063,7 @@ def generate_receipt(request, admission_no):
     from collections import defaultdict
     import re
     from decimal import Decimal
-    from weasyprint import HTML
+    # from weasyprint import HTML
     from django.db.models import Q
     from django.db import transaction
     from django.utils.timezone import localdate, now as timezone_now
@@ -1099,11 +1099,13 @@ def generate_receipt(request, admission_no):
 
     # Fail gracefully if PDF dependencies are missing
     try:
-        from weasyprint import HTML, CSS
-        WEASYPRINT_OK = True
+        from xhtml2pdf import pisa
+        XHTML2PDF_OK = True
     except Exception as e:
-        WEASYPRINT_OK = False
-        logging.getLogger(__name__).exception("WeasyPrint unavailable: %s", e)
+        pisa = None
+        XHTML2PDF_OK = False
+        XHTML2PDF_ERROR = str(e)
+        logging.getLogger(__name__).exception("xhtml2pdf unavailable: %s", e)
 
     # 🚨 LOG: Today's Fee Collections
     print("\n===== DEBUG: Today's Fee Collections =====")
@@ -1213,6 +1215,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
