@@ -29,7 +29,8 @@ MIDDLEWARE = [
 ]
 
 # Static files configuration
-STATICFILES_STORAGE = 'student_alerts_app.storage.CustomStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
