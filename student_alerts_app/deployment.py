@@ -12,6 +12,13 @@ ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 # an attacker to trick a user into submitting a request that they did not intend to make.
 CSRF_TRUSTED_ORIGINS = ['https://' + host for host in ALLOWED_HOSTS if host not in ['localhost', '127.0.0.1']]
 
+# Instruct Whitenoise to skip compression for binary static files
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = [
+    '.jpg', '.jpeg', '.png', '.gif', '.webp',
+    '.woff', '.woff2', '.ttf', '.eot', '.otf',
+    '.svg', '.ico', '.mp4', '.webm'
+]
+
 # DEBUG disabled for production. Because this is a production environment, 
 # it is important to disable DEBUG mode to prevent sensitive information from being exposed.
 DEBUG = False
