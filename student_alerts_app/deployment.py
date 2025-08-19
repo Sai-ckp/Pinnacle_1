@@ -29,7 +29,8 @@ MIDDLEWARE = [
 ]
 
 # Static files configuration
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'student_alerts_app.storage.CustomStaticFilesStorage'
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Database configuration for Azure PostgreSQL
