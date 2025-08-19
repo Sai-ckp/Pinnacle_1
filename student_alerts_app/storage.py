@@ -1,12 +1,15 @@
 from whitenoise.storage import CompressedManifestStaticFilesStorage
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CustomStaticFilesStorage(CompressedManifestStaticFilesStorage):
     def post_process(self, *args, **kwargs):
-        # Generator to safely skip binary files that can't be decoded
-        for name, hashed_name, processed in super().post_process(*args, **kwargs):
+        # Wrap generator from super().post_process
+        processor = super().post_process(*args, **kwargs)
+        for name, hashed_name, processed in processor:
             try:
                 yield name, hashed_name, processed
             except UnicodeDecodeError:
-                # Skip problematic file
-                print(f"Skipping file during collectstatic due to decode error: {name}")
+                logger.warning(f"⚠️ Skipping binary/static file due to decode error: {name}")
                 continue
