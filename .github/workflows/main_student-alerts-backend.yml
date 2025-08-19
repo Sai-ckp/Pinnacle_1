@@ -17,36 +17,32 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Python version
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
-      - name: Create and start virtual environment
+      - name: Create virtual environment and install dependencies
         run: |
           python -m venv venv
           source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Prepare artifact by copying all files (including hidden ones, excluding venv and artifact)
+      - name: Prepare artifact (excluding .git, venv, artifact)
         run: |
           shopt -s dotglob
           mkdir artifact
-          for item in * .*; do
-            if [[ "$item" != "." && "$item" != ".." && "$item" != "venv" && "$item" != "artifact" ]]; then
-              cp -r "$item" artifact/
-            fi
-          done
+          rsync -av --exclude='venv' --exclude='artifact' --exclude='.git' ./ artifact/
 
-      - name: Upload artifact for deployment jobs
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: artifact/
+          path: artifact
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,15 +58,12 @@ jobs:
           name: python-app
           path: app
 
-      - name: List all files in artifact
-        run: find app
-
-      - name: Move artifact contents to root
+      - name: Move contents to root for deployment
         run: |
           shopt -s dotglob
-          mv app/* .
+          cp -r app/* .
 
-      - name: List all files after move
+      - name: List files before deployment (for debugging)
         run: find . -type f
 
       - name: Login to Azure
@@ -87,5 +80,6 @@ jobs:
           slot-name: 'Production'
 
     
+
 
 
