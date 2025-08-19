@@ -1063,6 +1063,7 @@ def generate_receipt(request, admission_no):
     from collections import defaultdict
     import re
     from decimal import Decimal
+    from weasyprint import HTML
     from django.db.models import Q
     from django.db import transaction
     from django.utils.timezone import localdate, now as timezone_now
@@ -1212,6 +1213,7 @@ def generate_receipt(request, admission_no):
     html.write_pdf(target=response)
 
     return response
+
 
 
 
