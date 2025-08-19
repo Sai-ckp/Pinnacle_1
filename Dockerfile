@@ -1,63 +1,50 @@
-# Base image
-FROM python:3.9-slim
+# Stage 1: Builder stage installs dependencies and builds assets
+FROM python:3.9-slim AS builder
 
-# Install system dependencies for WeasyPrint
-# Base image
-FROM python:3.9-slim
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies for WeasyPrint
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libffi-dev \
-    libpango1.0-0 \
-    libpangocairo-1.0-0 \
-    libcairo2 \
-    libgdk-pixbuf2.0-0 \
-    libjpeg-dev \
-    libxml2 \
-    libxslt1.1 \
-    libgobject-2.0-0 \
-    fonts-liberation \
-    fonts-dejavu-core \
-    shared-mime-info  # Helps detect file types (needed for PDF)
-    curl \
+WORKDIR /app
+
+# Copy dependency file first to improve cache utilization
+COPY requirements.txt ./
+
+# Install runtime and build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+      libgdk-pixbuf2.0-0 libffi-dev shared-mime-info \
+      libgobject-2.0-0 build-essential \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt \
+    && apt-get purge -y build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Copy project files and collect static assets
+COPY . .
+
+RUN python -c "from weasyprint import HTML" && \
+    python manage.py collectstatic --noinput
+
+# Stage 2: Final runtime image
+FROM python:3.9-slim AS production
+
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copy code
-COPY . /app
+# Create and switch to a non-root user
+RUN addgroup --system appgroup && \
+    adduser --system --ingroup appgroup appuser
 
-# Install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+# Copy only necessary files from builder stage
+COPY --from=builder /app /app
 
-# Ensure WeasyPrint's dependencies are resolvable
-RUN python -c "from weasyprint import HTML"
+# Set ownership and drop privileges
+RUN chown -R appuser:appgroup /app
+USER appuser
 
-# Optional: Collect static files
-RUN python manage.py collectstatic --noinput || echo "No static files to collect"
-
-# Set working directory
-WORKDIR /app
-
-# Copy code
-COPY . /app
-
-# Install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-
-# Ensure WeasyPrint's dependencies are resolvable
-RUN python -c "from weasyprint import HTML"
-
-# Optional: Collect static files
-RUN python manage.py collectstatic --noinput || echo "No static files to collect"
-
-# Expose port
+# Expose app port and start command
 EXPOSE 8000
-
-# Start app
 CMD ["gunicorn", "student_alerts_app.wsgi:application", "--bind", "0.0.0.0:8000"]
