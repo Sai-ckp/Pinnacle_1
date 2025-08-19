@@ -154,10 +154,17 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = '/static/'
 # Use Whitenoise Storage backend that skips decoding binaries
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 TIME_ZONE = 'Asia/Kolkata'
 USE_TZ = True
 
+# Instruct Whitenoise to skip compression for binary static files
+WHITENOISE_SKIP_COMPRESS_EXTENSIONS = [
+    '.jpg', '.jpeg', '.png', '.gif', '.webp',
+    '.woff', '.woff2', '.ttf', '.eot', '.otf',
+    '.svg', '.ico', '.mp4', '.webm'
+]
 
 
 
@@ -189,6 +196,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
