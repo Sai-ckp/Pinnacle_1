@@ -2788,12 +2788,13 @@ from django.template.loader import render_to_string
 from .models import Student
 from decimal import Decimal
 
-# Optional: Gracefully import WeasyPrint
+# Optional: Gracefully import xhtml2pdf
 try:
-    from weasyprint import HTML
+    from xhtml2pdf import pisa
 except Exception as e:
-    HTML = None
-    WEASYPRINT_ERROR = str(e)
+    pisa = None
+    XHTML2PDF_ERROR = str(e)
+
 
 
 # Utility to safely convert to Decimal
@@ -2809,12 +2810,13 @@ def safe_decimal(value):
 def generate_fee_receipt_pdf(request, student_id):
     student = Student.objects.get(id=student_id)
 
-    if HTML is None:
+    if pisa is None:
         return HttpResponse(
-            f"PDF generation is temporarily unavailable: {WEASYPRINT_ERROR}",
+            f"PDF generation is temporarily unavailable: {XHTML2PDF_ERROR}",
             status=503,
             content_type="text/plain",
         )
+
 
     student.total_fee = sum([
         safe_decimal(student.tuition_fee),
@@ -2992,7 +2994,7 @@ from django.shortcuts import render, get_object_or_404
 from .models import StudentPaymentHistory
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
+from io import BytesIO
 from .models import Student
 from decimal import Decimal
 
@@ -3053,7 +3055,7 @@ def download_student_receipt(request, pk):
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
+from io import BytesIO
 from .models import StudentPaymentHistory
 
 from decimal import Decimal
@@ -4332,7 +4334,7 @@ from django.template.loader import render_to_string
 
 from django.http import HttpResponse
 
-from weasyprint import HTML
+from io import BytesIO
 
 from .models import DegreeAdmission
 
@@ -4967,6 +4969,7 @@ def generate_qr_dynamic(request):
 def student_fee_history(request, admission_no):
     history = StudentPaymentHistory.objects.filter(admission_no=admission_no).order_by('-payment_date')
     return render(request, "student_fee_history.html", {"history": history})
+
 
 
 
