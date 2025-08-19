@@ -25,18 +25,16 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Create virtual environment and install dependencies
+      - name: Install dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Prepare artifact (excluding .git, venv, artifact)
+      - name: Prepare artifact (excluding .git)
         run: |
           shopt -s dotglob
           mkdir artifact
-          rsync -av --exclude='venv' --exclude='artifact' --exclude='.git' ./ artifact/
+          rsync -av --exclude='.git' ./ artifact/
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
@@ -79,7 +77,9 @@ jobs:
           app-name: 'student-alerts-backend'
           slot-name: 'Production'
 
+
     
+
 
 
 
