@@ -32,17 +32,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Prepare artifact by copying all files (including hidden ones)
+      - name: Prepare artifact by copying all files (including hidden ones, excluding venv and artifact)
         run: |
           shopt -s dotglob
           mkdir artifact
-          cp -r * artifact/
+          for item in * .*; do
+            if [[ "$item" != "." && "$item" != ".." && "$item" != "venv" && "$item" != "artifact" ]]; then
+              cp -r "$item" artifact/
+            fi
+          done
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: artifact
+          path: artifact/
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,7 +65,7 @@ jobs:
       - name: List all files in artifact
         run: find app
 
-      - name: Move artifact contents to root (include hidden files)
+      - name: Move artifact contents to root
         run: |
           shopt -s dotglob
           mv app/* .
@@ -83,4 +87,5 @@ jobs:
           slot-name: 'Production'
 
     
+
 
