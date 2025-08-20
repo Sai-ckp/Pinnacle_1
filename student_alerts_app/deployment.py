@@ -40,15 +40,23 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+import sys
+print("DB_NAME:", os.getenv('DB_NAME'), file=sys.stderr)
+print("DB_USER:", os.getenv('DB_USER'), file=sys.stderr)
+print("DB_PASSWORD:", os.getenv('DB_PASSWORD'), file=sys.stderr)
+print("DB_HOST:", os.getenv('DB_HOST'), file=sys.stderr)
 
 # Database configuration for Azure PostgreSQL
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', ''),
-        'USER': os.getenv('DB_USER', ''),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
