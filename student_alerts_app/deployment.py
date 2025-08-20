@@ -40,7 +40,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+import os
 import sys
+
+# Debug logs (will appear in Azure logs)
 print("DB_NAME:", os.getenv('DB_NAME'), file=sys.stderr)
 print("DB_USER:", os.getenv('DB_USER'), file=sys.stderr)
 print("DB_PASSWORD:", os.getenv('DB_PASSWORD'), file=sys.stderr)
@@ -56,7 +59,7 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT', '5432'),
         'OPTIONS': {
-            'sslmode': 'require',
+            'sslmode': 'require',  # Enforce secure connection
         },
     }
 }
