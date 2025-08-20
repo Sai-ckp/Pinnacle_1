@@ -14,7 +14,7 @@ def actuator_health(request):
 
 urlpatterns = [
     # ✅ Safe default homepage
-    path('', home_view),
+    path('', login),
 
     # Admin route
     path('admin', admin.site.urls),
@@ -37,3 +37,4 @@ urlpatterns = [
 
 # ✅ Serve media files (only in development)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
