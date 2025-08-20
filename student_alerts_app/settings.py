@@ -100,16 +100,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'student_alerts_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+import os
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'institute_db_pg',  # Replace with your actual PostgreSQL database name
-        'USER': 'postgres',       # Replace with your PostgreSQL username
-        'PASSWORD': 'root',  # Replace with your PostgreSQL password
-        'HOST': 'localhost',      # Use the appropriate host (e.g., localhost or a remote host)
-        'PORT': '5432',           # Default PostgreSQL port
+        'NAME': os.getenv('DBNAME'),      # Your Azure environment variable for DB name
+        'USER': os.getenv('DBUSER'),      # Azure env var for DB user
+        'PASSWORD': os.getenv('DBPASS'),  # Azure env var for DB password
+        'HOST': os.getenv('DBHOST'),      # Azure env var for DB host (e.g., yourserver.postgres.database.azure.com)
+        'PORT': os.getenv('DBPORT', '5432'),  # Default to 5432 if not set
+        'OPTIONS': {
+            'sslmode': 'require',  # Often required in Azure for secure connection
+        },
     }
 }
+
 
 
 # Password validation
@@ -196,6 +202,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
