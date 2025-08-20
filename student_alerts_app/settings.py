@@ -102,6 +102,13 @@ WSGI_APPLICATION = 'student_alerts_app.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 import os
 
+print("Testing environment variables:")
+print("DB_NAME =", os.getenv('DB_NAME'))
+print("DB_USER =", os.getenv('DB_USER'))
+print("DB_PASSWORD =", os.getenv('DB_PASSWORD'))
+print("DB_HOST =", os.getenv('DB_HOST'))
+print("DB_PORT =", os.getenv('DB_PORT'))
+
 
 DATABASES = {
     'default': {
@@ -211,6 +218,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
