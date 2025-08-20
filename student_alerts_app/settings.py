@@ -34,7 +34,7 @@ ALLOWED_HOSTS = ['192.168.10.221', 'localhost', '127.0.0.1', '122.166.213.68']
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
 INSTALLED_APPS = [
-    'masters',
+    'master',
     'admission',
     'license',
     'attendence',
@@ -196,6 +196,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
