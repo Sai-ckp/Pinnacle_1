@@ -301,6 +301,7 @@ from django.shortcuts import render, redirect
 @custom_login_required
 def admission_form(request, enquiry_no=None):
     success = False
+    pu_admission = None  
     academic_prefix = "PSCM2025-26PUC"
     last = PUAdmission.objects.filter(admission_no__startswith=f"{academic_prefix}/").order_by('-id').first()
     last_number = int(re.search(r"/(\d+)$", last.admission_no).group(1)) if (last and last.admission_no) else 0
@@ -4969,6 +4970,7 @@ def generate_qr_dynamic(request):
 def student_fee_history(request, admission_no):
     history = StudentPaymentHistory.objects.filter(admission_no=admission_no).order_by('-payment_date')
     return render(request, "student_fee_history.html", {"history": history})
+
 
 
 
