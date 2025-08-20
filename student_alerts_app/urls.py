@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse, JsonResponse
+from master import views
 from master.views import custom_login_view
 
 
@@ -39,6 +40,7 @@ urlpatterns = [
 
 # ✅ Serve media files (only in development)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 
 
