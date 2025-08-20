@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse, JsonResponse
+from masters.views import custom_login_view
 
 # ✅ Safe root view (handles '/')
 def home_view(request):
@@ -14,7 +15,7 @@ def actuator_health(request):
 
 urlpatterns = [
     # ✅ Safe default homepage
-    path('', login),
+    path('', views.custom_login_view, name='login'),
 
     # Admin route
     path('admin', admin.site.urls),
@@ -37,4 +38,5 @@ urlpatterns = [
 
 # ✅ Serve media files (only in development)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
