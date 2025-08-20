@@ -105,11 +105,11 @@ import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DBNAME'),      # Your Azure environment variable for DB name
-        'USER': os.getenv('DBUSER'),      # Azure env var for DB user
-        'PASSWORD': os.getenv('DBPASS'),  # Azure env var for DB password
-        'HOST': os.getenv('DBHOST'),      # Azure env var for DB host (e.g., yourserver.postgres.database.azure.com)
-        'PORT': os.getenv('DBPORT', '5432'),  # Default to 5432 if not set
+        'NAME': os.getenv('DB_NAME'),      # Your Azure environment variable for DB name
+        'USER': os.getenv('DB_USER'),      # Azure env var for DB user
+        'PASSWORD': os.getenv('DB_PASSWORD'),  # Azure env var for DB password
+        'HOST': os.getenv('DB_HOST'),      # Azure env var for DB host (e.g., yourserver.postgres.database.azure.com)
+        'PORT': os.getenv('DB_PORT', '5432'),  # Default to 5432 if not set
         'OPTIONS': {
             'sslmode': 'require',  # Often required in Azure for secure connection
         },
@@ -202,6 +202,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
