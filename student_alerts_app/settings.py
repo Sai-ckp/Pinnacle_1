@@ -102,19 +102,28 @@ WSGI_APPLICATION = 'student_alerts_app.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 import os
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),      # Your Azure environment variable for DB name
-        'USER': os.getenv('DB_USER'),      # Azure env var for DB user
-        'PASSWORD': os.getenv('DB_PASSWORD'),  # Azure env var for DB password
-        'HOST': os.getenv('DB_HOST'),      # Azure env var for DB host (e.g., yourserver.postgres.database.azure.com)
-        'PORT': os.getenv('DB_PORT', '5432'),  # Default to 5432 if not set
+        'NAME': os.getenv('DB_NAME'),      # Azure environment variable for database name
+        'USER': os.getenv('DB_USER'),      # Azure environment variable for username
+        'PASSWORD': os.getenv('DB_PASSWORD'),  # Azure environment variable for password
+        'HOST': os.getenv('DB_HOST'),      # Azure environment variable for host, e.g. yourserver.postgres.database.azure.com
+        'PORT': os.getenv('DB_PORT', '5432'),  # Azure environment variable for port, default to 5432
         'OPTIONS': {
-            'sslmode': 'require',  # Often required in Azure for secure connection
+            'sslmode': 'require',          # Required for secure connection to Azure PostgreSQL
         },
     }
 }
+
+# Optional: For debugging to verify variables are loaded correctly, remove in production
+print("Database Configurations:")
+print("DB_NAME:", os.getenv('DB_NAME'))
+print("DB_USER:", os.getenv('DB_USER'))
+print("DB_HOST:", os.getenv('DB_HOST'))
+print("DB_PORT:", os.getenv('DB_PORT', '5432'))
+
 
 
 
@@ -202,6 +211,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
