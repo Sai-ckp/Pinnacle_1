@@ -45,11 +45,17 @@ jobs:
 
       - name: Run collectstatic
         env:
-          DJANGO_SETTINGS_MODULE: your_project_name.settings  # ← Replace with actual settings module
+          DJANGO_SETTINGS_MODULE: student_alerts_app.deployment  # ✅ Correct prod settings
         run: |
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
-        # `|| true` ensures that even if collectstatic fails, it won't break the build
+
+      - name: Run Django migrations
+        env:
+          DJANGO_SETTINGS_MODULE: student_alerts_app.deployment  # ✅ Correct prod settings
+        run: |
+          source venv/bin/activate
+          python manage.py migrate
 
       - name: Prepare artifact (excluding .git, venv, artifact)
         run: |
@@ -101,7 +107,9 @@ jobs:
 
 
 
+
     
+
 
 
 
