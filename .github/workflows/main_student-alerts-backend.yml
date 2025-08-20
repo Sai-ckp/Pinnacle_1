@@ -98,6 +98,23 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
 
+      - name: Set Azure Web App environment variables
+        uses: azure/cli@v1
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az webapp config appsettings set --name student-alerts-backend --resource-group <pinnacle-college> --settings \
+              DB_NAME=${{ secrets.DB_NAME }} \
+              DB_USER=${{ secrets.DB_USER }} \
+              DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              DB_HOST=${{ secrets.DB_HOST }} \
+              DB_PORT=${{ secrets.DB_PORT }}
+        env:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_365CC9311E4C4A2487CB1BAA01746F7A }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
+
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
@@ -109,6 +126,7 @@ jobs:
 
 
     
+
 
 
 
