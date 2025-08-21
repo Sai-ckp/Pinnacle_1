@@ -304,7 +304,11 @@ def admission_form(request, enquiry_no=None):
     pu_admission = None  
     academic_prefix = "PSCM2025-26PUC"
     last = PUAdmission.objects.filter(admission_no__startswith=f"{academic_prefix}/").order_by('-id').first()
-    last_number = int(re.search(r"/(\d+)$", last.admission_no).group(1)) if (last and last.admission_no) else 0
+    last_number = 0
+    if last and last.admission_no:
+        match = re.search(r"/(\d+)$", last.admission_no)
+        if match:
+            last_number = int(match.group(1))
 
     next_serial = last_number + 1
     next_admission_no = f"{academic_prefix}/{next_serial:03d}"
@@ -4970,6 +4974,7 @@ def generate_qr_dynamic(request):
 def student_fee_history(request, admission_no):
     history = StudentPaymentHistory.objects.filter(admission_no=admission_no).order_by('-payment_date')
     return render(request, "student_fee_history.html", {"history": history})
+
 
 
 
