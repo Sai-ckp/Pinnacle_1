@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: read
 
-    env:  # ✅ Set environment variables here for use in migration, collectstatic, etc.
+    env:
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -26,6 +26,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Detect changed files
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            html:
+              - '**/*.html'
+              - 'templates/**'
+            static:
+              - 'static/**'
+            backend:
+              - '**/*.py'
+              - 'requirements.txt'
 
       - name: Install system dependencies for WeasyPrint
         run: |
@@ -43,6 +57,14 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Create virtual environment and install dependencies
         run: |
           python -m venv venv
@@ -51,25 +73,17 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run collectstatic
+        if: steps.changes.outputs.html == 'true' || steps.changes.outputs.static == 'true' || steps.changes.outputs.backend == 'true'
         env:
           DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
         run: |
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
 
       - name: Run Django migrations
+        if: steps.changes.outputs.backend == 'true'
         env:
           DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
         run: |
           source venv/bin/activate
           python manage.py migrate
@@ -138,7 +152,9 @@ jobs:
 
 
 
+
     
+
 
 
 
