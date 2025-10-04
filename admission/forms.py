@@ -175,7 +175,7 @@ class PUAdmissionForm(forms.ModelForm):
 
 
         required_fields = [
-            'mother_name', 'father_name', 'student_phone_no', 
+            'student_phone_no', 
             'current_address', 'category', 'caste', 'payment_mode','student_declaration_date','student_declaration_place'
         ]
         for field_name in required_fields:
@@ -790,4 +790,5 @@ class StudentFeeCollectionForm(forms.ModelForm):
             cleaned_data["status"] = "Pending"
 
         return cleaned_data
+
 
