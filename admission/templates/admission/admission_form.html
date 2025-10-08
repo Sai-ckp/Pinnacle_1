@@ -528,7 +528,7 @@
 
                 <!-- CONTACT DETAILS -->
                 <div class="form-group">
-                    <label class="form-label required">Name of the Father <span class="text-danger"></span></label>
+                    <label class="form-label required">Name of the Father </label>
                     {{ form.father_name }}
                     {% if form.father_name.errors %}
                     <div class="text-danger">{{ form.father_name.errors.0 }}</div>
@@ -537,7 +537,7 @@
 
                 <div class="form-group">
                     <label for="id_father_mobile_no" style="font-size: 12px; font-weight: 500;">
-                        Father Mobile No <span style="color: red;">*</span>
+                        Father Mobile No 
                     </label>
                     {{ form.father_mobile_no }}
                     <div id="error_id_father_mobile_no" class="error-message"></div>
@@ -545,7 +545,7 @@
 
                 <div class="form-group">
                     <label for="id_aadhar_no" style="font-size: 12px; font-weight: 500; color: #333;">
-                        Father Aadhar No <span style="color:red">*</span>
+                        Father Aadhar No 
                     </label>
                     {{ form.aadhar_no }}
                     <div id="error_id_aadhar_no" class="error-message"></div>
@@ -558,7 +558,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="id_parent_mobile_no" style="font-size: 12px; font-weight: 500; color: #333; ">Father Occupation <span style="color:red">*</span></label>
+                    <label for="id_parent_mobile_no" style="font-size: 12px; font-weight: 500; color: #333; ">Father Occupation </label>
                     {{ form.father_occupation }}
                 </div>
                 <div class="form-group">
@@ -566,7 +566,7 @@
                     {{ form.annual_income }}
                 </div>
                 <div class="form-group">
-                    <label class="form-label required">Name of the Mother <span class="text-danger"></span></label>
+                    <label class="form-label required">Name of the Mother</label>
                     {{ form.mother_name }}
                     {% if form.mother_name.errors %}
                     <div class="text-danger small">{{ form.mother_name.errors.0 }}</div>
@@ -575,7 +575,7 @@
 
                 <div class="form-group">
                     <label for="id_mother_phone_no" style="font-size: 12px; font-weight: 500; color: #333;">
-                        Mother Mobile No <span style="color:red">*</span>
+                        Mother Mobile No 
                     </label>
                     {{ form.mother_phone_no }}
                     <div id="error_id_mother_phone_no" class="error-message"></div>
@@ -583,7 +583,7 @@
 
                 <div class="form-group">
                     <label for="id_mother_aadhar_no" style="font-size: 12px; font-weight: 500; color: #333;">
-                        Mother Aadhar No <span style="color:red">*</span>
+                        Mother Aadhar No 
                     </label>
                     {{ form.mother_aadhar_no }}
                     <div id="error_id_mother_aadhar_no" class="error-message"></div>
@@ -597,7 +597,7 @@
 
 
                 <div class="form-group">
-                    <label for="id_parent_mobile_no" style="font-size: 12px; font-weight: 500; color: #333; ">Mother Occupation <span style="color:red">*</span></label>
+                    <label for="id_parent_mobile_no" style="font-size: 12px; font-weight: 500; color: #333; ">Mother Occupation </label>
                     {{ form.mother_occupation }}
                 </div>
                 <div class="form-group">
@@ -2060,5 +2060,6 @@
     });
 </script>-->
 {% endblock %}
+
 
 
