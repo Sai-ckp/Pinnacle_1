@@ -15,6 +15,10 @@ export PYTHONPATH="/antenv/lib/python3.9/site-packages:$PYTHONPATH"
 export DJANGO_SETTINGS_MODULE=student_alerts_app.settings
 echo "DJANGO_SETTINGS_MODULE set to $DJANGO_SETTINGS_MODULE" >> "$LOG_FILE"
 
+# ✅ Install dependencies
+echo "Installing Python packages..." >> "$LOG_FILE"
+pip install -r requirements.txt >> "$LOG_FILE" 2>&1 || echo "Pip install failed" >> "$LOG_FILE"
+
 # Run migrations
 echo "Running migrations..." >> "$LOG_FILE"
 python manage.py migrate --noinput >> "$LOG_FILE" 2>&1 || echo "Migration failed" >> "$LOG_FILE"
