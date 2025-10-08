@@ -260,7 +260,7 @@ class DegreeAdmissionForm(forms.ModelForm):
 
         # Set required for selected fields
         required_fields = [
-            'father_name', 'mother_name', 'student_phone_no',
+             'student_phone_no',
             'permanent_address', 'category', 'caste', 'payment_mode','student_declaration_date','student_declaration_place'
         ]
         for field in required_fields:
@@ -790,5 +790,6 @@ class StudentFeeCollectionForm(forms.ModelForm):
             cleaned_data["status"] = "Pending"
 
         return cleaned_data
+
 
 
