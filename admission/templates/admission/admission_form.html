@@ -809,47 +809,7 @@
         <label class="form-label fw-bold">Co-Curricular Activities</label>
         {{ form.co_curricular_activities }}
     </div>-->
-                <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
-
-                <h4 class="mt-4 mb-3 text-uppercase text-primary" style="text-align: center; margin-bottom: 8px; ">Undertaking Details</h4>
-
-                <!-- Declaration Container -->
-                <div class="form-group" style="grid-column: 1 / -1;">
-
-                    <!-- Parent's Declaration Section -->
-                    <h5 class="mt-4"></h5>
-
-                    <p style="font-style: normal; color: #333; font-size: 10px; ">
-                        I, Mr./Mrs./Ms.
-                        <span {% if view_mode %}contenteditable="false" {% else %}contenteditable="true" {% endif %} style="border-bottom: 1px dotted #333; min-width: 150px; display: inline-block;"></span>,
-                        Parent/Guardian of Master/Kumari
-                        <span id="studentNameInsert" {% if view_mode %}contenteditable="false" {% else %}contenteditable="true" {% endif %} style="border-bottom: 1px dotted #333; min-width: 150px; display: inline-block;"></span>,
-                        hereby agree to take full responsibility for my ward in all academic, co-curricular, and disciplinary matters during the course of study at the institution.
-                    </p>
-
-                    <p style="font-style: normal; color: #333; font-size: 10px; ">
-                        I permit my ward to participate in co-curricular and extra-curricular activities organized by the institution. I understand necessary safety measures will be ensured and I support their involvement in such activities.
-                        If my ward has participated at Taluk, District, or State level events, I will submit a copy of the supporting documents in the documents section below.
-                    </p>
-
-                    <!-- Parent Date, Place, Signature -->
-                    <div class="form-grid mt-3">
-                        <div class="form-group">
-                            <label class="form-label">Date </label>
-                            {{ form.parent_declaration_date }}
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Place </label>
-                            {{ form.parent_declaration_place }}
-                        </div>
-                        <div class="form-group mt-4" style="display: flex; justify-content: flex-end;">
-                            <div style="width: 200px; display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 100%; border-bottom: 1px solid #000; height: 30px;"></div>
-                                <small>Father/Mother/Guardian Signature</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-4" style="font-size: 15px; line-height: 1.6; color: #333;">
+               
                        <!-- <hr class="my-4">-->
 
                         <!-- Student's Declaration Section -->
@@ -2060,6 +2020,7 @@
     });
 </script>-->
 {% endblock %}
+
 
 
 
