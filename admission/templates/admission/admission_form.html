@@ -432,7 +432,7 @@
                 <h4 class="mt-4 mb-3 text-uppercase text-primary" style=" text-align: center; margin-top: -5px; margin-bottom: 11px;">Student Details</h4>
 
                 <div class="form-group">
-                    <label for="id_student_name" style="font-size: 12px; font-weight: 500; color: #333; ">Name of the Student as entered in SSLC marks card<span style="color:red">*</span></label>
+                    <label for="id_student_name" style="font-size: 12px; font-weight: 500; color: #333; ">Name of the Student as entered in SSLC marks card<span style="color:red"></span></label>
                     {{ form.student_name }}
                 </div>
                 <div class="form-group">
@@ -440,11 +440,11 @@
                     {{ form.dob }}
                 </div>
                 <div class="form-group">
-                    <label for="id_gender" style="font-size: 12px; font-weight: 500; color: #333; ">Gender <span style="color:red">*</span></label>
+                    <label for="id_gender" style="font-size: 12px; font-weight: 500; color: #333; ">Gender <span style="color:red"></span></label>
                     {{ form.gender }}
                 </div>
                 <div class="form-group">
-                    <label for="id_birthplace" style="font-size: 12px; font-weight: 500; color: #333;">Place of Birth <span style="color:red">*</span></label>
+                    <label for="id_birthplace" style="font-size: 12px; font-weight: 500; color: #333;">Place of Birth <span style="color:red"></span></label>
                     {{ form.birthplace }}
                 </div>
 
@@ -490,7 +490,7 @@
 
                 <div class="form-group">
                     <label for="id_student_aadhar_no" style="font-size: 12px; font-weight: 500;">
-                        Student Aadhar No <span style="color: red;">*</span>
+                        Student Aadhar No <span style="color: red;"></span>
                     </label>
                     {{ form.student_aadhar_no }}
                     <div id="error_id_student_aadhar_no" class="error-message"></div>
@@ -508,18 +508,18 @@
                 </div>
                 <div class="form-group">
                     <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333;">
-                        Emergency Contact No <span style="color: red;">*</span>
+                        Emergency Contact No <span style="color: red;"></span>
                     </label>
                     {{ form.emergency_contact }}
                     <div id="error_id_emergency_contact" class="error-message"></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333; ">Emergency Contact Person Name <span style="color:red">*</span></label>
+                    <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333; ">Emergency Contact Person Name <span style="color:red"></span></label>
                     {{ form.emergency_contact_name }}
                 </div>
                 <div class="form-group">
-                    <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333; ">Emenrgency Contact Person's relationship with Student <span style="color:red">*</span></label>
+                    <label for="id_emergency_contact" style="font-size: 12px; font-weight: 500; color: #333; ">Emenrgency Contact Person's relationship with Student <span style="color:red"></span></label>
                     {{ form.emergency_contact_relation }}
                 </div>
                 <hr class="mt-4" style="border: 1px solid #000; width: 100%; margin: 2rem auto;" />
@@ -631,7 +631,7 @@
                     <label class="form-label">Student Address</label>
                     {{ form.student_address }}
                 </div>-->
-                "f
+                
                 <div class="form-group">
                     <label class="form-label required">Local Address <span class="text-danger"></span></label>
                     {{ form.current_address }}
@@ -640,7 +640,7 @@
                     {% endif %}
                 </div>
                 <div class="form-group">
-                    <label for="id_permanent_address" style="font-size: 12px; font-weight: 500; color: #333; ">Permanent Address <span style="color:red">*</span></label>
+                    <label for="id_permanent_address" style="font-size: 12px; font-weight: 500; color: #333; ">Permanent Address <span style="color:red"></span></label>
                     {{ form.permanent_address }}
                 </div>
 
@@ -648,13 +648,13 @@
                     <label class="form-label">Pincode</label>
                     {{ form.pincode }}
                 </div>-->
-                "f
+                
                 <div class="form-group">
                     <label class="form-label">Taluk</label>
                     {{ form.city }}
                 </div>
                 <div class="form-group">
-                    <label for="id_district" style="font-size: 12px; font-weight: 500; color: #333;">District<span style="color:red">*</span></label>
+                    <label for="id_district" style="font-size: 12px; font-weight: 500; color: #333;">District<span style="color:red"></span></label>
                     {{ form.district }}
                 </div>
                 <div class="form-group">
@@ -690,7 +690,7 @@
                     <label class="form-label">SSLC Percentage</label>
                     {{ form.sslc_percentage }}
                 </div>-->
-                "f
+                
                 <div class="form-group">
                     <label class="form-label">Name of the School Last Studied</label>
                     {{ form.school_name_laststudied }}
@@ -757,7 +757,7 @@
 
                 <div class="form-group">
                     <label for="id_course_type" class="form-label">
-                        Program Type <span style="color:red">*</span>
+                        Program Type <span style="color:red"></span>
                     </label>
                     <select name="course_type" id="id_course_type" class="form-select" required {% if view_mode %}disabled{% endif %}>
                         <option value="">Select Course Type</option>
@@ -770,7 +770,7 @@
 
                 <div class="form-group">
                     <label for="id_course" class="form-label">
-                        Course <span style="color:red">*</span>
+                        Course <span style="color:red"></span>
                     </label>
                     <select name="course" id="id_course" class="form-select" required {% if view_mode %}disabled{% endif %}>
                         <option value="">Select Course</option>
@@ -850,10 +850,10 @@
                         </div>
                     </div>
                     <div class="mt-4" style="font-size: 15px; line-height: 1.6; color: #333;">
-                        <hr class="my-4">
+                       <!-- <hr class="my-4">-->
 
                         <!-- Student's Declaration Section -->
-                        <h5 class="mt-4" style=" margin-bottom: 8px; text-align: center; margin-top: 15px;">Student's Undertaking</h5>
+                        <!-- <h5 class="mt-4" style=" margin-bottom: 8px; text-align: center; margin-top: 15px;">Student's Undertaking</h5>
 
                         <p style="font-style: normal; color: #333; font-size: 10px; ">
                             I hereby declare that I will abide by all the rules and regulations of the University, the State Government, and the college regarding my admission, attendance, conduct, and academics. I understand that my admission is subject to eligibility verification and submission of all original documents as prescribed.
@@ -873,10 +873,10 @@
 
                         <p style="font-style: normal; color: #333; font-size: 10px; ">
                             I agree to comply with the prescribed dress code and maintain discipline throughout my course of study.
-                        </p>
+                        </p>-->
 
                         <!-- Student Date, Place, Signature -->
-                        <div class="form-grid mt-3">
+                        <!-- <div class="form-grid mt-3">
                             <div class="form-group">
                                 <label class="form-label required">Date <span class="text-danger"></span></label>
                                 {{ form.student_declaration_date }}
@@ -897,7 +897,7 @@
                                     <small>Student's Signature</small>
                                 </div>
                             </div>
-                        </div>
+                        </div>-->
 
                     </div>
 
@@ -970,8 +970,8 @@
 
                 <!-- OFFICE USE ONLY -->
                 <div class="form-group" style="grid-column: 1/-1;">
-                    <h4 class="mt-4 mb-3" style="text-align: center; margin-top: 15px; margin-bottom: 8px; ">Fees Details</h4> <!-- Heading Added -->
-                    <div class="form-grid">
+                   <!-- <h4 class="mt-4 mb-3" style="text-align: center; margin-top: 15px; margin-bottom: 8px; ">Fees Details</h4> <!-- Heading Added -->
+                   <!-- <div class="form-grid">
                         {# Replace the Receipt No section with this block in your template #}
                         <div class="form-group">
                             <!--<div class="mb-3">
@@ -981,7 +981,7 @@
                                 <div class="text-danger">{{ form.academic_year.errors }}</div>
                                 {% endif %}
                             </div>-->
-                            <label class="form-label">Receipt No</label>
+                          <!--  <label class="form-label">Receipt No</label>
 
                             {% if form.instance.pk %}  {# Editing: allow editing receipt number #}
                             {{ form.receipt_no }}
@@ -1003,7 +1003,7 @@
                             <label class="form-label">Caution Deposit Fee*</label>
                             {{ form.tuition_advance_amount }}
                         </div>-->
-                        <div class="form-group">
+                       <!-- <div class="form-group">
                             <label class="form-label">Transcation ID/Reference No</label>
                             {{ form.utr_no }}
                         </div>
@@ -1036,7 +1036,7 @@
 
 
 
-                        <div class="form-group">
+                       <!-- <div class="form-group">
                             <label class="form-label required">Payment Mode <span class="text-danger"></span></label>
                             {{ form.payment_mode }}
                             {% if form.payment_mode.errors %}
@@ -1046,13 +1046,13 @@
 
                         <!-- QR Code Display Section -->
                         <!-- QR Code Display Section -->
-                        <div id="qr-code-section" class="mt-3" style="display: none;">
+                       <!-- <div id="qr-code-section" class="mt-3" style="display: none;">
                             <label>Scan to Pay (QR Code)</label><br>
                             <div id="qrcode" class="border p-2"></div>
                         </div>
              
                         <!-- Accountant's Signature -->
-                        <div class="form-group" style="grid-column: 1 / -1; display: flex; justify-content: flex-end;">
+                      <!--  <div class="form-group" style="grid-column: 1 / -1; display: flex; justify-content: flex-end;">
                             <div style="width: 200px; display: flex; flex-direction: column; align-items: center;">
                                 <div style="width: 100%; border-bottom: 1px solid #000; height: 30px;"></div>
                                 <small>Accountant's Signature</small>
@@ -2060,6 +2060,7 @@
     });
 </script>-->
 {% endblock %}
+
 
 
 
