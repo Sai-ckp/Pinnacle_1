@@ -2,7 +2,6 @@ import re
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import PUAdmission, CourseType, Course
-from master.models import Transport
 from django.db.models import Q
 from transport.models import MasterTransport
 class PUAdmissionForm(forms.ModelForm):
@@ -780,6 +779,7 @@ class StudentFeeCollectionForm(forms.ModelForm):
             cleaned_data["status"] = "Pending"
 
         return cleaned_data
+
 
 
 
