@@ -457,18 +457,18 @@
                     {{ form.religion }}
                 </div>
                 <div class="form-group">
-                    <label class="form-label required">Caste <span class="text-danger"></span></label>
+                    <label class="form-label required">Caste <span ></span></label>
                     {{ form.caste }}
                     {% if form.caste.errors %}
-                    <div class="text-danger small">{{ form.caste.errors.0 }}</div>
+                    <div >{{ form.caste.errors.0 }}</div>
                     {% endif %}
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label required">Sub Caste <span class="text-danger"></span></label>
+                    <label class="form-label required">Sub Caste <span ></span></label>
                     {{ form.sub_caste }}
                     {% if form.sub_caste.errors %}
-                    <div class="text-danger small">{{ form.sub_caste.errors.0 }}</div>
+                    <div >{{ form.sub_caste.errors.0 }}</div>
                     {% endif %}
                 </div>
 
@@ -2018,6 +2018,7 @@
     });
 </script>-->
 {% endblock %}
+
 
 
 
