@@ -3,7 +3,6 @@ from django import forms
 from django.core.exceptions import ValidationError
 from .models import PUAdmission, CourseType, Course
 from django.db.models import Q
-from transport.models import MasterTransport
 class PUAdmissionForm(forms.ModelForm):
     education_boards = forms.ChoiceField(choices=PUAdmission.BOARD_CHOICES,widget=forms.Select,required=False)
 
@@ -217,7 +216,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django import forms
 from .models import DegreeAdmission  # Make sure this import is corr
-from transport.models import MasterTransport
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -779,6 +777,7 @@ class StudentFeeCollectionForm(forms.ModelForm):
             cleaned_data["status"] = "Pending"
 
         return cleaned_data
+
 
 
 
