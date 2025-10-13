@@ -633,7 +633,7 @@
                 </div>-->
                 
                 <div class="form-group">
-                    <label class="form-label required">Local Address <span class="text-danger"></span></label>
+                    <label class="form-label required">Local Address </label>
                     {{ form.current_address }}
                     {% if form.current_address.errors %}
                     <div class="text-danger small">{{ form.current_address.errors.0 }}</div>
@@ -933,7 +933,7 @@
                         {# Replace the Receipt No section with this block in your template #}
                         <div class="form-group">
                             <div class="mb-3">
-                                <label for="{{ form.academic_year.id_for_label }}" class="form-label">Academic Year</label>
+                                <label for="{{ form.academic_year.id_for_label }}" class="form-label"></label>
                                 {{ form.academic_year }}
                                 {% if form.academic_year.errors %}
                                 <div class="text-danger">{{ form.academic_year.errors }}</div>
@@ -995,7 +995,7 @@
 
 
                         <div class="form-group">
-                            <label class="form-label required">Payment Mode <span class="text-danger"></span></label>
+                            <label class="form-label required">Payment Mode </label>
                             {{ form.payment_mode }}
                             {% if form.payment_mode.errors %}
                             <div class="text-danger small">{{ form.payment_mode.errors.0 }}</div>
@@ -2018,6 +2018,7 @@
     });
 </script>-->
 {% endblock %}
+
 
 
 
