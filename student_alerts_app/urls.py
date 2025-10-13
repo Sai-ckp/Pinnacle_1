@@ -33,13 +33,13 @@ urlpatterns = [
     
     # Other routes
     path('fees', include('fees.urls')),
-    path('transport/', include('transport.urls')),
     path('healthz/', lambda r: HttpResponse("ok")),
     path('actuator/health/', actuator_health),
 ]
 
 # ✅ Serve media files (only in development)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 
 
