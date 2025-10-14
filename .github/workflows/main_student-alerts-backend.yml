@@ -16,29 +16,25 @@ jobs:
     env:
       APP_NAME: student-alerts-backend
       RESOURCE_GROUP: pinnacle-college
-      DJANGO_SETTINGS_MODULE: student_alerts_app.settings  # or deployment if you have one
+      DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
 
     steps:
       # ✅ Step 1: Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ✅ Step 2: Remove heavy/irrelevant files before deployment
+      # ✅ Step 2: Clean unnecessary files
       - name: Clean unnecessary files
         run: |
-          rm -rf venv || true
-          rm -rf .venv || true
-          rm -rf __pycache__ || true
-          rm -rf *.sqlite3 || true
-          rm -rf .git || true
+          rm -rf venv .venv __pycache__ *.sqlite3 .git || true
 
-      # ✅ Step 3: Set up Python
-      - name: Set up Python 3.9
+      # ✅ Step 3: Set up Python 3.9
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
-      # ✅ Step 4: Cache pip dependencies for faster builds
+      # ✅ Step 4: Cache pip dependencies
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
@@ -47,7 +43,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # ✅ Step 5: Install dependencies (locally, just to validate build)
+      # ✅ Step 5: Install dependencies
       - name: Install dependencies
         run: |
           python -m venv venv
@@ -55,13 +51,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ✅ Step 6: Collect static files (optional)
+      # ✅ Step 6: Collect static files
       - name: Collect static files
         run: |
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
 
-      # ✅ Step 7: Login to Azure using your Service Principal (from GitHub secrets)
+      # ✅ Step 7: Login to Azure
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -69,19 +65,21 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
 
-      # ✅ Step 8: Deploy directly to Azure (no ZIP)
+      # ✅ Step 8: Deploy Django App to Azure
       - name: Deploy Django App to Azure
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
-          slot-name: 'Production'
           package: .
 
-      # ✅ Step 9: Run Django migrations remotely inside Azure App Service
+      # ✅ Step 9: Run Django migrations correctly (fixed)
       - name: Run Django migrations on Azure
         uses: azure/cli@v2
         with:
           inlineScript: |
-            echo "Running Django migrations on Azure App Service..."
-            az webapp ssh --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.APP_NAME }} --command "cd /home/site/wwwroot && python manage.py migrate --noinput"
-
+            echo "🚀 Running Django migrations on Azure App Service..."
+            az webapp run-command invoke \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --name ${{ env.APP_NAME }} \
+              --command-id "RunShellScript" \
+              --scripts "cd /home/site/wwwroot && python manage.py migrate --noinput"
