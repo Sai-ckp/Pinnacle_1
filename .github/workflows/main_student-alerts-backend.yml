@@ -1,4 +1,4 @@
-name: Build and deploy Django app to Azure Web App - student-alerts-backend
+name: Deploy Django App to Azure Web App
 
 on:
   push:
@@ -16,39 +16,30 @@ jobs:
     env:
       APP_NAME: student-alerts-backend
       RESOURCE_GROUP: pinnacle-college
-      DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
+      DJANGO_SETTINGS_MODULE: student_alerts_app.settings  # or deployment if you have one
 
     steps:
-      # ✅ Step 1: Checkout repository
-      - name: Checkout code
+      # ✅ Step 1: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ✅ Step 2: Remove unnecessary folders (avoid ZIP bloat)
-      - name: Clean workspace
+      # ✅ Step 2: Remove heavy/irrelevant files before deployment
+      - name: Clean unnecessary files
         run: |
-          echo "Cleaning workspace..."
-          rm -rf venv .venv node_modules __pycache__ *.sqlite3 *.log
+          rm -rf venv || true
+          rm -rf .venv || true
+          rm -rf __pycache__ || true
+          rm -rf *.sqlite3 || true
+          rm -rf .git || true
 
-      # ✅ Step 3: Install system dependencies (for WeasyPrint, etc.)
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libcairo2 \
-            libpango-1.0-0 \
-            libpangocairo-1.0-0 \
-            libgdk-pixbuf2.0-0 \
-            libffi-dev \
-            shared-mime-info
-
-      # ✅ Step 4: Set up Python
-      - name: Set up Python
+      # ✅ Step 3: Set up Python
+      - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
-      # ✅ Step 5: Cache pip dependencies
-      - name: Cache pip dependencies
+      # ✅ Step 4: Cache pip dependencies for faster builds
+      - name: Cache pip packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
@@ -56,7 +47,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # ✅ Step 6: Install project dependencies
+      # ✅ Step 5: Install dependencies (locally, just to validate build)
       - name: Install dependencies
         run: |
           python -m venv venv
@@ -64,56 +55,32 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ✅ Step 7: Collect static files
+      # ✅ Step 6: Collect static files (optional)
       - name: Collect static files
-        env:
-          DJANGO_SETTINGS_MODULE: ${{ env.DJANGO_SETTINGS_MODULE }}
         run: |
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
 
-      # ✅ Step 8: Login to Azure
+      # ✅ Step 7: Login to Azure using your Service Principal (from GitHub secrets)
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_365CC9311E4C4A2487CB1BAA01746F7A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # ✅ Step 9: Set environment variables in Azure
-      - name: Set Azure App Settings
-        uses: azure/cli@v1
-        with:
-          inlineScript: |
-            az webapp config appsettings set \
-              --name ${{ env.APP_NAME }} \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --settings \
-              DJANGO_SETTINGS_MODULE=${{ env.DJANGO_SETTINGS_MODULE }} \
-              SCM_DO_BUILD_DURING_DEPLOYMENT=true \
-              DISABLE_COLLECTSTATIC=1 \
-              DB_NAME='${{ secrets.DB_NAME }}' \
-              DB_USER='${{ secrets.DB_USER }}' \
-              DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
-              DB_HOST='${{ secrets.DB_HOST }}' \
-              DB_PORT='${{ secrets.DB_PORT }}'
-
-      # ✅ Step 10: Deploy Django project
-      - name: Deploy to Azure Web App
+      # ✅ Step 8: Deploy directly to Azure (no ZIP)
+      - name: Deploy Django App to Azure
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
-          slot-name: Production
+          slot-name: 'Production'
           package: .
 
-      # ✅ Step 11: Run Django migrations using Kudu API
-      # (No SSH; executes command inside Azure container)
-      - name: Run Django migrations
-        env:
-          APP_URL: ${{ env.APP_NAME }}.scm.azurewebsites.net
-        run: |
-          echo "Running migrations in Azure Web App..."
-          curl -X POST "https://${{ env.APP_URL }}/api/command" \
-            -u \$${{ env.APP_NAME }}:"${{ secrets.AZURE_DEPLOYMENT_PASSWORD }}" \
-            -H "Content-Type: application/json" \
-            -d '{"command":"cd /home/site/wwwroot && python manage.py migrate --noinput"}' || true
+      # ✅ Step 9: Run Django migrations remotely inside Azure App Service
+      - name: Run Django migrations on Azure
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            echo "Running Django migrations on Azure App Service..."
+            az webapp ssh --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.APP_NAME }} --command "cd /home/site/wwwroot && python manage.py migrate --noinput"
