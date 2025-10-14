@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'student_alerts_app',
     'core',
      'fees',
+    'transport',
      'lms',
 
    
@@ -224,6 +225,7 @@ MSGKART_EMAIL = "pscm@ckpsoftware.com"
 MSGKART_PHONE_ID = "677200268805951"
 MSGKART_ACCOUNT_ID = "1079493607572130"
 MSGKART_BASE_URL = "https://alb-backend.msgkart.com"
+
 
 
 
