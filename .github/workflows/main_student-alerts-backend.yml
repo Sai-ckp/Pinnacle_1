@@ -39,7 +39,6 @@ jobs:
             backend:
               - '**/*.py'
               - 'requirements.txt'
-
       - name: 🧱 Install system dependencies for WeasyPrint
         run: |
           sudo apt-get update
@@ -50,7 +49,6 @@ jobs:
             libgdk-pixbuf2.0-0 \
             libffi-dev \
             shared-mime-info
-
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
@@ -63,14 +61,12 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
       - name: 🧰 Create virtual environment and install dependencies
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: 🧾 Run collectstatic
         if: steps.changes.outputs.html == 'true' || steps.changes.outputs.static == 'true' || steps.changes.outputs.backend == 'true'
         env:
@@ -78,7 +74,6 @@ jobs:
         run: |
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
-
       - name: 🗄️ Run Django migrations
         if: steps.changes.outputs.backend == 'true'
         env:
@@ -86,7 +81,6 @@ jobs:
         run: |
           source venv/bin/activate
           python manage.py migrate --noinput
-
       - name: 🔐 Login to Azure
         uses: azure/login@v2
         with:
@@ -107,7 +101,6 @@ jobs:
               DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
               DB_HOST='${{ secrets.DB_HOST }}' \
               DB_PORT='${{ secrets.DB_PORT }}'
-
       - name: 🕒 Wait before deployment (prevent SCM restart)
         run: sleep 30
 
@@ -115,12 +108,10 @@ jobs:
         run: |
           echo "Zipping project for deployment..."
           zip -r deploy.zip . -x "*.git*" "venv/*" "__pycache__/*"
-
       - name: 🧭 List project files (debug)
         run: |
           echo "Listing top-level files before deploy:"
           ls -lah
-
       - name: 🚀 Deploy Django app to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
