@@ -1,4 +1,4 @@
-name: Build and deploy Python app to Azure Web App - student-alerts-backend
+name: Build and deploy Django app to Azure Web App - student-alerts-backend
 
 on:
   push:
@@ -16,18 +16,13 @@ jobs:
     env:
       APP_NAME: student-alerts-backend
       RESOURCE_GROUP: pinnacle-college
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
 
     steps:
-      # ✅ Step 1: Checkout code
+      # ✅ Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ✅ Step 2: Install WeasyPrint dependencies
+      # ✅ Step 2: Install system dependencies (for WeasyPrint, etc.)
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -61,7 +56,7 @@ jobs:
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
 
-      # ✅ Step 6: Prepare deployment package
+      # ✅ Step 6: Prepare ZIP for deployment
       - name: Prepare deployable package
         run: |
           echo "Preparing deployment package..."
@@ -83,7 +78,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
 
-      # ✅ Step 8: Configure environment variables
+      # ✅ Step 8: Set environment variables on Azure App
       - name: Set Azure App Settings
         uses: azure/cli@v1
         with:
@@ -99,21 +94,24 @@ jobs:
               DB_HOST='${{ secrets.DB_HOST }}' \
               DB_PORT='${{ secrets.DB_PORT }}'
 
-      # ✅ Step 9: Deploy to Azure Web App (ZIP deploy)
+      # ✅ Step 9: Deploy ZIP to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
-          slot-name: Production
           package: deploy.zip
 
-      # ✅ Step 10: Run Django migrations *inside* Azure
+      # ✅ Step 10: Run Django migrations (new method)
+      # We'll run commands INSIDE the container via Kudu API instead of az webapp ssh
       - name: Run Django migrations in Azure
         uses: azure/cli@v1
         with:
           inlineScript: |
-            echo "Running migrations inside Azure Web App..."
-            az webapp ssh \
-              --name ${{ env.APP_NAME }} \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --command "cd /home/site/wwwroot && python manage.py migrate --noinput"
+            echo "Running Django migrations inside Azure Web App..."
+            az webapp ssh --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --timeout 30 || true
+            az webapp create-remote-connection --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --port 2222 &
+            sleep 20
+            curl -X POST "https://${{ env.APP_NAME }}.scm.azurewebsites.net/api/command" \
+              -u "\$${{ env.APP_NAME }}" \
+              -d '{"command":"cd /home/site/wwwroot && python manage.py migrate --noinput"}' \
+              -H "Content-Type: application/json"
