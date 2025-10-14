@@ -23,11 +23,11 @@ jobs:
       DB_PORT: ${{ secrets.DB_PORT }}
 
     steps:
-      # ✅ Step 1: Checkout
+      # ✅ Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ✅ Step 2: Install required system libraries (for WeasyPrint etc.)
+      # ✅ Step 2: Install WeasyPrint dependencies
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -45,7 +45,7 @@ jobs:
         with:
           python-version: '3.9'
 
-      # ✅ Step 4: Install dependencies
+      # ✅ Step 4: Install Python dependencies
       - name: Install Python dependencies
         run: |
           python -m venv venv
@@ -53,7 +53,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ✅ Step 5: Run collectstatic
+      # ✅ Step 5: Collect static files
       - name: Collect static files
         env:
           DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
@@ -61,15 +61,7 @@ jobs:
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
 
-      # ✅ Step 6: Run migrations
-      - name: Run Django migrations
-        env:
-          DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
-        run: |
-          source venv/bin/activate
-          python manage.py migrate --noinput
-
-      # ✅ Step 7: Prepare clean deployment package
+      # ✅ Step 6: Prepare deployment package
       - name: Prepare deployable package
         run: |
           echo "Preparing deployment package..."
@@ -83,7 +75,7 @@ jobs:
           cd ..
           echo "✅ Package ready: $(du -h deploy.zip | cut -f1)"
 
-      # ✅ Step 8: Login to Azure
+      # ✅ Step 7: Login to Azure
       - name: Azure login
         uses: azure/login@v2
         with:
@@ -91,7 +83,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
 
-      # ✅ Step 9: Apply environment variables in Azure
+      # ✅ Step 8: Configure environment variables
       - name: Set Azure App Settings
         uses: azure/cli@v1
         with:
@@ -107,10 +99,21 @@ jobs:
               DB_HOST='${{ secrets.DB_HOST }}' \
               DB_PORT='${{ secrets.DB_PORT }}'
 
-      # ✅ Step 10: Deploy to Azure (ZIP deploy)
+      # ✅ Step 9: Deploy to Azure Web App (ZIP deploy)
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
           slot-name: Production
           package: deploy.zip
+
+      # ✅ Step 10: Run Django migrations *inside* Azure
+      - name: Run Django migrations in Azure
+        uses: azure/cli@v1
+        with:
+          inlineScript: |
+            echo "Running migrations inside Azure Web App..."
+            az webapp ssh \
+              --name ${{ env.APP_NAME }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --command "cd /home/site/wwwroot && python manage.py migrate --noinput"
