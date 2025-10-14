@@ -29,6 +29,7 @@ urlpatterns = [
     path('', include('license.urls')),
     path('', include('timetable.urls')),  # ✅ removed duplicate
     path('', include('lms.urls')),
+    path('', include('transport.urls')),
     path('', include('core.urls')),
     
     # Other routes
@@ -39,6 +40,7 @@ urlpatterns = [
 
 # ✅ Serve media files (only in development)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 
 
