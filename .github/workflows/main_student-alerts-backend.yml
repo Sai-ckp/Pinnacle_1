@@ -65,9 +65,9 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_365CC9311E4C4A2487CB1BAA01746F7A }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
 
       # ✅ Step 8: Deploy directly to Azure (no ZIP)
       - name: Deploy Django App to Azure
@@ -84,3 +84,4 @@ jobs:
           inlineScript: |
             echo "Running Django migrations on Azure App Service..."
             az webapp ssh --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.APP_NAME }} --command "cd /home/site/wwwroot && python manage.py migrate --noinput"
+
