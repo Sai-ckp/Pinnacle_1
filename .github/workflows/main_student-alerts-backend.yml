@@ -23,10 +23,10 @@ jobs:
       RESOURCE_GROUP: pinnacle-college
 
     steps:
-      - name: 🧩 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 📁 Detect changed files
+      - name: Detect changed files
         id: changes
         uses: dorny/paths-filter@v3
         with:
@@ -39,7 +39,8 @@ jobs:
             backend:
               - '**/*.py'
               - 'requirements.txt'
-      - name: 🧱 Install system dependencies for WeasyPrint
+
+      - name: Install system dependencies for WeasyPrint
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -49,46 +50,54 @@ jobs:
             libgdk-pixbuf2.0-0 \
             libffi-dev \
             shared-mime-info
-      - name: 🐍 Set up Python
+
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
-      - name: ⚡ Cache pip dependencies
+      - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - name: 🧰 Create virtual environment and install dependencies
+
+      - name: Clear pip cache (prevent ZIP errors)
+        run: rm -rf ~/.cache/pip
+
+      - name: Create virtual environment and install dependencies
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: 🧾 Run collectstatic
+
+      - name: Run collectstatic
         if: steps.changes.outputs.html == 'true' || steps.changes.outputs.static == 'true' || steps.changes.outputs.backend == 'true'
         env:
           DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
         run: |
           source venv/bin/activate
           python manage.py collectstatic --noinput || true
-      - name: 🗄️ Run Django migrations
+
+      - name: Run Django migrations
         if: steps.changes.outputs.backend == 'true'
         env:
           DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
         run: |
           source venv/bin/activate
           python manage.py migrate --noinput
-      - name: 🔐 Login to Azure
+
+      - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_365CC9311E4C4A2487CB1BAA01746F7A }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0EB78AC662B5425DBACE369EDF555C0B }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_72AC7174F5C444C1BE9DEAD7A37582D5 }}
 
-      - name: ⚙️ Set Azure Web App environment variables
+      - name: Set Azure Web App environment variables
         uses: azure/cli@v1
         with:
           inlineScript: |
@@ -101,21 +110,15 @@ jobs:
               DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
               DB_HOST='${{ secrets.DB_HOST }}' \
               DB_PORT='${{ secrets.DB_PORT }}'
-      - name: 🕒 Wait before deployment (prevent SCM restart)
-        run: sleep 30
 
-      - name: 📦 Prepare deployment package
-        run: |
-          echo "Zipping project for deployment..."
-          zip -r deploy.zip . -x "*.git*" "venv/*" "__pycache__/*"
-      - name: 🧭 List project files (debug)
+      - name: List project files (debug)
         run: |
           echo "Listing top-level files before deploy:"
           ls -lah
-      - name: 🚀 Deploy Django app to Azure Web App
+
+      - name: Deploy Django app to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
           slot-name: 'Production'
-          package: deploy.zip
-          clean: true
+          package: .
