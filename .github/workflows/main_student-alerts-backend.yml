@@ -7,38 +7,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_and_deploy:
+  build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
-
-    env:
-      DB_NAME: ${{ secrets.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
-      APP_NAME: student-alerts-backend
-      RESOURCE_GROUP: pinnacle-college
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Detect changed files
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            html:
-              - '**/*.html'
-              - 'templates/**'
-            static:
-              - 'static/**'
-            backend:
-              - '**/*.py'
-              - 'requirements.txt'
 
       - name: Install system dependencies for WeasyPrint
         run: |
@@ -64,31 +40,44 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Clear pip cache (prevent ZIP errors)
-        run: rm -rf ~/.cache/pip
-
-      - name: Create virtual environment and install dependencies
+      - name: Verify dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run collectstatic
-        if: steps.changes.outputs.html == 'true' || steps.changes.outputs.static == 'true' || steps.changes.outputs.backend == 'true'
-        env:
-          DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
+      - name: Prepare artifact (exclude venv and git)
         run: |
-          source venv/bin/activate
-          python manage.py collectstatic --noinput || true
+          shopt -s dotglob
+          mkdir artifact
+          rsync -av --exclude='venv' --exclude='.git' --exclude='artifact' ./ artifact/
 
-      - name: Run Django migrations
-        if: steps.changes.outputs.backend == 'true'
-        env:
-          DJANGO_SETTINGS_MODULE: student_alerts_app.deployment
+      - name: Upload artifact for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: artifact
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+          path: app
+
+      - name: Move contents to root for deployment
         run: |
-          source venv/bin/activate
-          python manage.py migrate --noinput
+          shopt -s dotglob
+          mv app/* .
+
+      - name: List files before deployment
+        run: find . -type f
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -101,30 +90,17 @@ jobs:
         uses: azure/cli@v1
         with:
           inlineScript: |
-            az webapp config appsettings set \
-              --name ${{ env.APP_NAME }} \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --settings \
+            az webapp config appsettings set --name student-alerts-backend --resource-group "pinnacle-college" --settings \
               DB_NAME='${{ secrets.DB_NAME }}' \
               DB_USER='${{ secrets.DB_USER }}' \
               DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
               DB_HOST='${{ secrets.DB_HOST }}' \
-              DB_PORT='${{ secrets.DB_PORT }}'
+              DB_PORT='${{ secrets.DB_PORT }}' \
+              DJANGO_SETTINGS_MODULE='student_alerts_app.deployment' \
+              PYTHON_VERSION='3.9'
 
-      - name: Prepare deployment package
-        run: |
-          mkdir deploy
-          cp -r manage.py requirements.txt student_alerts_app static templates deploy/
-
-      - name: List deployment files (debug)
-        run: |
-          echo "Listing deploy/ contents:"
-          ls -Rlah deploy
-
-      - name: Deploy Django app to Azure Web App
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.APP_NAME }}
+          app-name: 'student-alerts-backend'
           slot-name: 'Production'
-          package: ./deploy
-
